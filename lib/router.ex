@@ -2,7 +2,9 @@ defmodule Metr.Router do
 
   alias Metr.Event
 
-  def route(%Event{} = _event) do
+  def route(%Event{} = event) do
+    IO.inspect(event, label: "Routing")
+
     [
       # Module.feed(event),
     ]
