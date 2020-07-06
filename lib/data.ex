@@ -1,13 +1,19 @@
 defmodule Metr.Data do
-  def data_path(), do: File.cwd! <> "/data"
-  def event_path(), do: data_path() <> "/event"
-  def state_path(), do: data_path() <> "/state"
+  defp data_dir(), do: File.cwd! <> "/data"
+  defp state_dir(), do: data_dir() <> "/state"
+  defp state_path(module_full_name, id), do: state_dir() <> "/#{state_id(module_full_name, id)}.state"
 
 
-  def save_state(module_name, id, state) do
-    path = state_path() <> "/" <> state_id(module_name, id) <> ".state"
+  def save_state(module_full_name, id, state) do
+    path = state_path(module_full_name, id)
     bin = :erlang.term_to_binary(state)
     File.write!(path, bin)
+  end
+
+
+  def wipe_state(module_full_name, id) do
+    path = state_path(module_full_name, id)
+    File.rm(path)
   end
 
 
@@ -17,11 +23,12 @@ defmodule Metr.Data do
     |> Kernel.inspect()
     |> String.split(".")
     |> List.last()
+    |> String.replace("\"", "")
     "#{module_name}_#{id}"
   end
 
 
-  def genserver_id(module_name, id) do
-    {:global, state_id(module_name, id)}
+  def genserver_id(module_full_name, id) do
+    {:global, state_id(module_full_name, id)}
   end
 end
