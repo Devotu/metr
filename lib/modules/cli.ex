@@ -1,5 +1,5 @@
 defmodule Metr.CLI do
-  #genserver
+  use GenServer
 
   alias Metr.HRC
   alias Metr.Event
@@ -55,9 +55,31 @@ defmodule Metr.CLI do
     |> Router.route()
   end
 
+
+
   ## gen
+  @impl true
+  def init(:ok) do
+    {:ok, %{}}
+  end
+
+
+  def feed(%Event{} = event) do
+    {:ok, pid} = GenServer.start(Metr.CLI, :ok)
+    GenServer.cast(pid, event)
+    []
+  end
+
   #recieve event
   #opt
   #write output
+  @impl true
+  def handle_cast(%Event{} = event, _) do
+    IO.puts(format_event_display(event))
+    {:noreply, []}
+  end
 
+  defp format_event_display(%Event{} = event) do
+    "#{event.id}: #{Kernel.inspect(event.tags)} :: #{Kernel.inspect(event.data)}}"
+  end
 end
