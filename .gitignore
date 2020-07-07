@@ -24,3 +24,4 @@ metr-*.tar
 
 metr
 data/state/*
+data/event/all.log

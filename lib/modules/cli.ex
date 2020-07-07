@@ -52,7 +52,7 @@ defmodule Metr.CLI do
     request
     |> HRC.parse()
     |> Event.new()
-    |> Router.route()
+    |> Router.input()
   end
 
 

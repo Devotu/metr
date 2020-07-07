@@ -2,7 +2,17 @@ defmodule Metr.Router do
 
   alias Metr.Event
   alias Metr.CLI
+  alias Metr.Data
   alias Metr.Player
+
+  def input(events) when is_list(events) do
+    Enum.each(events, &input/1)
+  end
+
+  def input(%Event{} = event) do
+    Data.log_event(event)
+    route(event)
+  end
 
 
   def route(events) when is_list(events) do
@@ -10,7 +20,7 @@ defmodule Metr.Router do
   end
 
   def route(%Event{} = event) do
-    IO.inspect(event, label: "Routing")
+    IO.inspect(event, label: "Router - routing")
     #TODO log
 
     [
