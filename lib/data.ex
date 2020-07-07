@@ -22,6 +22,11 @@ defmodule Metr.Data do
   end
 
 
+  def state_exists?(module_name, id) do
+    File.exists?(state_path(module_name, id))
+  end
+
+
   def wipe_state(module_full_name, id) do
     path = state_path(module_full_name, id)
     File.rm(path)

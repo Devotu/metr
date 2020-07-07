@@ -7,7 +7,7 @@ defmodule PlayerTest do
 
 
   test "basic feed" do
-    assert [] == Player.feed Event.new([:show, :game], %{id: "abc_efg"})
+    assert [] == Player.feed Event.new([:not, :relevant], %{id: "abc_123"})
   end
 
 
