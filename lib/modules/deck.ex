@@ -10,10 +10,8 @@ defmodule Metr.Deck do
   def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id}}) do
     case Data.state_exists?("Player", player_id) do
       false ->
-        IO.puts("false")
         {:error, :id_not_found}
       true ->
-        IO.puts("true")
         deck_id = Id.hrid(name)
         #Create state
         deck_state = %{id: deck_id, name: name}

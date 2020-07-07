@@ -22,6 +22,13 @@ defmodule Metr.Data do
   end
 
 
+  def recall_state(module_full_name, id) do
+    state_path(module_full_name, id)
+    |> File.read!()
+    |> :erlang.binary_to_term()
+  end
+
+
   def state_exists?(module_name, id) do
     File.exists?(state_path(module_name, id))
   end
