@@ -48,4 +48,13 @@ defmodule CliTest do
     assert !Data.state_exists?("Player", player_id)
     assert !Data.state_exists?("Deck", deck_id)
   end
+
+
+  #Not actually testing the stuff but forces the system to display the wanted output
+  test "fail request format" do
+    deck_name = "Charlie"
+    deck_id = Id.hrid(deck_name)
+    assert :ok == process [{:input, "create deck with name #{deck_name}"}]
+    assert !Data.state_exists?("Deck", deck_id)
+  end
 end
