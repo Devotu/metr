@@ -22,7 +22,7 @@ defmodule Metr.Player do
     [Event.new([:player, :created], %{id: player_id})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:deck, :created], data: %{id: deck_id, player_id: player_id}} = event) do
+  def feed(%Event{id: _event_id, tags: [:deck, :created], data: %{id: _deck_id, player_id: player_id}} = event) do
     #Is running?
     case GenServer.whereis(Data.genserver_id(__ENV__.module, player_id)) do
       nil ->
@@ -55,10 +55,7 @@ defmodule Metr.Player do
 
 
   @impl true
-  def handle_call(%Event{id: _event_id, tags: [:deck, :created], data: %{id: deck_id, player_id: player_id}} = event, _from, state) do
-    IO.inspect(event, label: "player - call event")
-    IO.inspect(state, label: "player - call state")
-
+  def handle_call(%Event{id: _event_id, tags: [:deck, :created], data: %{id: deck_id, player_id: player_id}}, _from, state) do
     new_state = Map.update!(state, :decks, &(&1 ++ [deck_id]))
     #Save state
     Data.save_state(__ENV__.module, player_id, new_state)

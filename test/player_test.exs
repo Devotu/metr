@@ -21,7 +21,6 @@ defmodule PlayerTest do
   test "deck created" do
     #var
     player_id = "deck_owner"
-    deck_name = "Player deck"
     deck_id = "player_deck"
     #Player to own the deck
     [player_created_event] = Player.feed Event.new([:create, :player], %{name: "Deck owner"})
@@ -32,6 +31,6 @@ defmodule PlayerTest do
     assert [:player, :altered] == resulting_event.tags
     assert resulting_feedback_should_be == resulting_event.data.msg
     #Cleanup
-    # Data.wipe_state("Player", player_created_event.data.id)
+    Data.wipe_state("Player", player_created_event.data.id)
   end
 end
