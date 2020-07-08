@@ -37,4 +37,15 @@ defmodule CliTest do
     Data.wipe_state("Player", player_id)
     Data.wipe_state("Deck", deck_id)
   end
+
+
+  test "fail create deck" do
+    player_name = "Ceasar"
+    player_id = Id.hrid(player_name)
+    deck_name = "Bravo"
+    deck_id = Id.hrid(deck_name)
+    assert :ok == process [{:input, "create deck with name #{deck_name} and player_id #{player_id}"}]
+    assert !Data.state_exists?("Player", player_id)
+    assert !Data.state_exists?("Deck", deck_id)
+  end
 end

@@ -7,10 +7,11 @@ defmodule Metr.Deck do
   alias Metr.Id
   alias Metr.Data
 
-  def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id}}) do
+  def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id} = data}) do
     case Data.state_exists?("Player", player_id) do
       false ->
-        {:error, :id_not_found}
+        #Return
+        [Event.new([:deck, :create, :fail], %{cause: "player not found", data: data})]
       true ->
         deck_id = Id.hrid(name)
         #Create state
