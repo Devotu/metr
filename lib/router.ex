@@ -22,8 +22,6 @@ defmodule Metr.Router do
 
   #The actual routing implementation
   def route(%Event{} = event) do
-    IO.inspect(event, label: "Router - routing")
-
     [
       # Module.feed(event),
       Player.feed(event),
