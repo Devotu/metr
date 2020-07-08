@@ -49,6 +49,27 @@ defmodule Metr.HRC do
   end
 
   defp merge_kv([k, v], %{details: details} = acc) do
-    Map.put(acc, :details, Map.put(details, String.to_atom(k), "#{v}"))
+    case k do
+      "color" ->
+        updated_colors = Map.fetch(details, :colors)
+          |> no_ok()
+          |> merge_colors(String.to_atom(v))
+        Map.put(acc, :details, Map.put(details, :colors, updated_colors)) #TODO validate color
+      _ ->
+        Map.put(acc, :details, Map.put(details, String.to_atom(k), "#{v}"))
+    end
   end
+
+
+  defp merge_colors(:error, new) do
+    [new]
+  end
+
+  defp merge_colors(current, new) when is_list(current) do
+    current ++ [new]
+  end
+
+
+  defp no_ok({:ok, term}), do: term
+  defp no_ok(term), do: term
 end
