@@ -14,6 +14,7 @@ defmodule Metr.Deck do
       true ->
         deck_id = Id.hrid(name)
         #Create state
+        #The initialization is the only state change outside of a process
         deck_state = %{id: deck_id, name: name}
         #Save state
         Data.save_state(__ENV__.module, deck_id, deck_state)

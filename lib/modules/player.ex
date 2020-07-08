@@ -12,6 +12,7 @@ defmodule Metr.Player do
     player_id = Id.hrid(name)
     #Log event #TODO replay by module?
     #Create state
+    #The initialization is the only state change outside of a process
     player_state = %Player{id: player_id, name: name}
     #Save state
     Data.save_state(__ENV__.module, player_id, player_state)

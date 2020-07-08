@@ -3,6 +3,7 @@ defmodule Metr.Router do
   alias Metr.Event
   alias Metr.CLI
   alias Metr.Data
+  alias Metr.Deck
   alias Metr.Player
 
   def input(events) when is_list(events) do
@@ -19,13 +20,14 @@ defmodule Metr.Router do
     Enum.each(events, &route/1)
   end
 
+  #The actual routing implementation
   def route(%Event{} = event) do
     IO.inspect(event, label: "Router - routing")
-    #TODO log
 
     [
       # Module.feed(event),
       Player.feed(event),
+      Deck.feed(event),
       CLI.feed(event),
     ]
     |> Enum.filter(fn e -> Enum.count(e) > 0 end)
