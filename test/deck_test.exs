@@ -14,7 +14,7 @@ defmodule DeckTest do
 
   test "create deck" do
     Player.feed Event.new([:create, :player], %{name: "Decky"})
-    [resulting_event] = Deck.feed Event.new([:create, :deck], %{name: "Create deck", player_id: "decky"})
+    [resulting_event] = Deck.feed Event.new([:create, :deck], %{name: "Create deck", player_id: "decky", colors: [:black, :red]})
     assert [:deck, :created] == resulting_event.tags
     Data.wipe_state("Deck", resulting_event.data.id)
     Data.wipe_state("Player", resulting_event.data.player_id)
@@ -22,6 +22,7 @@ defmodule DeckTest do
 
 
   test "fail create deck" do
-    assert {:error, :id_not_found} == Deck.feed Event.new([:create, :deck], %{name: "Fail create deck", player_id: "faily"})
+    [resulting_event] = Deck.feed Event.new([:create, :deck], %{name: "Fail create deck", player_id: "faily"})
+    assert [:deck, :create, :fail] == resulting_event.tags
   end
 end
