@@ -4,6 +4,7 @@ defmodule Metr.Router do
   alias Metr.CLI
   alias Metr.Data
   alias Metr.Deck
+  alias Metr.Log
   alias Metr.Player
 
   def input(events) when is_list(events) do
@@ -26,6 +27,7 @@ defmodule Metr.Router do
       # Module.feed(event),
       Player.feed(event),
       Deck.feed(event),
+      Log.feed(event),
       CLI.feed(event),
     ]
     |> Enum.filter(fn e -> Enum.count(e) > 0 end)

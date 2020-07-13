@@ -1,4 +1,6 @@
 defmodule Metr.Data do
+  @delimiter "**"
+
   defp data_dir(), do: File.cwd! <> "/data"
 
   defp event_dir(), do: data_dir() <> "/event"
@@ -7,7 +9,38 @@ defmodule Metr.Data do
 
   def log_event(event) do
     bin = :erlang.term_to_binary(event)
-    File.write!(event_path(), bin, [:append])
+    del = bin <> @delimiter
+    File.write!(event_path(), del, [:append])
+  end
+
+
+  def read_log_tail(number \\ 100) do
+    event_path()
+    |> read_binary_from_path
+    |> parse_delimited_binary
+    |> Enum.reverse()
+    |> Enum.take(number)
+    |> Enum.reverse()
+  end
+
+  defp read_binary_from_path(path) do
+    case File.read(path) do
+      {:ok, binary} ->
+        binary
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp parse_delimited_binary({:error, :enoent}) do
+    {:error, :not_found}
+  end
+
+  defp parse_delimited_binary(binary) do
+    binary
+    |> String.slice( 0..-String.length(@delimiter) )
+    |> String.split( @delimiter )
+    |> Enum.map( fn b -> :erlang.binary_to_term(b) end )
   end
 
 

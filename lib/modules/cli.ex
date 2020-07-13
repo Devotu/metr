@@ -9,6 +9,7 @@ defmodule Metr.CLI do
   @switches [
     help: :boolean,
     input: :string,
+    log: :integer,
   ]
   @aliases [
     h: :help,
@@ -40,11 +41,11 @@ defmodule Metr.CLI do
     Available commands:
     input/in: String in human readable format:
     create type id with key value and key value
+    log: Integer Display n last log entries
     """
     IO.puts help_text
     help_text
   end
-
 
   #convert to event
   #route event
@@ -52,6 +53,11 @@ defmodule Metr.CLI do
     request
     |> HRC.parse()
     |> Event.new()
+    |> Router.input()
+  end
+
+  def process([{:log, number}]) do
+    Event.new([:read, :log], %{number: number})
     |> Router.input()
   end
 
@@ -66,7 +72,7 @@ defmodule Metr.CLI do
 
   def feed(%Event{} = event) do
     {:ok, pid} = GenServer.start(Metr.CLI, :ok)
-    GenServer.cast(pid, event)
+    GenServer.call(pid, event)
     []
   end
 
@@ -74,9 +80,16 @@ defmodule Metr.CLI do
   #opt
   #write output
   @impl true
-  def handle_cast(%Event{} = event, _) do
+  def handle_call(%Event{} = event, _, _) do
     IO.puts(format_event_display(event))
-    {:noreply, []}
+    {:reply, :ok, %{}}
+  end
+
+  defp format_event_display(%Event{tags: [:list, :log, _id]} = event) do
+    events = event.data.entries
+      |> Enum.map(fn e -> format_event_display(e) end)
+      |> Enum.join("\n > ")
+    "#{event.id}: #{Kernel.inspect(event.tags)} :: \n > #{events}}"
   end
 
   defp format_event_display(%Event{} = event) do
