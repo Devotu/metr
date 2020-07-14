@@ -15,7 +15,6 @@ defmodule LogTest do
     sent_event = Event.new([:read, :log], %{number: number_requested})
     [resulting_event] = Log.feed sent_event
     assert [:list, :log, sent_event.id] == resulting_event.tags
-    IO.inspect(resulting_event, label: "logtest - resulting event")
     assert number_requested == Enum.count(resulting_event.data.entries)
   end
 end
