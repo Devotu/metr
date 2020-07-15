@@ -1,5 +1,5 @@
 defmodule Metr.HRC do
-  defstruct predicate: nil, subject: nil, details: %{}
+  defstruct action: nil, subject: nil, details: %{}, parts: []
 
   alias Metr.HRC
 
@@ -7,15 +7,15 @@ defmodule Metr.HRC do
     input
     |> String.split()
     |> (fn bits -> {bits, %HRC{}} end).()
-    |> parse_predicate()
+    |> parse_action()
     |> parse_subject()
     |> parse_id()
     |> parse_details()
   end
 
 
-  defp parse_predicate({[predicate|remaining], %{} = acc}) do
-    {remaining, Map.put(acc, :predicate, String.to_atom(predicate))}
+  defp parse_action({[action|remaining], %{} = acc}) do
+    {remaining, Map.put(acc, :action, String.to_atom(action))}
   end
 
 
@@ -39,6 +39,31 @@ defmodule Metr.HRC do
 
   defp parse_details({["with"|bits], %{} = acc}) do
     bits
+    |> Enum.chunk_by(fn b -> "with" == b end)
+    |> Enum.reduce(acc, fn part, acc -> parse_pairs({part, acc}) end)
+  end
+
+
+  defp parse_pairs({[], %{} = acc}) do
+    acc
+  end
+
+  defp parse_pairs({["with"|bits], %{} = acc}) do
+    parse_pairs({bits, acc})
+  end
+
+  defp parse_pairs({["part"|bits], %{} = acc}) do
+    [id|kvs] = bits
+    part = %{part: parse_value(id), details: %{}}
+    part_map = kvs
+    |> Enum.chunk_by(fn b -> "and" == b end)
+    |> Enum.reduce(part, fn kv, acc -> merge_kv(kv, acc) end)
+
+    Map.put(acc, :parts, acc.parts ++ [part_map])
+  end
+
+  defp parse_pairs({bits, %{} = acc}) when is_list(bits) do
+    bits
     |> Enum.chunk_by(fn b -> "and" == b end)
     |> Enum.reduce(acc, fn kv, acc -> merge_kv(kv, acc) end)
   end
@@ -49,14 +74,14 @@ defmodule Metr.HRC do
   end
 
   defp merge_kv([k, v], %{details: details} = acc) do
-    case k do
-      "color" ->
+    case {k, parse_value(v)} do
+      {"color", _} ->
         updated_colors = Map.fetch(details, :colors)
           |> no_ok()
           |> merge_colors(String.to_atom(v))
         Map.put(acc, :details, Map.put(details, :colors, updated_colors)) #TODO validate color
-      _ ->
-        Map.put(acc, :details, Map.put(details, String.to_atom(k), "#{v}"))
+      {_, pv} ->
+        Map.put(acc, :details, Map.put(details, String.to_atom(k), pv))
     end
   end
 
@@ -72,4 +97,40 @@ defmodule Metr.HRC do
 
   defp no_ok({:ok, term}), do: term
   defp no_ok(term), do: term
+
+
+  defp parse_value(v) do
+    v
+    |> parse_text_scale()
+    |> parse_number()
+  end
+
+
+  defp parse_text_scale(v) do
+    case v do
+      "bad" ->
+        -2
+      "negative" ->
+        -1
+      "neutral" ->
+        0
+      "positive" ->
+        1
+      "good" ->
+        2
+      _ ->
+        v
+    end
+  end
+
+
+  defp parse_number(v) when is_number(v), do: v
+  defp parse_number(v) do
+    case Integer.parse(v) do
+      {int, _} ->
+        int
+      _ ->
+        v
+    end
+  end
 end
