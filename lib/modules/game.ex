@@ -29,25 +29,6 @@ defmodule Metr.Game do
     [Event.new([:game, :created], %{id: game_id})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:deck, :created], data: %{id: _deck_id, player_id: player_id}} = event) do
-    #Is running?
-    case GenServer.whereis(Data.genserver_id(__ENV__.module, player_id)) do
-      nil ->
-        #Get state
-        current_state = Data.recall_state(__ENV__.module, player_id)
-        #Start process
-        GenServer.start(Metr.Player, current_state, [name: Data.genserver_id(__ENV__.module, player_id)])
-        #Call update
-        msg = GenServer.call(Data.genserver_id(__ENV__.module, player_id), event)
-        #Return
-        [Event.new([:player, :altered], %{msg: msg})]
-      _ ->
-        #Call update
-        msg = GenServer.call(Data.genserver_id(__ENV__.module, player_id), event)
-        #Return
-        [Event.new([:player, :altered], %{msg: msg})]
-    end
-  end
 
   def feed(_) do
     []
