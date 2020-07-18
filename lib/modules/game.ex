@@ -19,18 +19,14 @@ defmodule Metr.Game do
       participants: convert_to_participants(data.parts, data.winner)
     }
 
-    IO.inspect(data, label: "Game - init data")
-    IO.inspect(game_state, label: "Game - init state")
-
     #Save state
-    # Data.save_state(__ENV__.module, player_id, player_state)
+    Data.save_state(__ENV__.module, game_id, game_state)
 
-    # #Start genserver
-    # GenServer.start(Metr.Player, player_state, [name: Data.genserver_id(__ENV__.module, player_id)])
+    #Start genserver
+    GenServer.start(Metr.Game, game_state, [name: Data.genserver_id(__ENV__.module, game_id)])
 
     #Return
     [Event.new([:game, :created], %{id: "player_id"})]
-    [Event.new([:not, :implemented], %{id: "player_id"})]
   end
 
   def feed(%Event{id: _event_id, tags: [:deck, :created], data: %{id: _deck_id, player_id: player_id}} = event) do
