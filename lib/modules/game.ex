@@ -26,7 +26,7 @@ defmodule Metr.Game do
     GenServer.start(Metr.Game, game_state, [name: Data.genserver_id(__ENV__.module, game_id)])
 
     #Return
-    [Event.new([:game, :created], %{id: "player_id"})]
+    [Event.new([:game, :created], %{id: game_id})]
   end
 
   def feed(%Event{id: _event_id, tags: [:deck, :created], data: %{id: _deck_id, player_id: player_id}} = event) do
