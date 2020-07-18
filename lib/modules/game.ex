@@ -86,14 +86,4 @@ defmodule Metr.Game do
   def init(state) do
     {:ok, state}
   end
-
-
-  @impl true
-  def handle_call(%Event{id: _event_id, tags: [:deck, :created], data: %{id: deck_id, player_id: player_id}}, _from, state) do
-    new_state = Map.update!(state, :decks, &(&1 ++ [deck_id]))
-    #Save state
-    Data.save_state(__ENV__.module, player_id, new_state)
-    #Reply
-    {:reply, "Deck #{deck_id} added to player #{player_id}", new_state}
-  end
 end
