@@ -73,6 +73,7 @@ defmodule Metr.Game do
   end
 
 
+  defp place(_part_id, 0), do: 0
   defp place(part_id, winner_id) do
     case part_id == winner_id do
       true -> 1
