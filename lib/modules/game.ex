@@ -25,8 +25,14 @@ defmodule Metr.Game do
     #Start genserver
     GenServer.start(Metr.Game, game_state, [name: Data.genserver_id(__ENV__.module, game_id)])
 
+    player_ids = game_state.participants
+      |> Enum.map(fn p -> p.player_id end)
+
+    deck_ids = game_state.participants
+      |> Enum.map(fn p -> p.deck_id end)
+
     #Return
-    [Event.new([:game, :created], %{id: game_id})]
+    [Event.new([:game, :created], %{id: game_id, player_ids: player_ids, deck_ids: deck_ids})]
   end
 
 
@@ -44,28 +50,28 @@ defmodule Metr.Game do
   end
 
 
-  defp fill_force(%{part: part, details: %{player: _player, deck: _deck, force: _force} = details}) do
+  defp fill_force(%{part: part, details: %{player_id: _player, deck_id: _deck, force: _force} = details}) do
     %{part: part, details: details}
   end
 
-  defp fill_force(%{part: part, details: %{player: _player, deck: _deck} = details}) do
+  defp fill_force(%{part: part, details: %{player_id: _player, deck_id: _deck} = details}) do
     %{part: part, details: Map.put(details, :force, nil)}
   end
 
 
-  defp fill_fun(%{part: part, details: %{player: _player, deck: _deck, fun: _force} = details}) do
+  defp fill_fun(%{part: part, details: %{player_id: _player, deck_id: _deck, fun: _force} = details}) do
     %{part: part, details: details}
   end
 
-  defp fill_fun(%{part: part, details: %{player: _player, deck: _deck} = details}) do
+  defp fill_fun(%{part: part, details: %{player_id: _player, deck_id: _deck} = details}) do
     %{part: part, details: Map.put(details, :fun, nil)}
   end
 
 
   defp part_to_participant(part, winner) do
     %{
-      player: part.details.player,
-      deck: part.details.deck,
+      player_id: part.details.player_id,
+      deck_id: part.details.deck_id,
       place: place(part.part, winner),
       force: part.details.force,
       fun: part.details.fun
