@@ -35,11 +35,26 @@ defmodule Metr.Game do
     [Event.new([:game, :created], %{id: game_id, player_ids: player_ids, deck_ids: deck_ids})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:read, :game] = tags, data: %{game_id: id}}) do
+    ready_process(id)
+    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
+    [Event.new([:deck, :read], %{msg: msg})]
+  end
 
   def feed(_) do
     []
   end
 
+
+  defp ready_process(id) do
+    # Is running?
+    if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
+      #Get state
+      current_state = Data.recall_state(__ENV__.module, id)
+      #Start process
+      GenServer.start(Metr.Game, current_state, [name: Data.genserver_id(__ENV__.module, id)])
+    end
+  end
 
 
   defp convert_to_participants(parts, winner) do
@@ -92,5 +107,12 @@ defmodule Metr.Game do
   @impl true
   def init(state) do
     {:ok, state}
+  end
+
+
+  @impl true
+  def handle_call(%{tags: [:read, :game]}, _from, state) do
+    #Reply
+    {:reply, state, state}
   end
 end
