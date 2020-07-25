@@ -39,22 +39,20 @@ defmodule Metr.Player do
 
 
   defp update(id, tags, data) do
+    ready_process(id)
+    #Call update
+    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data})
+    #Return
+    [Event.new([:player, :altered], %{msg: msg})]
+  end
+
+  defp ready_process(id) do
     # Is running?
-    case GenServer.whereis(Data.genserver_id(__ENV__.module, id)) do
-      nil ->
-        #Get state
-        current_state = Data.recall_state(__ENV__.module, id)
-        #Start process
-        GenServer.start(Metr.Player, current_state, [name: Data.genserver_id(__ENV__.module, id)])
-        #Call update
-        msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data})
-        #Return
-        [Event.new([:player, :altered], %{msg: msg})]
-      _ ->
-        #Call update
-        msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data})
-        #Return
-        [Event.new([:player, :altered], %{msg: msg})]
+    if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
+      #Get state
+      current_state = Data.recall_state(__ENV__.module, id)
+      #Start process
+      GenServer.start(Metr.Player, current_state, [name: Data.genserver_id(__ENV__.module, id)])
     end
   end
 
