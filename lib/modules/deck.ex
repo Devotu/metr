@@ -27,17 +27,35 @@ defmodule Metr.Deck do
     end
   end
 
+  def feed(%Event{id: _event_id, tags: [:read, :deck] = tags, data: %{deck_id: id}}) do
+    ready_process(id)
+    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
+    [Event.new([:deck, :read], %{msg: msg})]
+  end
+
   def feed(_) do
     []
   end
 
 
-  def build_state(id, %{name: name, player_id: _player_id, colors: colors}) do
+
+  defp ready_process(id) do
+    # Is running?
+    if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
+      #Get state
+      current_state = Data.recall_state(__ENV__.module, id)
+      #Start process
+      GenServer.start(Metr.Deck, current_state, [name: Data.genserver_id(__ENV__.module, id)])
+    end
+  end
+
+
+  defp build_state(id, %{name: name, player_id: _player_id, colors: colors}) do
     %Deck{id: id, name: name}
     |> apply_colors(colors)
   end
 
-  def build_state(id, %{name: name, player_id: _player_id}) do
+  defp build_state(id, %{name: name, player_id: _player_id}) do
     %Deck{id: id, name: name}
   end
 
@@ -56,5 +74,12 @@ defmodule Metr.Deck do
   @impl true
   def init(state) do
     {:ok, state}
+  end
+
+
+  @impl true
+  def handle_call(%{tags: [:read, :deck]}, _from, state) do
+    #Reply
+    {:reply, state, state}
   end
 end
