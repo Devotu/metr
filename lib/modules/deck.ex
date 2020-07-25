@@ -1,5 +1,5 @@
 defmodule Metr.Deck do
-  defstruct id: "", name: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false
+  defstruct id: "", name: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: []
 
   use GenServer
 
@@ -27,6 +27,12 @@ defmodule Metr.Deck do
     end
   end
 
+  def feed(%Event{id: _event_id, tags: [:game, :created] = tags, data: %{id: game_id, deck_ids: deck_ids}}) do
+    #for each participant
+    #call update
+    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}) end)
+  end
+
   def feed(%Event{id: _event_id, tags: [:read, :deck] = tags, data: %{deck_id: id}}) do
     ready_process(id)
     msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
@@ -37,6 +43,15 @@ defmodule Metr.Deck do
     []
   end
 
+
+
+  defp update(id, tags, data) do
+    ready_process(id)
+    #Call update
+    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data})
+    #Return
+    [Event.new([:deck, :altered], %{msg: msg})]
+  end
 
 
   defp ready_process(id) do
@@ -81,5 +96,15 @@ defmodule Metr.Deck do
   def handle_call(%{tags: [:read, :deck]}, _from, state) do
     #Reply
     {:reply, state, state}
+  end
+
+
+  @impl true
+  def handle_call(%{tags: [:game, :created], data: %{id: game_id, deck_id: id}}, _from, state) do
+    new_state = Map.update!(state, :games, &(&1 ++ [game_id]))
+    #Save state
+    Data.save_state(__ENV__.module, id, new_state)
+    #Reply
+    {:reply, "Game #{game_id} added to deck #{id}", new_state}
   end
 end

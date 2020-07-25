@@ -52,6 +52,7 @@ defmodule Metr.Player do
     [Event.new([:player, :altered], %{msg: msg})]
   end
 
+
   defp ready_process(id) do
     # Is running?
     if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
