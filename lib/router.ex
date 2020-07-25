@@ -4,6 +4,7 @@ defmodule Metr.Router do
   alias Metr.CLI
   alias Metr.Data
   alias Metr.Deck
+  alias Metr.Game
   alias Metr.Log
   alias Metr.Player
 
@@ -27,6 +28,7 @@ defmodule Metr.Router do
       # Module.feed(event),
       Player.feed(event),
       Deck.feed(event),
+      Game.feed(event),
       Log.feed(event),
       CLI.feed(event),
     ]
