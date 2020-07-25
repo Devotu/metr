@@ -33,6 +33,12 @@ defmodule Metr.Player do
     Enum.reduce(player_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, player_id: id}) end)
   end
 
+  def feed(%Event{id: _event_id, tags: [:read, :player] = tags, data: %{player_id: id}}) do
+    ready_process(id)
+    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
+    [Event.new([:player, :read], %{msg: msg})]
+  end
+
   def feed(_) do
     []
   end
@@ -80,5 +86,11 @@ defmodule Metr.Player do
     Data.save_state(__ENV__.module, id, new_state)
     #Reply
     {:reply, "Game #{game_id} added to player #{id}", new_state}
+  end
+
+  @impl true
+  def handle_call(%{tags: [:read, :player]}, _from, state) do
+    #Reply
+    {:reply, state, state}
   end
 end
