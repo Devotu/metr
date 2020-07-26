@@ -54,7 +54,7 @@ defmodule Metr.Deck do
   end
 
 
-  defp ready_process(id) do
+   defp ready_process(id) do
     # Is running?
     if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
       #Get state

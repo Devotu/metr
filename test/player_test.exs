@@ -3,6 +3,7 @@ defmodule PlayerTest do
 
   alias Metr.Data
   alias Metr.Event
+  alias Metr.Deck
   alias Metr.Game
   alias Metr.Id
   alias Metr.Player
@@ -67,5 +68,22 @@ defmodule PlayerTest do
     Data.wipe_state("Player", player_one_id)
     Data.wipe_state("Player", player_two_id)
     Data.wipe_state("Game", game_created_event.data.id)
+  end
+
+
+  test "list players" do
+    Player.feed Event.new([:create, :player], %{name: "Adam List"})
+    Player.feed Event.new([:create, :player], %{name: "Bertil List"})
+    Player.feed Event.new([:create, :player], %{name: "Ceasar List"})
+    Deck.feed Event.new([:create, :deck], %{name: "Alpha List", player_id: "adam_list"})
+    Deck.feed Event.new([:create, :deck], %{name: "Beta List", player_id: "bertil_list"})
+    [resulting_event] = Player.feed Event.new([:list, :player], %{})
+    assert [:players] == resulting_event.tags
+    assert 3 <= Enum.count(resulting_event.data.players) #any actual data will break proper comparison
+    Data.wipe_state("Player", "adam_list")
+    Data.wipe_state("Player", "bertil_list")
+    Data.wipe_state("Player", "ceasar_list")
+    Data.wipe_state("Deck", "alpha_list")
+    Data.wipe_state("Deck", "beta_list")
   end
 end

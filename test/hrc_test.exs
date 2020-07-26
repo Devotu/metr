@@ -26,4 +26,12 @@ defmodule HRCTest do
     assert data.subject == :deck
     assert data.details == %{name: "Bravo", player_id: "bertil", colors: [:black, :red]}
   end
+
+  test "parse list decks" do
+    data = HRC.parse("list deck all")
+    assert is_struct(data)
+    assert data.action == :list
+    assert data.subject == :deck
+    assert data.details == %{}
+  end
 end

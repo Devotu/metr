@@ -23,6 +23,12 @@ defmodule Metr.Player do
     [Event.new([:player, :created], %{id: id})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:list, :player] = tags, data: %{}}) do
+    players = Data.list_ids(__ENV__.module)
+    |> Enum.map(fn id -> recall(id) end)
+    [Event.new([:players], %{players: players})]
+  end
+
   def feed(%Event{id: _event_id, tags: [:deck, :created] = tags, data: %{id: _deck_id, player_id: id} = data}) do
     update(id, tags, data)
   end
@@ -50,6 +56,12 @@ defmodule Metr.Player do
     msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data})
     #Return
     [Event.new([:player, :altered], %{msg: msg})]
+  end
+
+
+  defp recall(id) do
+    ready_process(id)
+    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :player]})
   end
 
 

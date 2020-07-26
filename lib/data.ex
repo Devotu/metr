@@ -75,16 +75,36 @@ defmodule Metr.Data do
 
   @spec state_id(binary, any) :: <<_::8, _::_*8>>
   def state_id(module_full_name, id) do
-    module_name = module_full_name
+    "#{module_to_name(module_full_name)}_#{id}"
+  end
+
+
+  defp module_to_name(module_full_name) do
+    module_full_name
     |> Kernel.inspect()
     |> String.split(".")
     |> List.last()
     |> String.replace("\"", "")
-    "#{module_name}_#{id}"
+  end
+
+
+  defp extract_id(name, module_full_name) do
+    name
+    |> String.replace_prefix(module_to_name(module_full_name), "")
+    |> String.replace_prefix("_", "")
+    |> String.replace_suffix(".state", "")
   end
 
 
   def genserver_id(module_full_name, id) do
     {:global, state_id(module_full_name, id)}
+  end
+
+
+  def list_ids(module_full_name) do
+    File.ls!(state_dir())
+    |> Enum.map(fn fp -> String.replace(fp, state_dir(), "") end)
+    |> Enum.filter(fn fp -> String.starts_with?(fp, module_to_name(module_full_name)) end)
+    |> Enum.map(fn fp -> extract_id(fp, module_full_name) end)
   end
 end

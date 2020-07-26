@@ -63,6 +63,8 @@ defmodule DeckTest do
     assert [:deck, :altered] == first_resulting_event.tags
     assert "Game #{game_created_event.data.id} added to deck #{deck_one_id}" == first_resulting_event.data.msg
     #Cleanup
+    Data.wipe_state("Player", player_one_id)
+    Data.wipe_state("Player", player_two_id)
     Data.wipe_state("Deck", deck_one_id)
     Data.wipe_state("Deck", deck_two_id)
     Data.wipe_state("Game", game_created_event.data.id)
