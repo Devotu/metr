@@ -81,14 +81,14 @@ defmodule Metr.CLI do
   #write output
   @impl true
   def handle_call(%Event{} = event, _, _) do
-    IO.puts(format_event_display(event))
+    IO.puts("=> " <> format_event_display(event))
     {:reply, :ok, %{}}
   end
 
   defp format_event_display(%Event{tags: [:list, :log, _id]} = event) do
     events = event.data.entries
       |> Enum.map(fn e -> format_event_display(e) end)
-      |> Enum.join("\n > ")
+      |> Enum.join("\n   > ")
     "#{event.id}: #{Kernel.inspect(event.tags)} :: \n > #{events}}"
   end
 
