@@ -77,8 +77,9 @@ defmodule PlayerTest do
     Player.feed Event.new([:create, :player], %{name: "Ceasar List"})
     Deck.feed Event.new([:create, :deck], %{name: "Alpha List", player_id: "adam_list"})
     Deck.feed Event.new([:create, :deck], %{name: "Beta List", player_id: "bertil_list"})
-    [resulting_event] = Player.feed Event.new([:list, :player], %{})
-    assert [:players] == resulting_event.tags
+    fake_pid = "#123"
+    [resulting_event] = Player.feed Event.new([:list, :player], %{response_pid: fake_pid})
+    assert [:players, fake_pid] == resulting_event.tags
     assert 3 <= Enum.count(resulting_event.data.players) #any actual data will break proper comparison
     Data.wipe_state("Player", "adam_list")
     Data.wipe_state("Player", "bertil_list")

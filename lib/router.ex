@@ -31,6 +31,7 @@ defmodule Metr.Router do
       Game.feed(event),
       Log.feed(event),
       CLI.feed(event),
+      Metr.feed(event),
     ]
     |> Enum.filter(fn e -> Enum.count(e) > 0 end)
     |> Enum.each(fn e -> route(e) end)
