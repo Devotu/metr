@@ -8,6 +8,7 @@ defmodule Metr.Deck do
   alias Metr.Data
   alias Metr.Deck
 
+  ##feed
   def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id} = data}) do
     case Data.state_exists?("Player", player_id) do
       false ->
@@ -39,11 +40,26 @@ defmodule Metr.Deck do
     [Event.new([:deck, :read], %{msg: msg})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:list, :deck] = tags, data: %{response_pid: response_pid}}) do
+    decks = Data.list_ids(__ENV__.module)
+    |> Enum.map(fn id -> recall(id) end)
+    [Event.new([:decks, response_pid], %{decks: decks})]
+  end
+
   def feed(_) do
     []
   end
 
-
+  ##private
+  defp ready_process(id) do
+    # Is running?
+    if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
+      #Get state
+      current_state = Data.recall_state(__ENV__.module, id)
+      #Start process
+      GenServer.start(Metr.Deck, current_state, [name: Data.genserver_id(__ENV__.module, id)])
+    end
+  end
 
   defp update(id, tags, data) do
     ready_process(id)
@@ -53,15 +69,9 @@ defmodule Metr.Deck do
     [Event.new([:deck, :altered], %{msg: msg})]
   end
 
-
-   defp ready_process(id) do
-    # Is running?
-    if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
-      #Get state
-      current_state = Data.recall_state(__ENV__.module, id)
-      #Start process
-      GenServer.start(Metr.Deck, current_state, [name: Data.genserver_id(__ENV__.module, id)])
-    end
+  defp recall(id) do
+    ready_process(id)
+    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :deck]})
   end
 
 

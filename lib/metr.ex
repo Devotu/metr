@@ -18,6 +18,20 @@ defmodule Metr do
     Task.await(listening_task)
   end
 
+  def list_decks() do
+    #Start listener
+    listening_task = Task.async(fn ->
+      listen()
+    end)
+
+    #Fire ze missiles
+    Event.new([:list, :deck], %{response_pid: listening_task.pid})
+    |> Router.input()
+
+    #Await response
+    Task.await(listening_task)
+  end
+
 
   def listen() do
     receive do
@@ -33,6 +47,10 @@ defmodule Metr do
     []
   end
 
+  def feed(%Event{tags: [:decks, response_pid]} = event) when is_pid(response_pid) do
+    send response_pid, event.data.decks
+    []
+  end
 
   def feed(_) do
     []
