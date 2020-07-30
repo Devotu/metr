@@ -38,13 +38,8 @@ defmodule Metr do
 
 
   ## feed
-  def feed(%Event{tags: [:players, response_pid]} = event) when is_pid(response_pid) do
-    send response_pid, event.data.players
-    []
-  end
-
-  def feed(%Event{tags: [:decks, response_pid]} = event) when is_pid(response_pid) do
-    send response_pid, event.data.decks
+  def feed(%Event{tags: [type, response_pid]} = event) when is_atom(type) and is_pid(response_pid) do
+    send response_pid, event.data[type]
     []
   end
 
