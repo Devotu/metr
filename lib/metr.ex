@@ -4,6 +4,7 @@ defmodule Metr do
   alias Metr.Router
 
 
+  ## api
   def list_players() do
     list(:player)
   end
@@ -13,11 +14,11 @@ defmodule Metr do
   end
 
 
+
+  ## private
   defp list(type) when is_atom(type) do
     #Start listener
-    listening_task = Task.async(fn ->
-      listen()
-    end)
+    listening_task = Task.async(&listen/0)
 
     #Fire ze missiles
     Event.new([:list, type], %{response_pid: listening_task.pid})
