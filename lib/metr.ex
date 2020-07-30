@@ -13,6 +13,10 @@ defmodule Metr do
     list(:deck)
   end
 
+  def list_games() do
+    list(:game)
+  end
+
 
 
   ## private

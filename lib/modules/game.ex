@@ -8,6 +8,8 @@ defmodule Metr.Game do
   alias Metr.Data
   alias Metr.Game
 
+
+  ## feed
   def feed(%Event{id: _event_id, tags: [:create, :game], data: data}) do
     game_id = Id.guid()
 
@@ -41,6 +43,12 @@ defmodule Metr.Game do
     [Event.new([:deck, :read], %{msg: msg})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:list, :game], data: %{response_pid: response_pid}}) do
+    games = Data.list_ids(__ENV__.module)
+    |> Enum.map(fn id -> recall(id) end)
+    [Event.new([:games, response_pid], %{games: games})]
+  end
+
   def feed(_) do
     []
   end
@@ -54,6 +62,11 @@ defmodule Metr.Game do
       #Start process
       GenServer.start(Metr.Game, current_state, [name: Data.genserver_id(__ENV__.module, id)])
     end
+  end
+
+  defp recall(id) do
+    ready_process(id)
+    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :game]})
   end
 
 
