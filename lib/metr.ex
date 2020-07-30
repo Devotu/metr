@@ -5,40 +5,35 @@ defmodule Metr do
 
 
   def list_players() do
-    #Start listener
-    listening_task = Task.async(fn ->
-      listen()
-    end)
-
-    #Fire ze missiles
-    Event.new([:list, :player], %{response_pid: listening_task.pid})
-    |> Router.input()
-
-    #Await response
-    Task.await(listening_task)
+    list(:player)
   end
 
   def list_decks() do
+    list(:deck)
+  end
+
+
+  defp list(type) when is_atom(type) do
     #Start listener
     listening_task = Task.async(fn ->
       listen()
     end)
 
     #Fire ze missiles
-    Event.new([:list, :deck], %{response_pid: listening_task.pid})
+    Event.new([:list, type], %{response_pid: listening_task.pid})
     |> Router.input()
 
     #Await response
     Task.await(listening_task)
   end
 
-
-  def listen() do
+  defp listen() do
     receive do
       msg ->
         msg
     end
   end
+
 
 
   ## feed
