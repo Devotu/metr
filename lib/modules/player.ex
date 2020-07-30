@@ -61,7 +61,7 @@ defmodule Metr.Player do
 
   defp recall(id) do
     ready_process(id)
-    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :player]})
+    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :player]})
   end
 
 

@@ -34,13 +34,12 @@ defmodule Metr.Deck do
     Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}) end)
   end
 
-  def feed(%Event{id: _event_id, tags: [:read, :deck] = tags, data: %{deck_id: id}}) do
-    ready_process(id)
-    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
+  def feed(%Event{id: _event_id, tags: [:read, :deck], data: %{deck_id: id}}) do
+    msg = recall(id)
     [Event.new([:deck, :read], %{msg: msg})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :deck] = tags, data: %{response_pid: response_pid}}) do
+  def feed(%Event{id: _event_id, tags: [:list, :deck], data: %{response_pid: response_pid}}) do
     decks = Data.list_ids(__ENV__.module)
     |> Enum.map(fn id -> recall(id) end)
     [Event.new([:decks, response_pid], %{decks: decks})]
