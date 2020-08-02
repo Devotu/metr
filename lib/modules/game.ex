@@ -34,7 +34,8 @@ defmodule Metr.Game do
       |> Enum.map(fn p -> p.deck_id end)
 
     #Return
-    [Event.new([:game, :created], %{id: game_id, player_ids: player_ids, deck_ids: deck_ids})]
+    response_tags = add_response_pid([:game, :created], data)
+    [Event.new(response_tags, %{id: game_id, player_ids: player_ids, deck_ids: deck_ids})]
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :game] = tags, data: %{game_id: id}}) do
@@ -72,22 +73,22 @@ defmodule Metr.Game do
 
   defp convert_to_participants(parts, winner) do
     parts
-    |> Enum.map(fn p -> fill_force(p) end)
+    |> Enum.map(fn p -> fill_power(p) end)
     |> Enum.map(fn p -> fill_fun(p) end)
     |> Enum.map(fn p -> part_to_participant(p, winner) end)
   end
 
 
-  defp fill_force(%{part: part, details: %{player_id: _player, deck_id: _deck, force: _force} = details}) do
+  defp fill_power(%{part: part, details: %{player_id: _player, deck_id: _deck, power: _power} = details}) do
     %{part: part, details: details}
   end
 
-  defp fill_force(%{part: part, details: %{player_id: _player, deck_id: _deck} = details}) do
-    %{part: part, details: Map.put(details, :force, nil)}
+  defp fill_power(%{part: part, details: %{player_id: _player, deck_id: _deck} = details}) do
+    %{part: part, details: Map.put(details, :power, nil)}
   end
 
 
-  defp fill_fun(%{part: part, details: %{player_id: _player, deck_id: _deck, fun: _force} = details}) do
+  defp fill_fun(%{part: part, details: %{player_id: _player, deck_id: _deck, fun: _power} = details}) do
     %{part: part, details: details}
   end
 
@@ -101,7 +102,7 @@ defmodule Metr.Game do
       player_id: part.details.player_id,
       deck_id: part.details.deck_id,
       place: place(part.part, winner),
-      force: part.details.force,
+      power: part.details.power,
       fun: part.details.fun
     }
   end
@@ -114,6 +115,12 @@ defmodule Metr.Game do
       false -> 2
     end
   end
+
+
+  defp add_response_pid(tags, %{response_pid: pid}) do
+    tags ++ [pid]
+  end
+  defp add_response_pid(tags, %{}), do: tags
 
 
   ## gen
