@@ -51,8 +51,8 @@ defmodule PlayerTest do
 
     [game_created_event] = Game.feed Event.new([:create, :game], %{
           parts: [
-            %{details: %{deck_id: "festering", force: 2, fun: -1, player_id: player_one_id}, part: 1},
-            %{details: %{deck_id: "gloom", force: 1, fun: 2, player_id: player_two_id}, part: 2}
+            %{details: %{deck_id: "festering", power: 2, fun: -1, player_id: player_one_id}, part: 1},
+            %{details: %{deck_id: "gloom", power: 1, fun: 2, player_id: player_two_id}, part: 2}
           ],
           winner: 2
         })

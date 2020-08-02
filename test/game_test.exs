@@ -13,7 +13,7 @@ defmodule GameTest do
         part 1
         player_id erik
         and deck_id evil
-        and force positive
+        and power positive
         and fun bad
       with
         part 2
@@ -27,7 +27,7 @@ defmodule GameTest do
     assert hcr.details == %{winner: 2}
     assert hcr.parts ==
       [
-        %{part: 1, details: %{deck_id: "evil", player_id: "erik", force: 1, fun: -2}},
+        %{part: 1, details: %{deck_id: "evil", player_id: "erik", power: 1, fun: -2}},
         %{part: 2, details: %{deck_id: "fungus", player_id: "fredrik"}}
       ]
 
