@@ -55,8 +55,8 @@ defmodule Metr do
     listening_task = Task.async(&listen/0)
 
     #Fire ze missiles
-    Event.new([:list, type], %{response_pid: listening_task.pid})
-    |> Router.input()
+    Event.new([:list, type])
+    |> Router.input(listening_task.pid)
 
     #Await response
     Task.await(listening_task)
@@ -67,12 +67,9 @@ defmodule Metr do
     #Start listener
     listening_task = Task.async(&listen/0)
 
-    #Merge response info to data
-    response_ready_data = Map.put(data, :response_pid, listening_task.pid)
-
     #Fire ze missiles
-    Event.new([:create, type], response_ready_data)
-    |> Router.input()
+    Event.new([:create, type], data)
+    |> Router.input(listening_task.pid)
 
     #Await response
     Task.await(listening_task)
@@ -89,17 +86,19 @@ defmodule Metr do
 
 
   ## feed
-  def feed(%Event{tags: [type, response_pid]} = event) when is_atom(type) and is_pid(response_pid) do
+  #by type
+  def feed(%Event{tags: [type, response_pid]} = event, _orepp) when is_atom(type) and is_pid(response_pid) do
     send response_pid, event.data[type]
     []
   end
 
-  def feed(%Event{tags: [type, _status, response_pid]} = event) when is_atom(type) and is_pid(response_pid) do
+  #by id
+  def feed(%Event{tags: [type, _status, response_pid]} = event, _orepp) when is_atom(type) and is_pid(response_pid) do
     send response_pid, event.data.id
     []
   end
 
-  def feed(_) do
+  def feed(_event, _orepp) do
     []
   end
 end

@@ -20,6 +20,10 @@ defmodule Metr.Event do
     %Event{id: Id.guid(), tags: tags, data: data}
   end
 
+  def new(tags) when is_list(tags) do
+    %Event{id: Id.guid(), tags: tags, data: %{}}
+  end
+
 
   defp add_action({tags, data, %HRC{action: nil} = hrc}), do: {tags, data, hrc}
   defp add_action({tags, data, hrc}) do

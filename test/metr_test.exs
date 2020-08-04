@@ -29,10 +29,10 @@ defmodule MetrTest do
     deck_two_name = "Echo Metr"
     deck_two_id = "echo_metr"
 
-    Player.feed Event.new([:create, :player], %{name: player_one_name})
-    Player.feed Event.new([:create, :player], %{name: player_two_name})
-    Deck.feed Event.new([:create, :deck], %{name: deck_one_name, player_id: player_one_id})
-    Deck.feed Event.new([:create, :deck], %{name: deck_two_name, player_id: player_two_id})
+    Player.feed Event.new([:create, :player], %{name: player_one_name}), nil
+    Player.feed Event.new([:create, :player], %{name: player_two_name}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_one_name, player_id: player_one_id}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_two_name, player_id: player_two_id}), nil
 
     game_one = %{
       :deck_1 => deck_one_id,
@@ -57,8 +57,17 @@ defmodule MetrTest do
       :winner => 1}
     game_two_id = Metr.create_game(game_two)
 
-    # assert :ok == status
+    games = Metr.list_games()
+
     assert 15 = String.length(game_two_id)
+
+    assert 1 == Enum.filter(games, fn g -> String.equivalent?(g.id, game_two_id) end) |> Enum.count()
+
+    [deck_one] = Metr.list_decks() |> Enum.filter(fn d -> String.equivalent?(d.id, deck_one_id) end)
+    [player_two] = Metr.list_players() |> Enum.filter(fn p -> String.equivalent?(p.id, player_two_id) end)
+
+    assert 2 == Enum.count(deck_one.games)
+    assert 2 == Enum.count(player_two.games)
 
     Data.wipe_state("Player", player_one_id)
     Data.wipe_state("Player", player_two_id)
