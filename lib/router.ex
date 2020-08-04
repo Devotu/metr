@@ -18,12 +18,12 @@ defmodule Metr.Router do
   end
 
 
-  def route(events) when is_list(events) do
+  defp route(events) when is_list(events) do
     Enum.each(events, &route/1)
   end
 
   #The actual routing implementation
-  def route(%Event{} = event) do
+  defp route(%Event{} = event) do
     [
       # Module.feed(event),
       Player.feed(event),
