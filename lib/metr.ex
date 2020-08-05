@@ -112,7 +112,7 @@ defmodule Metr do
   end
 
   #by id failure
-  def feed(%Event{tags: [type, :not, _status, response_pid]} = event, _orepp) when is_atom(type) and is_pid(response_pid) do
+  def feed(%Event{tags: [type, :not, _status, response_pid]} = _event, _orepp) when is_atom(type) and is_pid(response_pid) do
     send response_pid, :error
     []
   end

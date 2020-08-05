@@ -24,7 +24,7 @@ defmodule Metr.Deck do
         GenServer.start(Metr.Deck, deck_state, [name: Data.genserver_id(__ENV__.module, deck_state.id)])
 
         #Return
-        [Event.new([:deck, :created], %{id: deck_state.id, player_id: player_id})]
+        [Event.new([:deck, :created, repp], %{id: deck_state.id, player_id: player_id})]
     end
   end
 
