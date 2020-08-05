@@ -31,8 +31,8 @@ defmodule GameTest do
         %{part: 2, details: %{deck_id: "fungus", player_id: "fredrik"}}
       ]
 
-    [resulting_event] = Game.feed Event.new(hcr)
-    assert [:game, :created] == resulting_event.tags
+    [resulting_event] = Game.feed Event.new(hcr), nil
+    assert [:game, :created, nil] == resulting_event.tags
     assert ["erik", "fredrik"] == resulting_event.data.player_ids
     assert ["evil", "fungus"] == resulting_event.data.deck_ids
     assert is_bitstring(resulting_event.id)
