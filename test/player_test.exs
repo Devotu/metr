@@ -10,13 +10,13 @@ defmodule PlayerTest do
 
 
   test "basic feed" do
-    assert [] == Player.feed Event.new([:not, :relevant], %{id: "abc_123"})
+    assert [] == Player.feed Event.new([:not, :relevant], %{id: "abc_123"}), nil
   end
 
 
   test "create player" do
-    [resulting_event] = Player.feed Event.new([:create, :player], %{name: "Testy"})
-    assert [:player, :created] == resulting_event.tags
+    [resulting_event] = Player.feed Event.new([:create, :player], %{name: "Testy"}), nil
+    assert [:player, :created, nil] == resulting_event.tags
     Data.wipe_state("Player", resulting_event.data.id)
   end
 
@@ -26,9 +26,9 @@ defmodule PlayerTest do
     player_id = "deck_owner"
     deck_id = "player_deck"
     #Player to own the deck
-    [player_created_event] = Player.feed Event.new([:create, :player], %{name: "Deck owner"})
+    [player_created_event] = Player.feed Event.new([:create, :player], %{name: "Deck owner"}), nil
     #Resolve deck created
-    [resulting_event] = Player.feed Event.new([:deck, :created], %{id: deck_id, player_id: player_id})
+    [resulting_event] = Player.feed Event.new([:deck, :created, nil], %{id: deck_id, player_id: player_id}), nil
     #Assert
     resulting_feedback_should_be = "Deck #{deck_id} added to player #{player_id}"
     assert [:player, :altered] == resulting_event.tags
@@ -43,10 +43,10 @@ defmodule PlayerTest do
     #Players to participate
     player_one_name = "Filip"
     player_one_id = Id.hrid(player_one_name)
-    Player.feed Event.new([:create, :player], %{name: player_one_name})
+    Player.feed Event.new([:create, :player], %{name: player_one_name}), nil
     player_two_name = "Gustav"
     player_two_id = Id.hrid(player_two_name)
-    Player.feed Event.new([:create, :player], %{name: player_two_name})
+    Player.feed Event.new([:create, :player], %{name: player_two_name}), nil
     #Resolve game created
 
     [game_created_event] = Game.feed Event.new([:create, :game], %{
@@ -55,9 +55,9 @@ defmodule PlayerTest do
             %{details: %{deck_id: "gloom", power: 1, fun: 2, player_id: player_two_id}, part: 2}
           ],
           winner: 2
-        })
+        }), nil
 
-    resulting_events = Player.feed(game_created_event)
+    resulting_events = Player.feed(game_created_event, nil)
     first_resulting_event = List.first(resulting_events)
 
     #Assert
@@ -72,13 +72,13 @@ defmodule PlayerTest do
 
 
   test "list players" do
-    Player.feed Event.new([:create, :player], %{name: "Adam List"})
-    Player.feed Event.new([:create, :player], %{name: "Bertil List"})
-    Player.feed Event.new([:create, :player], %{name: "Ceasar List"})
-    Deck.feed Event.new([:create, :deck], %{name: "Alpha List", player_id: "adam_list"})
-    Deck.feed Event.new([:create, :deck], %{name: "Beta List", player_id: "bertil_list"})
+    Player.feed Event.new([:create, :player], %{name: "Adam List"}), nil
+    Player.feed Event.new([:create, :player], %{name: "Bertil List"}), nil
+    Player.feed Event.new([:create, :player], %{name: "Ceasar List"}), nil
+    Deck.feed Event.new([:create, :deck], %{name: "Alpha List", player_id: "adam_list"}), nil
+    Deck.feed Event.new([:create, :deck], %{name: "Beta List", player_id: "bertil_list"}), nil
     fake_pid = "#123"
-    [resulting_event] = Player.feed Event.new([:list, :player], %{response_pid: fake_pid})
+    [resulting_event] = Player.feed Event.new([:list, :player]), fake_pid
     assert [:players, fake_pid] == resulting_event.tags
     assert 3 <= Enum.count(resulting_event.data.players) #any actual data will break proper comparison
     Data.wipe_state("Player", "adam_list")

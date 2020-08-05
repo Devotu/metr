@@ -70,7 +70,7 @@ defmodule Metr.CLI do
   end
 
 
-  def feed(%Event{} = event) do
+  def feed(%Event{} = event, _orepp) do
     {:ok, pid} = GenServer.start(Metr.CLI, :ok)
     GenServer.call(pid, event)
     []

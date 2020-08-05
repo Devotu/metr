@@ -9,7 +9,7 @@ defmodule Metr.Deck do
   alias Metr.Deck
 
   ##feed
-  def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id} = data}) do
+  def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id} = data}, repp) do
     case Data.state_exists?("Player", player_id) do
       false ->
         #Return
@@ -28,24 +28,24 @@ defmodule Metr.Deck do
     end
   end
 
-  def feed(%Event{id: _event_id, tags: [:game, :created] = tags, data: %{id: game_id, deck_ids: deck_ids}}) do
+  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{id: game_id, deck_ids: deck_ids}}, repp) do
     #for each participant
     #call update
     Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}) end)
   end
 
-  def feed(%Event{id: _event_id, tags: [:read, :deck], data: %{deck_id: id}}) do
+  def feed(%Event{id: _event_id, tags: [:read, :deck], data: %{deck_id: id}}, repp) do
     msg = recall(id)
     [Event.new([:deck, :read], %{msg: msg})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :deck], data: %{response_pid: response_pid}}) do
+  def feed(%Event{id: _event_id, tags: [:list, :deck]}, repp) do
     decks = Data.list_ids(__ENV__.module)
     |> Enum.map(fn id -> recall(id) end)
-    [Event.new([:decks, response_pid], %{decks: decks})]
+    [Event.new([:decks, repp], %{decks: decks})]
   end
 
-  def feed(_) do
+  def feed(_event, _orepp) do
     []
   end
 
@@ -111,7 +111,7 @@ defmodule Metr.Deck do
 
 
   @impl true
-  def handle_call(%{tags: [:game, :created], data: %{id: game_id, deck_id: id}}, _from, state) do
+  def handle_call(%{tags: [:game, :created, _orepp], data: %{id: game_id, deck_id: id}}, _from, state) do
     new_state = Map.update!(state, :games, &(&1 ++ [game_id]))
     #Save state
     Data.save_state(__ENV__.module, id, new_state)

@@ -10,7 +10,7 @@ defmodule Metr.Game do
 
 
   ## feed
-  def feed(%Event{id: _event_id, tags: [:create, :game], data: data}) do
+  def feed(%Event{id: _event_id, tags: [:create, :game], data: data}, repp) do
     game_id = Id.guid()
 
     #Create state
@@ -34,23 +34,27 @@ defmodule Metr.Game do
       |> Enum.map(fn p -> p.deck_id end)
 
     #Return
-    response_tags = add_response_pid([:game, :created], data)
-    [Event.new(response_tags, %{id: game_id, player_ids: player_ids, deck_ids: deck_ids})]
+    [Event.new([:game, :created, repp], %{id: game_id, player_ids: player_ids, deck_ids: deck_ids})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:read, :game] = tags, data: %{game_id: id}}) do
+  def feed(%Event{id: _event_id, tags: [:read, :game] = tags, data: %{game_id: id}}, repp) do
     ready_process(id)
     msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
-    [Event.new([:deck, :read], %{msg: msg})]
+    [Event.new([:deck, :read, repp], %{msg: msg})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :game], data: %{response_pid: response_pid}}) do
+  def feed(%Event{id: _event_id, tags: [:list, :game]}, repp) do
     games = Data.list_ids(__ENV__.module)
-    |> Enum.map(fn id -> recall(id) end)
-    [Event.new([:games, response_pid], %{games: games})]
+      |> Enum.map(fn id -> recall(id) end)
+    [Event.new([:games, repp], %{games: games})]
   end
 
-  def feed(_) do
+  def feed(%Event{id: _event_id, tags: [:delete, :game], data: %{game_id: game_id}}, repp) do
+    Data.wipe_state(__ENV__.module, game_id)
+    [Event.new([:game, :deleted, repp], %{id: game_id})]
+  end
+
+  def feed(_event, _orepp) do
     []
   end
 
@@ -116,11 +120,6 @@ defmodule Metr.Game do
     end
   end
 
-
-  defp add_response_pid(tags, %{response_pid: pid}) do
-    tags ++ [pid]
-  end
-  defp add_response_pid(tags, %{}), do: tags
 
 
   ## gen
