@@ -49,6 +49,19 @@ defmodule Metr do
   end
 
 
+  def delete_game(game_id) do
+    #Start listener
+    listening_task = Task.async(&listen/0)
+
+    #Fire ze missiles
+    Event.new([:delete, :game], %{game_id: game_id})
+    |> Router.input(listening_task.pid)
+
+    #Await response
+    Task.await(listening_task)
+  end
+
+
   ## private
   defp list(type) when is_atom(type) do
     #Start listener

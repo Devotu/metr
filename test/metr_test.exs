@@ -76,4 +76,39 @@ defmodule MetrTest do
     Data.wipe_state("Game", game_one_id)
     Data.wipe_state("Game", game_two_id)
   end
+
+
+  test "delete game" do
+    player_one_name = "Filip Metr"
+    player_one_id = "filip_metr"
+    deck_one_name = "Foxtrot Metr"
+    deck_one_id = "foxtrot_metr"
+
+    player_two_name = "Gustav Metr"
+    player_two_id = "gustav_metr"
+    deck_two_name = "Gamma Metr"
+    deck_two_id = "gamma_metr"
+
+    Player.feed Event.new([:create, :player], %{name: player_one_name}), nil
+    Player.feed Event.new([:create, :player], %{name: player_two_name}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_one_name, player_id: player_one_id}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_two_name, player_id: player_two_id}), nil
+
+    game = %{
+      :deck_1 => deck_one_id,
+      :deck_2 => deck_two_id,
+      :player_1 => player_one_id,
+      :player_2 => player_two_id,
+      :winner => 2}
+    game_id = Metr.create_game(game)
+    assert game_id == Metr.delete_game(game_id)
+    games = Metr.list_games()
+
+    assert 0 == Enum.filter(games, fn g -> String.equivalent?(g.id, game_id) end) |> Enum.count()
+
+    Data.wipe_state("Player", player_one_id)
+    Data.wipe_state("Player", player_two_id)
+    Data.wipe_state("Deck", deck_one_id)
+    Data.wipe_state("Deck", deck_two_id)
+  end
 end
