@@ -102,8 +102,9 @@ defmodule MetrTest do
       :winner => 2}
     game_id = Metr.create_game(game)
     assert game_id == Metr.delete_game(game_id)
-    games = Metr.list_games()
+    assert :error == Metr.delete_game("not an actual game id")
 
+    games = Metr.list_games()
     assert 0 == Enum.filter(games, fn g -> String.equivalent?(g.id, game_id) end) |> Enum.count()
 
     Data.wipe_state("Player", player_one_id)

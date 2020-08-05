@@ -50,8 +50,10 @@ defmodule Metr.Game do
   end
 
   def feed(%Event{id: _event_id, tags: [:delete, :game], data: %{game_id: game_id}}, repp) do
-    Data.wipe_state(__ENV__.module, game_id)
-    [Event.new([:game, :deleted, repp], %{id: game_id})]
+    case Data.wipe_state(__ENV__.module, game_id) do
+      :ok -> [Event.new([:game, :deleted, repp], %{id: game_id})]
+      _ -> [Event.new([:game, :not, :deleted, repp], %{id: game_id})]
+    end
   end
 
   def feed(_event, _orepp) do
