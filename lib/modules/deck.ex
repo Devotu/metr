@@ -28,7 +28,7 @@ defmodule Metr.Deck do
     end
   end
 
-  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{id: game_id, deck_ids: deck_ids}}, repp) do
+  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{id: game_id, deck_ids: deck_ids}}, _repp) do
     #for each participant
     #call update
     Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}) end)
@@ -36,7 +36,7 @@ defmodule Metr.Deck do
 
   def feed(%Event{id: _event_id, tags: [:read, :deck], data: %{deck_id: id}}, repp) do
     msg = recall(id)
-    [Event.new([:deck, :read], %{msg: msg})]
+    [Event.new([:deck, :read, repp], %{msg: msg})]
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :deck]}, repp) do

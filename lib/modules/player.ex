@@ -29,11 +29,11 @@ defmodule Metr.Player do
     [Event.new([:players, repp], %{players: players})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:deck, :created, _orepp] = tags, data: %{id: _deck_id, player_id: id} = data}, repp) do
+  def feed(%Event{id: _event_id, tags: [:deck, :created, _orepp] = tags, data: %{id: _deck_id, player_id: id} = data}, _repp) do
     update(id, tags, data)
   end
 
-  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{id: game_id, player_ids: player_ids}}, repp) do
+  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{id: game_id, player_ids: player_ids}}, _repp) do
     #for each participant
     #call update
     Enum.reduce(player_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, player_id: id}) end)
@@ -45,7 +45,7 @@ defmodule Metr.Player do
     [Event.new([:player, :read], %{msg: msg})]
   end
 
-  def feed(event, _orepp) do
+  def feed(_event, _orepp) do
     []
   end
 
