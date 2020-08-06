@@ -43,6 +43,11 @@ defmodule Metr.Game do
     [Event.new([:deck, :read, repp], %{msg: msg})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:list, :game], data: %{ids: ids}}, repp) when is_list(ids) do
+    games = Enum.map(ids, &recall/1)
+    [Event.new([:games, repp], %{games: games})]
+  end
+
   def feed(%Event{id: _event_id, tags: [:list, :game]}, repp) do
     games = Data.list_ids(__ENV__.module)
       |> Enum.map(fn id -> recall(id) end)

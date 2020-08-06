@@ -32,6 +32,7 @@ defmodule Metr.Router do
   end
 
   #The actual routing implementation
+  defp route({%Event{} = event, response_pid}), do: route(event, response_pid)
   defp route(%Event{} = event, response_pid \\ nil) do
     [
       # Module.feed(event),

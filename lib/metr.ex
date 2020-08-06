@@ -18,6 +18,10 @@ defmodule Metr do
     list(:deck)
   end
 
+  def list_games(id) do
+    list(:game, id)
+  end
+
   def list_games() do
     list(:game)
   end
@@ -69,6 +73,18 @@ defmodule Metr do
 
     #Fire ze missiles
     Event.new([:list, type])
+    |> Router.input(listening_task.pid)
+
+    #Await response
+    Task.await(listening_task)
+  end
+
+  defp list(type, id) when is_atom(type) do
+    #Start listener
+    listening_task = Task.async(&listen/0)
+
+    #Fire ze missiles
+    Event.new([:list, type], %{deck_id: id})  ## TODO generic
     |> Router.input(listening_task.pid)
 
     #Await response
