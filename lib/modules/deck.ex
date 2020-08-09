@@ -36,7 +36,7 @@ defmodule Metr.Deck do
 
   def feed(%Event{id: _event_id, tags: [:read, :deck], data: %{deck_id: id}}, repp) do
     deck = recall(id)
-    [Event.new([:deck, :read, repp], %{msg: deck})]
+    [Event.new([:deck, :read, repp], %{out: deck})]
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :deck]}, repp) do
@@ -72,7 +72,7 @@ defmodule Metr.Deck do
     #Call update
     msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data})
     #Return
-    [Event.new([:deck, :altered], %{msg: msg})]
+    [Event.new([:deck, :altered], %{out: msg})]
   end
 
   defp recall(id) do

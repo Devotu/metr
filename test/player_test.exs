@@ -32,7 +32,7 @@ defmodule PlayerTest do
     #Assert
     resulting_feedback_should_be = "Deck #{deck_id} added to player #{player_id}"
     assert [:player, :altered] == resulting_event.tags
-    assert resulting_feedback_should_be == resulting_event.data.msg
+    assert resulting_feedback_should_be == resulting_event.data.out
     #Cleanup
     Data.wipe_state("Player", player_created_event.data.id)
   end
@@ -63,7 +63,7 @@ defmodule PlayerTest do
     #Assert
     assert 2 == Enum.count(resulting_events)
     assert [:player, :altered] == first_resulting_event.tags
-    assert "Game #{game_created_event.data.id} added to player #{player_one_id}" == first_resulting_event.data.msg
+    assert "Game #{game_created_event.data.id} added to player #{player_one_id}" == first_resulting_event.data.out
     #Cleanup
     Data.wipe_state("Player", player_one_id)
     Data.wipe_state("Player", player_two_id)

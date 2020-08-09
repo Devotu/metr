@@ -42,7 +42,7 @@ defmodule Metr.Player do
   def feed(%Event{id: _event_id, tags: [:read, :player] = tags, data: %{player_id: id}}, _orepp) do
     ready_process(id)
     msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
-    [Event.new([:player, :read], %{msg: msg})]
+    [Event.new([:player, :read], %{out: msg})]
   end
 
   def feed(_event, _orepp) do
@@ -55,7 +55,7 @@ defmodule Metr.Player do
     #Call update
     msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data})
     #Return
-    [Event.new([:player, :altered], %{msg: msg})]
+    [Event.new([:player, :altered], %{out: msg})]
   end
 
 
