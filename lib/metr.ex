@@ -27,6 +27,19 @@ defmodule Metr do
   end
 
 
+  def read_deck(deck_id) do
+    #Start listener
+    listening_task = Task.async(&listen/0)
+
+    #Fire ze missiles
+    Event.new([:read, :deck], %{deck_id: deck_id})
+    |> Router.input(listening_task.pid)
+
+    #Await response
+    Task.await(listening_task)
+  end
+
+
 
   def create_game(%{
     :deck_1 => d1, :deck_2 => d2,
@@ -133,6 +146,11 @@ defmodule Metr do
   end
 
   #by id
+  def feed(%Event{tags: [type, _status, response_pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(response_pid) do
+    send response_pid, out
+    []
+  end
+
   def feed(%Event{tags: [type, _status, response_pid]} = event, _orepp) when is_atom(type) and is_pid(response_pid) do
     send response_pid, event.data.id
     []

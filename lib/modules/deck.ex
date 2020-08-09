@@ -34,6 +34,17 @@ defmodule Metr.Deck do
     Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}) end)
   end
 
+  def feed(%Event{id: _event_id, tags: [:game, :deleted, _orepp] = tags, data: %{id: game_id}}, _repp) do
+    #for each deck find connections to this game
+    deck_ids = Data.list_ids(__ENV__.module)
+    |> Enum.map(fn id -> recall(id) end)
+    |> Enum.filter(fn d -> Enum.member?(d.games, game_id) end)
+    |> Enum.map(fn d -> d.id end)
+    |> IO.inspect(label: "deck ids")
+    #call update
+    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}) end)
+  end
+
   def feed(%Event{id: _event_id, tags: [:read, :deck], data: %{deck_id: id}}, repp) do
     deck = recall(id)
     [Event.new([:deck, :read, repp], %{out: deck})]
@@ -122,5 +133,15 @@ defmodule Metr.Deck do
     Data.save_state(__ENV__.module, id, new_state)
     #Reply
     {:reply, "Game #{game_id} added to deck #{id}", new_state}
+  end
+
+
+  @impl true
+  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: game_id, deck_id: id}}, _from, state) do
+    new_state = Map.update!(state, :games, fn games -> List.delete(games, game_id) end)
+    #Save state
+    Data.save_state(__ENV__.module, id, new_state)
+    #Reply
+    {:reply, "Game #{game_id} removed from deck #{id}", new_state}
   end
 end

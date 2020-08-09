@@ -103,6 +103,13 @@ defmodule MetrTest do
       :winner => 2}
     game_id = Metr.create_game(game)
     assert game_id == Metr.delete_game(game_id)
+
+    deck_1 = Metr.read_deck(deck_1_id)
+    IO.inspect(deck_1, label: "metr test deck 1")
+    assert 0 == Enum.count(deck_1.games)
+
+    ## TODO player games removed
+
     assert :error == Metr.delete_game("not an actual game id")
 
     games = Metr.list_games()
