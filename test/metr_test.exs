@@ -163,8 +163,8 @@ defmodule MetrTest do
     game_2_id = Metr.create_game(game_2)
 
     assert 2 == Enum.count(Metr.list_games())
-    assert 2 == Enum.count(Metr.list_games(deck_1_id))
-    assert 1 == Enum.count(Metr.list_games(deck_2_id))
+    assert 2 == Enum.count(Metr.list_games(:deck, deck_1_id))
+    assert 1 == Enum.count(Metr.list_games(:deck, deck_2_id))
 
     Data.wipe_state("Player", player_1_id)
     Data.wipe_state("Player", player_2_id)
