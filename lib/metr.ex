@@ -27,16 +27,12 @@ defmodule Metr do
   end
 
 
-  def read_deck(deck_id) do
-    #Start listener
-    listening_task = Task.async(&listen/0)
+  def read_player(id) do
+    read(:player, id)
+  end
 
-    #Fire ze missiles
-    Event.new([:read, :deck], %{deck_id: deck_id})
-    |> Router.input(listening_task.pid)
-
-    #Await response
-    Task.await(listening_task)
+  def read_deck(id) do
+    read(:deck, id)
   end
 
 
@@ -113,6 +109,21 @@ defmodule Metr do
 
     #Fire ze missiles
     Event.new([:create, type], data)
+    |> Router.input(listening_task.pid)
+
+    #Await response
+    Task.await(listening_task)
+  end
+
+
+  defp read(type, id) when is_atom(type) do
+    #Start listener
+    listening_task = Task.async(&listen/0)
+
+    data = Map.put(%{}, type_id(type), id)
+
+    #Fire ze missiles
+    Event.new([:read, type], data)
     |> Router.input(listening_task.pid)
 
     #Await response
