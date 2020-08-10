@@ -40,7 +40,6 @@ defmodule Metr.Deck do
     |> Enum.map(fn id -> recall(id) end)
     |> Enum.filter(fn d -> Enum.member?(d.games, game_id) end)
     |> Enum.map(fn d -> d.id end)
-    |> IO.inspect(label: "deck ids")
     #call update
     Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}) end)
   end
