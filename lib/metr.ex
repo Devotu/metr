@@ -75,6 +75,12 @@ defmodule Metr do
   end
 
 
+  def create_player(%{:name => n} = data) do
+    create(:player, data)
+  end
+
+
+
   ## private
   defp list(type) when is_atom(type) do
     #Start listener
