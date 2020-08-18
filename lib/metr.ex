@@ -75,8 +75,13 @@ defmodule Metr do
   end
 
 
-  def create_player(%{:name => n} = data) do
+  def create_player(%{name: _n} = data) do
     create(:player, data)
+  end
+
+
+  def create_deck(%{name: _n, player_id: _p} = data) do
+    create(:deck, data)
   end
 
 

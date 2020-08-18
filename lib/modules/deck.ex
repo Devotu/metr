@@ -1,5 +1,5 @@
 defmodule Metr.Deck do
-  defstruct id: "", name: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: []
+  defstruct id: "", name: "", format: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: []
 
   use GenServer
 
