@@ -7,6 +7,8 @@ defmodule MetrTest do
   alias Metr.Player
   alias Metr.Id
 
+  @id_length 11
+
   test "list players" do
     assert is_list Metr.list_players()
   end
@@ -44,7 +46,7 @@ defmodule MetrTest do
     game_1_id = Metr.create_game(game_1)
 
     # assert :ok == status
-    assert 15 = String.length(game_1_id)
+    assert @id_length = String.length(game_1_id)
 
     game_2 = %{
       :deck_1 => deck_1_id,
@@ -60,7 +62,7 @@ defmodule MetrTest do
 
     games = Metr.list_games()
 
-    assert 15 = String.length(game_2_id)
+    assert @id_length = String.length(game_2_id)
 
     assert 1 == Enum.filter(games, fn g -> String.equivalent?(g.id, game_2_id) end) |> Enum.count()
 

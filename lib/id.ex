@@ -15,7 +15,8 @@ defmodule Metr.Id do
             "hop", "tap", "fit", "hit", "big",
             "rot", "wit", "met", "pal", "lap"
         ]
-        |> Enum.take_random(4)
+        |> Enum.take_random(2)
+        |> Enum.concat([Enum.random(100..999) |> Integer.to_string()])
         |> Enum.join("_")
     end
 end
