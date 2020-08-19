@@ -7,7 +7,7 @@ defmodule MetrTest do
   alias Metr.Player
   alias Metr.Id
 
-  @id_length 11
+  @id_length 14
 
   test "list players" do
     assert is_list Metr.list_players()

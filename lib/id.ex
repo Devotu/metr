@@ -17,6 +17,7 @@ defmodule Metr.Id do
         ]
         |> Enum.take_random(2)
         |> Enum.concat([Enum.random(100..999) |> Integer.to_string()])
+        |> Enum.concat([Enum.random(10..99) |> Integer.to_string()])
         |> Enum.join("_")
     end
 end
