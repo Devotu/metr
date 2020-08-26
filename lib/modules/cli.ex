@@ -56,8 +56,8 @@ defmodule Metr.CLI do
     |> Router.input()
   end
 
-  def process([{:log, number}]) do
-    Event.new([:read, :log], %{number: number})
+  def process([{:log, limit}]) do
+    Event.new([:read, :log], %{limit: limit})
     |> Router.input()
   end
 

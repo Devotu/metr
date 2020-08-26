@@ -11,10 +11,10 @@ defmodule LogTest do
 
 
   test "read log" do
-    number_requested = 5
-    sent_event = Event.new([:read, :log], %{number: number_requested})
+    limit_requested = 5
+    sent_event = Event.new([:read, :log], %{limit: limit_requested})
     [resulting_event] = Log.feed sent_event, nil
     assert [:list, :log, sent_event.id] == resulting_event.tags
-    assert number_requested == Enum.count(resulting_event.data.entries)
+    assert limit_requested == Enum.count(resulting_event.data.entries)
   end
 end

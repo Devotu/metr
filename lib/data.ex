@@ -14,12 +14,12 @@ defmodule Metr.Data do
   end
 
 
-  def read_log_tail(number \\ 100) do
+  def read_log_tail(limit \\ 100) do
     event_path()
     |> read_binary_from_path
     |> parse_delimited_binary
     |> Enum.reverse()
-    |> Enum.take(number)
+    |> Enum.take(limit)
     |> Enum.reverse()
   end
 
@@ -66,6 +66,10 @@ defmodule Metr.Data do
     File.exists?(state_path(module_name, id))
   end
 
+
+  def wipe_state(module_full_name, ids) when is_list(ids) do
+    Enum.each(ids, fn id -> wipe_state(module_full_name, id) end)
+  end
 
   def wipe_state(module_full_name, id) do
     path = state_path(module_full_name, id)

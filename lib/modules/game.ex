@@ -48,9 +48,17 @@ defmodule Metr.Game do
     [Event.new([:games, repp], %{games: games})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:list, :game], data: %{limit: limit}}, repp) when is_number(limit) do
+    games = Data.list_ids(__ENV__.module)
+      |> Enum.map(&recall/1)
+      |> Enum.sort(&(&1.time < &2.time))
+      |> Enum.take(limit)
+    [Event.new([:games, repp], %{games: games})]
+  end
+
   def feed(%Event{id: _event_id, tags: [:list, :game]}, repp) do
     games = Data.list_ids(__ENV__.module)
-      |> Enum.map(fn id -> recall(id) end)
+    |> Enum.map(&recall/1)
     [Event.new([:games, repp], %{games: games})]
   end
 

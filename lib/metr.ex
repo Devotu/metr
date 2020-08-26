@@ -19,7 +19,13 @@ defmodule Metr do
   end
 
   def list_games(type, id) when is_atom(type) do
-    list(:game, type, id)
+    constraints = Map.put(%{}, type_id(type), id)
+    list(:game, constraints)
+  end
+
+  def list_games(limit) when is_number(limit) do
+    constraints = Map.put(%{}, :limit, limit)
+    list(:game, constraints)
   end
 
   def list_games() do
@@ -99,14 +105,12 @@ defmodule Metr do
     Task.await(listening_task)
   end
 
-  defp list(type, by, id) when is_atom(type) and is_atom(by) do
+  defp list(type, constraints) when is_map(constraints) do
     #Start listener
     listening_task = Task.async(&listen/0)
 
-    data = Map.put(%{}, type_id(by), id)
-
     #Fire ze missiles
-    Event.new([:list, type], data)
+    Event.new([:list, type], constraints)
     |> Router.input(listening_task.pid)
 
     #Await response
