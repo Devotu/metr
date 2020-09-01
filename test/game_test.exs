@@ -133,9 +133,9 @@ defmodule GameTest do
     deck_2_name = "Kilo Game"
     deck_2_id = Id.hrid(deck_2_name)
 
-    player_3_name = "Ludvig Metr"
+    player_3_name = "Ludvig Game"
     player_3_id = Id.hrid(player_3_name)
-    deck_3_name = "Lima Metr"
+    deck_3_name = "Lima Game"
     deck_3_id = Id.hrid(deck_3_name)
 
     Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
@@ -199,5 +199,135 @@ defmodule GameTest do
     Data.wipe_state("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_state("Deck", [deck_1_id, deck_2_id, deck_3_id])
     Data.wipe_state("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
+  end
+
+
+  test "rank altering game" do
+    player_1_name = "Martin Rank"
+    player_1_id = Id.hrid(player_1_name)
+    deck_1_name = "Mike Rank"
+    deck_1_id = Id.hrid(deck_1_name)
+
+    player_2_name = "Niklas Game"
+    player_2_id = Id.hrid(player_2_name)
+    deck_2_name = "November Game"
+    deck_2_id = Id.hrid(deck_2_name)
+
+    player_3_name = "Olof Game"
+    player_3_id = Id.hrid(player_3_name)
+    deck_3_name = "Oscar Game"
+    deck_3_id = Id.hrid(deck_3_name)
+
+    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
+    Player.feed Event.new([:create, :player], %{name: player_2_name}), nil
+    Player.feed Event.new([:create, :player], %{name: player_3_name}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_3_name, player_id: player_3_id}), nil
+
+    #1v2  10+ 20-
+    game_1 = %{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_2_id,
+      :player_1 => player_1_id,
+      :player_2 => player_2_id,
+      :winner => 1}
+    game_1_id = Metr.create_game(game_1)
+
+    #1v3  10++ 30-
+    game_2 = %{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_3_id,
+      :fun_1 => 1,
+      :fun_2 => -2,
+      :player_1 => player_1_id,
+      :player_2 => player_3_id,
+      :power_1 => 2,
+      :power_2 => -2,
+      :winner => 1}
+    game_2_id = Metr.create_game(game_2)
+
+    #1v2  11+ 20--
+    game_3 = %{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_2_id,
+      :player_1 => player_1_id,
+      :player_2 => player_2_id,
+      :winner => 1}
+    game_3_id = Metr.create_game(game_3)
+
+    #1v2 11 2-1+
+    game_4 = %{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_2_id,
+      :player_1 => player_1_id,
+      :player_2 => player_2_id,
+      :winner => 2}
+    game_4_id = Metr.create_game(game_4)
+
+    #1v2 11- 2-1++
+    game_5 = %{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_2_id,
+      :player_1 => player_1_id,
+      :player_2 => player_2_id,
+      :winner => 2}
+    game_5_id = Metr.create_game(game_5)
+
+    #End state 11- 20 30-
+    deck_1 = Metr.read_deck(deck_1_id)
+    deck_2 = Metr.read_deck(deck_2_id)
+    deck_3 = Metr.read_deck(deck_3_id)
+
+    assert deck_1.rank == {1,1}
+    assert deck_2.rank == {0,0}
+    assert deck_3.rank == {0,-1}
+
+    #1v3  11 30--
+    game_6_id = Metr.create_game(%{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_3_id,
+      :player_1 => player_1_id,
+      :player_2 => player_3_id,
+      :winner => 1})
+
+    #1v3  11+ 3-1-
+    game_7_id = Metr.create_game(%{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_3_id,
+      :player_1 => player_1_id,
+      :player_2 => player_3_id,
+      :winner => 1})
+
+    #1v3  11++ 3-1--
+    game_8_id = Metr.create_game(%{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_3_id,
+      :player_1 => player_1_id,
+      :player_2 => player_3_id,
+      :winner => 1})
+
+    #This should not make any difference
+    #1v3  12 3-2
+    game_9_id = Metr.create_game(%{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_3_id,
+      :player_1 => player_1_id,
+      :player_2 => player_3_id,
+      :winner => 1})
+
+    #End state 12 20 3-2
+    deck_1 = Metr.read_deck(deck_1_id)
+    deck_2 = Metr.read_deck(deck_2_id)
+    deck_3 = Metr.read_deck(deck_3_id)
+
+    assert deck_1.rank == {2,0}
+    assert deck_2.rank == {0,0}
+    assert deck_3.rank == {-2,0}
+
+    Data.wipe_state("Player", [player_1_id, player_2_id, player_3_id])
+    Data.wipe_state("Deck", [deck_1_id, deck_2_id, deck_3_id])
+    Data.wipe_state("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id,
+                            game_6_id, game_7_id, game_8_id, game_9_id])
   end
 end
