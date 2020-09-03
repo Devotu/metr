@@ -1,5 +1,5 @@
 defmodule Metr.Game do
-  defstruct id: "", time: 0, participants: []
+  defstruct id: "", time: 0, participants: [], ranking: false
 
   use GenServer
 
@@ -33,8 +33,11 @@ defmodule Metr.Game do
     deck_ids = game_state.participants
       |> Enum.map(fn p -> p.deck_id end)
 
+    rank_alterations = collect_rank_alterations(data.rank, game_state)
+
     #Return
-    [Event.new([:game, :created, repp], %{id: game_id, player_ids: player_ids, deck_ids: deck_ids})]
+    [Event.new([:game, :created, repp], %{id: game_id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank})]
+    ++ rank_alterations
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :game] = tags, data: %{game_id: id}}, repp) do
@@ -134,6 +137,20 @@ defmodule Metr.Game do
       false -> 2
     end
   end
+
+
+  defp collect_rank_alterations(false, _game), do: []
+  defp collect_rank_alterations(true, game) do
+    Enum.map(game.participants, fn p -> rank_participant(p) end)
+  end
+
+  defp rank_participant(%{deck_id: deck_id} = p) do
+    Event.new([:rank, :altered], %{deck_id: deck_id, change: find_change(p)})
+  end
+
+  defp find_change(%{place: 0}), do: 0
+  defp find_change(%{place: 1}), do: 1
+  defp find_change(%{}), do: -1
 
 
 

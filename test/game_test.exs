@@ -226,16 +226,16 @@ defmodule GameTest do
     Deck.feed Event.new([:create, :deck], %{name: deck_3_name, player_id: player_3_id}), nil
 
     #1v2  10+ 20-
-    game_1 = %{
+    game_1_id = Metr.create_game(%{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
-      :winner => 1}
-    game_1_id = Metr.create_game(game_1)
+      :rank => true,
+      :winner => 1})
 
     #1v3  10++ 30-
-    game_2 = %{
+    game_2_id = Metr.create_game(%{
       :deck_1 => deck_1_id,
       :deck_2 => deck_3_id,
       :fun_1 => 1,
@@ -244,35 +244,35 @@ defmodule GameTest do
       :player_2 => player_3_id,
       :power_1 => 2,
       :power_2 => -2,
-      :winner => 1}
-    game_2_id = Metr.create_game(game_2)
+      :rank => true,
+      :winner => 1})
 
     #1v2  11+ 20--
-    game_3 = %{
+    game_3_id = Metr.create_game(%{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
-      :winner => 1}
-    game_3_id = Metr.create_game(game_3)
+      :rank => true,
+      :winner => 1})
 
     #1v2 11 2-1+
-    game_4 = %{
+    game_4_id = Metr.create_game(%{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
-      :winner => 2}
-    game_4_id = Metr.create_game(game_4)
+      :rank => true,
+      :winner => 2})
 
     #1v2 11- 2-1++
-    game_5 = %{
+    game_5_id = Metr.create_game(%{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
-      :winner => 2}
-    game_5_id = Metr.create_game(game_5)
+      :rank => true,
+      :winner => 2})
 
     #End state 11- 20 30-
     deck_1 = Metr.read_deck(deck_1_id)
@@ -289,6 +289,7 @@ defmodule GameTest do
       :deck_2 => deck_3_id,
       :player_1 => player_1_id,
       :player_2 => player_3_id,
+      :rank => true,
       :winner => 1})
 
     #1v3  11+ 3-1-
@@ -297,6 +298,7 @@ defmodule GameTest do
       :deck_2 => deck_3_id,
       :player_1 => player_1_id,
       :player_2 => player_3_id,
+      :rank => true,
       :winner => 1})
 
     #1v3  11++ 3-1--
@@ -305,16 +307,27 @@ defmodule GameTest do
       :deck_2 => deck_3_id,
       :player_1 => player_1_id,
       :player_2 => player_3_id,
+      :rank => true,
       :winner => 1})
 
-    #This should not make any difference
+    #These should not make any difference
     #1v3  12 3-2
     game_9_id = Metr.create_game(%{
       :deck_1 => deck_1_id,
       :deck_2 => deck_3_id,
       :player_1 => player_1_id,
       :player_2 => player_3_id,
+      :rank => true,
       :winner => 1})
+
+    #1v3  12 3-2
+    game_9_id = Metr.create_game(%{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_3_id,
+      :player_1 => player_1_id,
+      :player_2 => player_3_id,
+      :rank => true,
+      :winner => 2})
 
     #End state 12 20 3-2
     deck_1 = Metr.read_deck(deck_1_id)
