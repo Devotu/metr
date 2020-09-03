@@ -321,7 +321,7 @@ defmodule GameTest do
       :winner => 1})
 
     #1v3  12 3-2
-    game_9_id = Metr.create_game(%{
+    game_10_id = Metr.create_game(%{
       :deck_1 => deck_1_id,
       :deck_2 => deck_3_id,
       :player_1 => player_1_id,
@@ -341,6 +341,6 @@ defmodule GameTest do
     Data.wipe_state("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_state("Deck", [deck_1_id, deck_2_id, deck_3_id])
     Data.wipe_state("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id,
-                            game_6_id, game_7_id, game_8_id, game_9_id])
+                            game_6_id, game_7_id, game_8_id, game_9_id, game_10_id])
   end
 end

@@ -52,7 +52,8 @@ defmodule DeckTest do
             %{details: %{deck_id: deck_1_id, power: -1, fun: -2, player_id: player_1_id}, part: 1},
             %{details: %{deck_id: deck_2_id, power: 1, fun: 2, player_id: player_2_id}, part: 2}
           ],
-          winner: 1
+          winner: 1,
+          rank: false
         }), nil
 
     resulting_events = Deck.feed game_created_event, nil
