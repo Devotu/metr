@@ -77,35 +77,35 @@ defmodule DeckTest do
     deck_1_id = Id.hrid(deck_1_name)
     Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil
 
-    [deck_1_1] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    [deck_1_1] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id, change: 1}), nil
     assert deck_1_1.data.out.rank == nil
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id}), nil
-    [deck_1_2] = Deck.feed Event.new([:read, :deck], %{change: 1, deck_id: deck_1_id}), nil
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck_1_2] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck_1_2.data.out.rank == 1
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id}), nil
-    [deck_1_3] = Deck.feed Event.new([:read, :deck], %{change: 1, deck_id: deck_1_id}), nil
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck_1_3] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck_1_3.data.out.rank == 1
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id}), nil
-    [deck_1_3] = Deck.feed Event.new([:read, :deck], %{change: 1, deck_id: deck_1_id}), nil
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck_1_3] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck_1_3.data.out.rank == 2
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id}), nil
-    [deck_1_3] = Deck.feed Event.new([:read, :deck], %{change: -1, deck_id: deck_1_id}), nil
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck_1_3] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck_1_3.data.out.rank == 1
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id}), nil
-    [deck_1_3] = Deck.feed Event.new([:read, :deck], %{change: 1, deck_id: deck_1_id}), nil
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck_1_3] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck_1_3.data.out.rank == 2
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id}), nil
-    [deck_1_3] = Deck.feed Event.new([:read, :deck], %{change: 1, deck_id: deck_1_id}), nil
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck_1_3] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck_1_3.data.out.rank == 2
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id}), nil
-    [deck_1_3] = Deck.feed Event.new([:read, :deck], %{change: 1, deck_id: deck_1_id}), nil
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck_1_3] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck_1_3.data.out.rank == 2
 
     Data.wipe_state("Deck", player_1_id)
@@ -121,7 +121,7 @@ defmodule DeckTest do
     deck_1_id = Id.hrid(deck_1_name)
     Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id, rank: {1,-1}}), nil
 
-    [deck_1] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    [deck_1] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id, change: 1}), nil
     assert deck_1.data.out.rank == {1,-1}
 
     Data.wipe_state("Deck", player_1_id)
