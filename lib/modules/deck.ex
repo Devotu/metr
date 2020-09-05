@@ -91,22 +91,35 @@ defmodule Metr.Deck do
   end
 
 
-  defp build_state(id, %{name: name, player_id: _player_id, colors: colors}) do
+
+  defp build_state(id, %{name: name, player_id: _player_id} = data) do
     %Deck{id: id, name: name}
-    |> apply_colors(colors)
+    |> apply_colors(data)
+    |> apply_rank(data)
   end
 
-  defp build_state(id, %{name: name, player_id: _player_id}) do
-    %Deck{id: id, name: name}
-  end
 
-
-  defp apply_colors(%Deck{} = deck, colors) when is_list(colors) do
-    Enum.reduce(colors, deck, fn c,d -> apply_color(c, d) end)
+  defp apply_colors(%Deck{} = deck, data) when is_map(data) do
+    case Map.has_key?(data, :colors) do
+      true ->
+        Enum.reduce(data.colors, deck, fn c,d -> apply_color(c, d) end)
+      false ->
+        deck
+    end
   end
 
   defp apply_color(color, %Deck{} = deck) when is_atom(color) do
     Map.put(deck, color, true)
+  end
+
+
+  defp apply_rank(%Deck{} = deck, data) when is_map(data) do
+    case Map.has_key?(data, :rank) and is_tuple(data.rank) do
+      true ->
+        Map.update!(deck, :rank, fn _r -> data.rank end)
+      false ->
+        deck
+    end
   end
 
 

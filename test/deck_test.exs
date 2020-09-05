@@ -30,7 +30,6 @@ defmodule DeckTest do
 
 
   test "deck created" do
-    #var
     #Players to participate
     player_1_name = "Helge"
     player_1_id = Id.hrid(player_1_name)
@@ -108,6 +107,22 @@ defmodule DeckTest do
     Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id}), nil
     [deck_1_3] = Deck.feed Event.new([:read, :deck], %{change: 1, deck_id: deck_1_id}), nil
     assert deck_1_3.data.out.rank == 2
+
+    Data.wipe_state("Deck", player_1_id)
+    Data.wipe_state("Player", deck_1_id)
+  end
+
+
+  test "create game with specified rank" do
+    player_1_name = "Bertil Deck"
+    player_1_id = Id.hrid(player_1_name)
+    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
+    deck_1_name = "Bravo Deck"
+    deck_1_id = Id.hrid(deck_1_name)
+    Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id, rank: {1,-1}}), nil
+
+    [deck_1] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck_1.data.out.rank == {1,-1}
 
     Data.wipe_state("Deck", player_1_id)
     Data.wipe_state("Player", deck_1_id)
