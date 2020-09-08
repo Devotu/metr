@@ -125,6 +125,10 @@ defmodule Metr.Game do
   end
 
 
+  defp fill_rank(%{rank: nil} = deck), do: Map.update!(deck, :rank, fn _r -> {0,0} end)
+  defp fill_rank(deck), do: deck
+
+
   defp part_to_participant(part, winner) do
     %{
       player_id: part.details.player_id,
@@ -160,7 +164,10 @@ defmodule Metr.Game do
     1 == participants
       |> Enum.map(fn p -> get_deck(p.deck_id) end)
       |> Enum.map(fn e -> e.data.out end)
-      |> Enum.dedup_by(fn d -> d.rank end)
+      |> Enum.map(fn d -> fill_rank(d) end)
+      |> Enum.map(fn d -> d.rank end)
+      |> Enum.map(fn {rank, _delta} -> rank end)
+      |> Enum.dedup_by(fn r -> r end)
       |> Enum.count()
   end
 
