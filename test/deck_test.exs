@@ -30,21 +30,20 @@ defmodule DeckTest do
 
 
   test "deck created" do
-    #var
     #Players to participate
-    player_one_name = "Helge"
-    player_1_id = Id.hrid(player_one_name)
-    Player.feed Event.new([:create, :player], %{name: player_one_name}), nil
-    player_two_name = "Ivar"
-    player_2_id = Id.hrid(player_two_name)
-    Player.feed Event.new([:create, :player], %{name: player_two_name}), nil
+    player_1_name = "Helge"
+    player_1_id = Id.hrid(player_1_name)
+    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
+    player_2_name = "Ivar"
+    player_2_id = Id.hrid(player_2_name)
+    Player.feed Event.new([:create, :player], %{name: player_2_name}), nil
     #Decks to participate
-    deck_one_name = "Haste"
-    deck_1_id = Id.hrid(deck_one_name)
-    Deck.feed Event.new([:create, :deck], %{name: deck_one_name, player_id: player_1_id}), nil
-    deck_two_name = "Imprint"
-    deck_2_id = Id.hrid(deck_two_name)
-    Deck.feed Event.new([:create, :deck], %{name: deck_two_name, player_id: player_2_id}), nil
+    deck_1_name = "Haste"
+    deck_1_id = Id.hrid(deck_1_name)
+    Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil
+    deck_2_name = "Imprint"
+    deck_2_id = Id.hrid(deck_2_name)
+    Deck.feed Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil
     #Resolve game created
 
     [game_created_event] = Game.feed Event.new([:create, :game], %{
@@ -52,7 +51,8 @@ defmodule DeckTest do
             %{details: %{deck_id: deck_1_id, power: -1, fun: -2, player_id: player_1_id}, part: 1},
             %{details: %{deck_id: deck_2_id, power: 1, fun: 2, player_id: player_2_id}, part: 2}
           ],
-          winner: 1
+          winner: 1,
+          rank: false
         }), nil
 
     resulting_events = Deck.feed game_created_event, nil
@@ -66,5 +66,117 @@ defmodule DeckTest do
     Data.wipe_state("Player", [player_1_id, player_2_id])
     Data.wipe_state("Deck", [deck_1_id, deck_2_id])
     Data.wipe_state("Game", [game_created_event.data.id])
+  end
+
+
+  test "alter rank" do
+    player_1_name = "Adam Deck"
+    player_1_id = Id.hrid(player_1_name)
+    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
+    deck_1_name = "Alpha Deck"
+    deck_1_id = Id.hrid(deck_1_name)
+    Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil
+
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id, change: 1}), nil
+    assert deck.data.out.rank == nil
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {0,1}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {1,0}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {1,1}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {2,0}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {2,-1}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {2,0}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {2,1}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {2,1}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {2,0}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {2,-1}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {1,0}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {1,-1}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {0,0}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {0,-1}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {-1,0}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {-1,-1}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {-2,0}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {-2,-1}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {-2,-1}
+
+    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
+    assert deck.data.out.rank == {-2,0}
+
+    Data.wipe_state("Deck", deck_1_id)
+    Data.wipe_state("Player", player_1_id)
+  end
+
+
+  test "create game with specified rank" do
+    player_1_name = "Bertil Deck"
+    player_1_id = Id.hrid(player_1_name)
+    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
+    deck_1_name = "Bravo Deck"
+    deck_1_id = Id.hrid(deck_1_name)
+    Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id, rank: {1,-1}}), nil
+
+    [deck_1] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id, change: 1}), nil
+    assert deck_1.data.out.rank == {1,-1}
+
+    Data.wipe_state("Deck", deck_1_id)
+    Data.wipe_state("Player", player_1_id)
   end
 end

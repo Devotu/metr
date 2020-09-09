@@ -13,7 +13,9 @@ defmodule Metr.Event do
       |> add_details()
       |> add_parts()
 
-    new(tags, merge_data(data))
+    merged_data = merge_data(data)
+    merged_data = Map.put(merged_data, :rank, false)
+    new(tags, merged_data)
   end
 
   def new(tags) when is_list(tags) do

@@ -54,7 +54,8 @@ defmodule PlayerTest do
             %{details: %{deck_id: "festering", power: 2, fun: -1, player_id: player_one_id}, part: 1},
             %{details: %{deck_id: "gloom", power: 1, fun: 2, player_id: player_two_id}, part: 2}
           ],
-          winner: 2
+          winner: 2,
+          rank: false
         }), nil
 
     resulting_events = Player.feed(game_created_event, nil)

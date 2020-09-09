@@ -1,5 +1,5 @@
 defmodule Metr.Deck do
-  defstruct id: "", name: "", format: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: []
+  defstruct id: "", name: "", format: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: [], rank: nil
 
   use GenServer
 
@@ -7,6 +7,7 @@ defmodule Metr.Deck do
   alias Metr.Id
   alias Metr.Data
   alias Metr.Deck
+  alias Metr.Rank
 
   ##feed
   def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id} = data}, repp) do
@@ -60,6 +61,11 @@ defmodule Metr.Deck do
     [{Event.new([:list, :game], %{ids: deck.games}), repp}]
   end
 
+  def feed(%Event{id: _event_id, tags: [:rank, :altered] = tags, data: %{deck_id: id, change: change}}, _repp) do
+    #call update
+    update(id, tags, %{id: id, change: change})
+  end
+
   def feed(_event, _orepp) do
     []
   end
@@ -91,22 +97,35 @@ defmodule Metr.Deck do
   end
 
 
-  defp build_state(id, %{name: name, player_id: _player_id, colors: colors}) do
+
+  defp build_state(id, %{name: name, player_id: _player_id} = data) do
     %Deck{id: id, name: name}
-    |> apply_colors(colors)
+    |> apply_colors(data)
+    |> apply_rank(data)
   end
 
-  defp build_state(id, %{name: name, player_id: _player_id}) do
-    %Deck{id: id, name: name}
-  end
 
-
-  defp apply_colors(%Deck{} = deck, colors) when is_list(colors) do
-    Enum.reduce(colors, deck, fn c,d -> apply_color(c, d) end)
+  defp apply_colors(%Deck{} = deck, data) when is_map(data) do
+    case Map.has_key?(data, :colors) do
+      true ->
+        Enum.reduce(data.colors, deck, fn c,d -> apply_color(c, d) end)
+      false ->
+        deck
+    end
   end
 
   defp apply_color(color, %Deck{} = deck) when is_atom(color) do
     Map.put(deck, color, true)
+  end
+
+
+  defp apply_rank(%Deck{} = deck, data) when is_map(data) do
+    case Map.has_key?(data, :rank) and is_tuple(data.rank) do
+      true ->
+        Map.update!(deck, :rank, fn _r -> data.rank end)
+      false ->
+        deck
+    end
   end
 
 
@@ -134,7 +153,7 @@ defmodule Metr.Deck do
     {:reply, "Game #{game_id} added to deck #{id}", new_state}
   end
 
-
+#TODO refactor id order/names
   @impl true
   def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: game_id, deck_id: id}}, _from, state) do
     new_state = Map.update!(state, :games, fn games -> List.delete(games, game_id) end)
@@ -142,5 +161,15 @@ defmodule Metr.Deck do
     Data.save_state(__ENV__.module, id, new_state)
     #Reply
     {:reply, "Game #{game_id} removed from deck #{id}", new_state}
+  end
+
+
+  @impl true
+  def handle_call(%{tags: [:rank, :altered], data: %{id: id, change: change}}, _from, state) do
+    new_state = Map.update!(state, :rank, fn rank -> Rank.apply_change(rank, change) end)
+    #Save state
+    Data.save_state(__ENV__.module, id, new_state)
+    #Reply
+    {:reply, "Deck #{id} rank altered to #{Kernel.inspect(new_state.rank)}", new_state}
   end
 end
