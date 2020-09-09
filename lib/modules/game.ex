@@ -16,7 +16,9 @@ defmodule Metr.Game do
     participants = convert_to_participants(data.parts, data.winner)
 
     #Return
-    create_game(participants, data.rank, repp) ++ collect_rank_alterations(participants, data.rank)
+    game_events = create_game(participants, data.rank, repp)
+    rank_events = collect_rank_alterations(participants, data.rank)
+    game_events ++ rank_events
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :game] = tags, data: %{game_id: id}}, repp) do
@@ -155,7 +157,7 @@ defmodule Metr.Game do
       true ->
         Enum.map(participants, fn p -> rank_participant(p) end)
       false ->
-        Event.new([:error, :game], %{msg: "Ranks does not match"})
+        [Event.new([:error, :game], %{msg: "Ranks does not match"})]
     end
   end
 
