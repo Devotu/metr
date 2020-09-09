@@ -160,8 +160,8 @@ defmodule DeckTest do
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {-2,0}
 
-    Data.wipe_state("Deck", player_1_id)
-    Data.wipe_state("Player", deck_1_id)
+    Data.wipe_state("Deck", deck_1_id)
+    Data.wipe_state("Player", player_1_id)
   end
 
 
@@ -176,7 +176,7 @@ defmodule DeckTest do
     [deck_1] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id, change: 1}), nil
     assert deck_1.data.out.rank == {1,-1}
 
-    Data.wipe_state("Deck", player_1_id)
-    Data.wipe_state("Player", deck_1_id)
+    Data.wipe_state("Deck", deck_1_id)
+    Data.wipe_state("Player", player_1_id)
   end
 end
