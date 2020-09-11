@@ -27,6 +27,17 @@ defmodule Metr.Event do
   end
 
 
+
+  def only_errors(events) when is_list(events) do
+    Enum.filter(events, fn e ->
+      Enum.any?(e.tags, fn t ->
+        t == :error
+      end)
+    end)
+  end
+
+
+
   defp add_action({tags, data, %HRC{action: nil} = hrc}), do: {tags, data, hrc}
   defp add_action({tags, data, hrc}) do
     {tags ++ [hrc.action], data, hrc}
