@@ -15,10 +15,18 @@ defmodule Metr.Game do
 
     participants = convert_to_participants(data.parts, data.winner)
 
-    #Return
-    game_events = create_game(participants, data.rank, repp)
     rank_events = collect_rank_alterations(participants, data.rank)
-    game_events ++ rank_events
+
+    #If any contains errors don't alter state
+    error_events = Event.only_errors(rank_events)
+
+    #Return
+    case Enum.count(error_events) > 0 do
+      true ->
+        error_events
+      false ->
+        rank_events ++ save_state(participants, data.rank, repp)
+    end
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :game] = tags, data: %{game_id: id}}, repp) do
@@ -82,7 +90,7 @@ defmodule Metr.Game do
   end
 
 
-  defp create_game(participants, rank?, repp) do
+  defp save_state(participants, rank?, repp) do
     game_id = Id.guid()
 
     #Create state
