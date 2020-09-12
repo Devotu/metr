@@ -13,7 +13,7 @@ defmodule Metr.Router do
   end
 
   def input(%Event{} = event, response_pid) when is_pid(response_pid) do
-    Data.log_event(event)
+    Data.log_external_input(event)
     route(event, response_pid)
   end
 
@@ -22,7 +22,7 @@ defmodule Metr.Router do
   end
 
   def input(%Event{} = event) do
-    Data.log_event(event)
+    Data.log_external_input(event)
     route(event, nil)
   end
 

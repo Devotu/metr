@@ -7,7 +7,7 @@ defmodule Metr.Data do
   defp input_path(), do: event_dir() <> "/input.log"
 
 
-  def log_event(event) do
+  def log_external_input(event) do
     bin = :erlang.term_to_binary(event)
     del = bin <> @delimiter
     File.write!(input_path(), del, [:append])
