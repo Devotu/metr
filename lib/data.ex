@@ -4,18 +4,18 @@ defmodule Metr.Data do
   defp data_dir(), do: File.cwd! <> "/data"
 
   defp event_dir(), do: data_dir() <> "/event"
-  defp event_path(), do: event_dir() <> "/all.log"
+  defp input_path(), do: event_dir() <> "/input.log"
 
 
   def log_event(event) do
     bin = :erlang.term_to_binary(event)
     del = bin <> @delimiter
-    File.write!(event_path(), del, [:append])
+    File.write!(input_path(), del, [:append])
   end
 
 
   def read_log_tail(limit \\ 100) do
-    event_path()
+    input_path()
     |> read_binary_from_path
     |> parse_delimited_binary
     |> Enum.reverse()
