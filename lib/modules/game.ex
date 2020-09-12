@@ -11,11 +11,10 @@ defmodule Metr.Game do
 
 
   ## feed
-  def feed(%Event{id: _event_id, tags: [:create, :game], data: data}, repp) do
+  def feed(%Event{id: _event_id, tags: [:create, :game], data: data} = event, repp) do
+    id = Id.guid()
 
-    participants = convert_to_participants(data.parts, data.winner)
-
-    rank_events = collect_rank_alterations(participants, data.rank)
+    rank_events = collect_rank_alterations(data)
 
     #If any contains errors don't alter state
     error_events = Event.only_errors(rank_events)
@@ -25,7 +24,7 @@ defmodule Metr.Game do
       true ->
         error_events
       false ->
-        rank_events ++ save_state(participants, data.rank, repp)
+        rank_events ++ initiate_state({id, data, event}, repp)
     end
   end
 
@@ -90,27 +89,15 @@ defmodule Metr.Game do
   end
 
 
-  defp save_state(participants, rank?, repp) do
-    game_id = Id.guid()
+  defp initiate_state({id, data, event}, repp) do
+    process_name = Data.genserver_id(__ENV__.module, id)
 
-    #Create state
-    #The initialization is the only state change outside of a process
-    game_state = %Game{
-      id: game_id,
-      time: DateTime.utc_now() |> DateTime.to_unix(),
-      participants: participants
-    }
-
-    #Save state
-    saved = Data.save_state(__ENV__.module, game_id, game_state)
-
-    case saved do
-      :ok ->
-        #Start genserver
-        GenServer.start(Metr.Game, game_state, [name: Data.genserver_id(__ENV__.module, game_id)])
+    case GenServer.start(Metr.Game, {id, data, event}, [name: process_name]) do
+      {:ok, _pid} ->
+        participants = convert_to_participants(data.parts, data.winner)
         player_ids =  Enum.map(participants, fn p -> p.player_id end)
         deck_ids = Enum.map(participants, fn p -> p.deck_id end)
-        [Event.new([:game, :created, repp], %{id: game_id, player_ids: player_ids, deck_ids: deck_ids, ranking: rank?})]
+        [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank})]
       _ ->
         Event.new([:error, :game], %{msg: "Could not save game state"})
     end
@@ -159,8 +146,9 @@ defmodule Metr.Game do
   end
 
 
-  defp collect_rank_alterations(_participants, false), do: []
-  defp collect_rank_alterations(participants, true) do
+  defp collect_rank_alterations(%{rank: false}), do: []
+  defp collect_rank_alterations(%{rank: true} = data) do
+    participants = convert_to_participants(data.parts, data.winner)
     case ranks_match?(participants) do
       true ->
         Enum.map(participants, fn p -> rank_participant(p) end)
@@ -207,7 +195,16 @@ defmodule Metr.Game do
 
   ## gen
   @impl true
-  def init(state) do
+  def init({id, data, event}) do
+    participants = convert_to_participants(data.parts, data.winner)
+    state = %Game{
+      id: id,
+      time: DateTime.utc_now() |> DateTime.to_unix(),
+      participants: participants,
+      ranking: data.rank
+    }
+    :ok = Data.save_state(__ENV__.module, id, state)
+    :ok = Data.log_by_id(__ENV__.module, id, event)
     {:ok, state}
   end
 
