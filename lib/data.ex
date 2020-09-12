@@ -4,18 +4,45 @@ defmodule Metr.Data do
   defp data_dir(), do: File.cwd! <> "/data"
 
   defp event_dir(), do: data_dir() <> "/event"
-  defp input_path(), do: event_dir() <> "/input.log"
+  defp event_path_external_inputs(), do: event_dir() <> "/input.log"
+  defp event_path(module_full_name, id), do: event_dir() <> "/#{entity_id(module_full_name, id)}.log"
 
 
   def log_external_input(event) do
     bin = :erlang.term_to_binary(event)
     del = bin <> @delimiter
-    File.write!(input_path(), del, [:append])
+    File.write!(event_path_external_inputs(), del, [:append])
   end
 
 
-  def read_log_tail(limit \\ 100) do
-    input_path()
+  def log_by_id(module_full_name, id, event) do
+    path = event_path(module_full_name, id)
+    bin = :erlang.term_to_binary(event)
+    del = bin <> @delimiter
+    File.write!(path, del, [:append])
+  end
+
+
+  def read_log_by_id(module_full_name, id) do
+    event_path(module_full_name, id)
+    |> read_binary_from_path
+    |> parse_delimited_binary
+  end
+
+
+  #Currently only Test events
+  def wipe_log("Test", id) do
+    path = event_path("Test", id)
+    File.rm(path)
+  end
+
+  def wipe_log(module_full_name, id) do
+    IO.puts("Data - Error - Wiping log #{module_full_name}/#{id} not allowed")
+  end
+
+
+  def read_input_log_tail(limit \\ 100) do
+    event_path_external_inputs()
     |> read_binary_from_path
     |> parse_delimited_binary
     |> Enum.reverse()
@@ -45,7 +72,7 @@ defmodule Metr.Data do
 
 
   defp state_dir(), do: data_dir() <> "/state"
-  defp state_path(module_full_name, id), do: state_dir() <> "/#{state_id(module_full_name, id)}.state"
+  defp state_path(module_full_name, id), do: state_dir() <> "/#{entity_id(module_full_name, id)}.state"
 
 
   def save_state(module_full_name, id, state) do
@@ -77,8 +104,8 @@ defmodule Metr.Data do
   end
 
 
-  @spec state_id(binary, any) :: <<_::8, _::_*8>>
-  def state_id(module_full_name, id) do
+  @spec entity_id(binary, any) :: <<_::8, _::_*8>>
+  def entity_id(module_full_name, id) do
     "#{module_to_name(module_full_name)}_#{id}"
   end
 
@@ -101,7 +128,7 @@ defmodule Metr.Data do
 
 
   def genserver_id(module_full_name, id) do
-    {:global, state_id(module_full_name, id)}
+    {:global, entity_id(module_full_name, id)}
   end
 
 
