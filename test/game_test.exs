@@ -369,6 +369,17 @@ defmodule GameTest do
     assert deck_3.rank == {0,0}
     assert deck_4.rank == {1,0}
 
+
+    #Deletion should step back but roll back
+    Metr.delete_game(game_11_id)
+
+    #End state 12+ 42--
+    deck_1 = Metr.read_deck(deck_1_id)
+    deck_4 = Metr.read_deck(deck_4_id)
+
+    assert deck_1.rank == {2,1}
+    assert deck_4.rank == {2,-1}
+
     Data.wipe_state("Player", [player_1_id, player_2_id, player_3_id, player_4_id])
     Data.wipe_state("Deck", [deck_1_id, deck_2_id, deck_3_id, deck_4_id])
     Data.wipe_state("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id,
