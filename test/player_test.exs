@@ -17,8 +17,7 @@ defmodule PlayerTest do
   test "create player" do
     [resulting_event] = Player.feed Event.new([:create, :player], %{name: "Testy"}), nil
     assert [:player, :created, nil] == resulting_event.tags
-    Data.wipe_state("Player", resulting_event.data.id)
-    Data.wipe_log("Player", resulting_event.data.id)
+    Data.wipe_test("Player", resulting_event.data.id)
   end
 
 
@@ -35,8 +34,7 @@ defmodule PlayerTest do
     assert [:player, :altered] == resulting_event.tags
     assert resulting_feedback_should_be == resulting_event.data.out
     #Cleanup
-    Data.wipe_state("Player", player_created_event.data.id)
-    Data.wipe_log("Player", player_created_event.data.id)
+    Data.wipe_test("Player", player_created_event.data.id)
   end
 
 
@@ -68,9 +66,8 @@ defmodule PlayerTest do
     assert [:player, :altered] == first_resulting_event.tags
     assert "Game #{game_created_event.data.id} added to player #{player_one_id}" == first_resulting_event.data.out
     #Cleanup
-    Data.wipe_state("Player", [player_one_id, player_two_id])
-    Data.wipe_log("Player", [player_one_id, player_two_id])
-    Data.wipe_state("Game", game_created_event.data.id)
+    Data.wipe_test("Player", [player_one_id, player_two_id])
+    Data.wipe_test("Game", game_created_event.data.id)
   end
 
 
@@ -84,8 +81,7 @@ defmodule PlayerTest do
     [resulting_event] = Player.feed Event.new([:list, :player]), fake_pid
     assert [:players, fake_pid] == resulting_event.tags
     assert 3 <= Enum.count(resulting_event.data.players) #any actual data will break proper comparison
-    Data.wipe_state("Player", ["adam_list", "bertil_list", "ceasar_list"])
-    Data.wipe_log("Player", ["adam_list", "bertil_list", "ceasar_list"])
-    Data.wipe_state("Deck", ["alpha_list", "beta_list"])
+    Data.wipe_test("Player", ["adam_list", "bertil_list", "ceasar_list"])
+    Data.wipe_test("Deck", ["alpha_list", "beta_list"])
   end
 end

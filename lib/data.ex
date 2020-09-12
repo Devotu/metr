@@ -137,4 +137,14 @@ defmodule Metr.Data do
     |> Enum.filter(fn fp -> String.starts_with?(fp, module_to_name(module_full_name)) end)
     |> Enum.map(fn fp -> extract_id(fp, module_full_name) end)
   end
+
+
+  def wipe_test(module_full_name, ids) when is_list(ids) do
+    Enum.each(ids, fn id -> wipe_test(module_full_name, id) end)
+  end
+
+  def wipe_test(module_full_name, id) do
+    wipe_state(module_full_name, id)
+    wipe_log(module_full_name, id)
+  end
 end

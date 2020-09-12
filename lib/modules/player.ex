@@ -84,8 +84,8 @@ defmodule Metr.Player do
   @impl true
   def init({id, data, event}) do
     state = %Player{id: id, name: data.name}
-    Data.save_state(__ENV__.module, id, state)
-    Data.log_by_id(__ENV__.module, id, event)
+    :ok = Data.save_state(__ENV__.module, id, state)
+    :ok = Data.log_by_id(__ENV__.module, id, event)
     {:ok, state}
   end
 

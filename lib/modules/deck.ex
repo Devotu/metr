@@ -10,22 +10,19 @@ defmodule Metr.Deck do
   alias Metr.Rank
 
   ##feed
-  def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id} = data}, repp) do
+  def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id} = data} = event, repp) do
     case Data.state_exists?("Player", player_id) do
       false ->
         #Return
         [Event.new([:deck, :create, :fail], %{cause: "player not found", data: data})]
       true ->
-        #Create state
-        #The initialization is the only state change outside of a process
-        deck_state = build_state(Id.hrid(name), data)
-        #Save state
-        :ok = Data.save_state(__ENV__.module, deck_state.id, deck_state)
+        id = Id.hrid(name)
+        process_name = Data.genserver_id(__ENV__.module, id)
         #Start genserver
-        GenServer.start(Metr.Deck, deck_state, [name: Data.genserver_id(__ENV__.module, deck_state.id)])
+        GenServer.start(Metr.Deck, {id, data, event}, [name: process_name])
 
         #Return
-        [Event.new([:deck, :created, repp], %{id: deck_state.id, player_id: player_id})]
+        [Event.new([:deck, :created, repp], %{id: id, player_id: player_id})]
     end
   end
 
@@ -132,7 +129,10 @@ defmodule Metr.Deck do
 
   ## gen
   @impl true
-  def init(state) do
+  def init({id, data, event}) do
+    state = build_state(id, data)
+    :ok = Data.save_state(__ENV__.module, id, state)
+    :ok = Data.log_by_id(__ENV__.module, id, event)
     {:ok, state}
   end
 
