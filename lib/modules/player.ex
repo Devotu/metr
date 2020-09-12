@@ -8,16 +8,11 @@ defmodule Metr.Player do
   alias Metr.Data
   alias Metr.Player
 
-  def feed(%Event{id: _event_id, tags: [:create, :player], data: %{name: name}}, repp) do
+  def feed(%Event{id: _event_id, tags: [:create, :player], data: %{name: name} = data} = event, repp) do
     id = Id.hrid(name)
-    #Log event #TODO replay by module?
-    #Create state
-    #The initialization is the only state change outside of a process
-    player_state = %Player{id: id, name: name}
-    #Save state
-    Data.save_state(__ENV__.module, id, player_state)
+
     #Start genserver
-    GenServer.start(Metr.Player, player_state, [name: Data.genserver_id(__ENV__.module, id)])
+    GenServer.start(Metr.Player, {id, data, event}, [name: Data.genserver_id(__ENV__.module, id)])
 
     #Return
     [Event.new([:player, :created, repp], %{id: id})]
@@ -87,7 +82,10 @@ defmodule Metr.Player do
 
   ## gen
   @impl true
-  def init(state) do
+  def init({id, data, event}) do
+    state = %Player{id: id, name: data.name}
+    Data.save_state(__ENV__.module, id, state)
+    Data.log_by_id(__ENV__.module, id, event)
     {:ok, state}
   end
 

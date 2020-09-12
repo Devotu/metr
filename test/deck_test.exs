@@ -20,6 +20,7 @@ defmodule DeckTest do
     assert [:deck, :created, nil] == resulting_event.tags
     Data.wipe_state("Deck", resulting_event.data.id)
     Data.wipe_state("Player", resulting_event.data.player_id)
+    Data.wipe_log("Player", resulting_event.data.player_id)
   end
 
 
@@ -64,6 +65,7 @@ defmodule DeckTest do
     assert "Game #{game_created_event.data.id} added to deck #{deck_1_id}" == first_resulting_event.data.out
     #Cleanup
     Data.wipe_state("Player", [player_1_id, player_2_id])
+    Data.wipe_log("Player", [player_1_id, player_2_id])
     Data.wipe_state("Deck", [deck_1_id, deck_2_id])
     Data.wipe_state("Game", [game_created_event.data.id])
   end
@@ -162,6 +164,7 @@ defmodule DeckTest do
 
     Data.wipe_state("Deck", deck_1_id)
     Data.wipe_state("Player", player_1_id)
+    Data.wipe_log("Player", player_1_id)
   end
 
 
@@ -178,5 +181,6 @@ defmodule DeckTest do
 
     Data.wipe_state("Deck", deck_1_id)
     Data.wipe_state("Player", player_1_id)
+    Data.wipe_log("Player", player_1_id)
   end
 end

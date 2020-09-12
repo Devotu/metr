@@ -30,14 +30,13 @@ defmodule Metr.Data do
   end
 
 
-  #Currently only Test events
-  def wipe_log("Test", id) do
-    path = event_path("Test", id)
-    File.rm(path)
+  def wipe_log(module_full_name, ids) when is_list(ids) do
+    Enum.each(ids, fn id -> wipe_log(module_full_name, id) end)
   end
 
   def wipe_log(module_full_name, id) do
-    IO.puts("Data - Error - Wiping log #{module_full_name}/#{id} not allowed")
+    path = event_path(module_full_name, id)
+    File.rm(path)
   end
 
 

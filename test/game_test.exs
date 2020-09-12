@@ -117,6 +117,7 @@ defmodule GameTest do
     assert 3 == Enum.count(Metr.list_games(3))
 
     Data.wipe_state("Player", [player_1_id, player_2_id, player_3_id])
+    Data.wipe_log("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_state("Deck", [deck_1_id, deck_2_id, deck_3_id])
     Data.wipe_state("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
   end
@@ -197,6 +198,7 @@ defmodule GameTest do
     assert 4 == Enum.count(Metr.list_games(:deck, deck_2_id))
 
     Data.wipe_state("Player", [player_1_id, player_2_id, player_3_id])
+    Data.wipe_log("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_state("Deck", [deck_1_id, deck_2_id, deck_3_id])
     Data.wipe_state("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
   end
@@ -370,6 +372,7 @@ defmodule GameTest do
     assert deck_4.rank == {1,0}
 
     Data.wipe_state("Player", [player_1_id, player_2_id, player_3_id, player_4_id])
+    Data.wipe_log("Player", [player_1_id, player_2_id, player_3_id, player_4_id])
     Data.wipe_state("Deck", [deck_1_id, deck_2_id, deck_3_id, deck_4_id])
     Data.wipe_state("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id,
                             game_6_id, game_7_id, game_8_id, game_9_id, game_10_id,

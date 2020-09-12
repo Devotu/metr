@@ -73,6 +73,7 @@ defmodule MetrTest do
     assert 2 == Enum.count(player_2.games)
 
     Data.wipe_state("Player", [player_1_id, player_2_id])
+    Data.wipe_log("Player", [player_1_id, player_2_id])
     Data.wipe_state("Deck", [deck_1_id, deck_2_id])
     Data.wipe_state("Game", [game_1_id, game_2_id])
   end
@@ -115,6 +116,7 @@ defmodule MetrTest do
     assert 0 == Enum.filter(games, fn g -> String.equivalent?(g.id, game_id) end) |> Enum.count()
 
     Data.wipe_state("Player", [player_1_id, player_2_id])
+    Data.wipe_log("Player", [player_1_id, player_2_id])
     Data.wipe_state("Deck", [deck_1_id, deck_2_id])
   end
 
@@ -171,6 +173,7 @@ defmodule MetrTest do
     assert 1 == Enum.count(Metr.list_games(:deck, deck_2_id))
 
     Data.wipe_state("Player", [player_1_id, player_2_id, player_3_id])
+    Data.wipe_log("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_state("Deck", [deck_1_id, deck_2_id, deck_3_id])
     Data.wipe_state("Game", [game_1_id, game_2_id])
   end
