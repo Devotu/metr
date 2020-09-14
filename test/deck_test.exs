@@ -57,11 +57,14 @@ defmodule DeckTest do
 
     resulting_events = Deck.feed game_created_event, nil
     first_resulting_event = List.first(resulting_events)
+    deck_log = Data.read_log_by_id("Deck", deck_1_id)
 
     #Assert
     assert 2 == Enum.count(resulting_events)
     assert [:deck, :altered] == first_resulting_event.tags
     assert "Game #{game_created_event.data.id} added to deck #{deck_1_id}" == first_resulting_event.data.out
+    assert 2 == Enum.count(deck_log)
+
     #Cleanup
     Data.wipe_test("Player", [player_1_id, player_2_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id])

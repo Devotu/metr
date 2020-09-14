@@ -26,20 +26,20 @@ defmodule Metr.Deck do
     end
   end
 
-  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{id: game_id, deck_ids: deck_ids}}, _repp) do
+  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{id: game_id, deck_ids: deck_ids}} = event, _repp) do
     #for each participant
     #call update
-    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}) end)
+    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}, event) end)
   end
 
-  def feed(%Event{id: _event_id, tags: [:game, :deleted, _orepp] = tags, data: %{id: game_id}}, _repp) do
+  def feed(%Event{id: _event_id, tags: [:game, :deleted, _orepp] = tags, data: %{id: game_id}} = event, _repp) do
     #for each deck find connections to this game
     deck_ids = Data.list_ids(__ENV__.module)
     |> Enum.map(fn id -> recall(id) end)
     |> Enum.filter(fn d -> Enum.member?(d.games, game_id) end)
     |> Enum.map(fn d -> d.id end)
     #call update
-    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}) end)
+    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}, event) end)
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :deck], data: %{deck_id: id}}, repp) do
@@ -58,9 +58,9 @@ defmodule Metr.Deck do
     [{Event.new([:list, :game], %{ids: deck.games}), repp}]
   end
 
-  def feed(%Event{id: _event_id, tags: [:rank, :altered] = tags, data: %{deck_id: id, change: change}}, _repp) do
+  def feed(%Event{id: _event_id, tags: [:rank, :altered] = tags, data: %{deck_id: id, change: change}} = event, _repp) do
     #call update
-    update(id, tags, %{id: id, change: change})
+    update(id, tags, %{id: id, change: change}, event)
   end
 
   def feed(_event, _orepp) do
@@ -80,10 +80,10 @@ defmodule Metr.Deck do
     end
   end
 
-  defp update(id, tags, data) do
+  defp update(id, tags, data, event) do
     ready_process(id)
     #Call update
-    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data})
+    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
     #Return
     [Event.new([:deck, :altered], %{out: msg})]
   end
@@ -131,8 +131,7 @@ defmodule Metr.Deck do
   @impl true
   def init({id, data, event}) do
     state = build_state(id, data)
-    :ok = Data.save_state(__ENV__.module, id, state)
-    :ok = Data.log_by_id(__ENV__.module, id, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}
   end
 
@@ -145,31 +144,25 @@ defmodule Metr.Deck do
 
 
   @impl true
-  def handle_call(%{tags: [:game, :created, _orepp], data: %{id: game_id, deck_id: id}}, _from, state) do
+  def handle_call(%{tags: [:game, :created, _orepp], data: %{id: game_id, deck_id: id}, event: event}, _from, state) do
     new_state = Map.update!(state, :games, &(&1 ++ [game_id]))
-    #Save state
-    Data.save_state(__ENV__.module, id, new_state)
-    #Reply
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:reply, "Game #{game_id} added to deck #{id}", new_state}
   end
 
 #TODO refactor id order/names
   @impl true
-  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: game_id, deck_id: id}}, _from, state) do
+  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: game_id, deck_id: id}, event: event}, _from, state) do
     new_state = Map.update!(state, :games, fn games -> List.delete(games, game_id) end)
-    #Save state
-    Data.save_state(__ENV__.module, id, new_state)
-    #Reply
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:reply, "Game #{game_id} removed from deck #{id}", new_state}
   end
 
 
   @impl true
-  def handle_call(%{tags: [:rank, :altered], data: %{id: id, change: change}}, _from, state) do
+  def handle_call(%{tags: [:rank, :altered], data: %{id: id, change: change}, event: event}, _from, state) do
     new_state = Map.update!(state, :rank, fn rank -> Rank.apply_change(rank, change) end)
-    #Save state
-    Data.save_state(__ENV__.module, id, new_state)
-    #Reply
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:reply, "Deck #{id} rank altered to #{Kernel.inspect(new_state.rank)}", new_state}
   end
 end
