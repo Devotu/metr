@@ -17,6 +17,8 @@ defmodule PlayerTest do
   test "create player" do
     [resulting_event] = Player.feed Event.new([:create, :player], %{name: "Testy"}), nil
     assert [:player, :created, nil] == resulting_event.tags
+    log_entries = Data.read_log_by_id("Player", resulting_event.data.id)
+    assert 1 = Enum.count(log_entries)
     Data.wipe_test("Player", resulting_event.data.id)
   end
 
@@ -41,9 +43,9 @@ defmodule PlayerTest do
   test "game created" do
     #var
     #Players to participate
-    player_one_name = "Filip"
-    player_one_id = Id.hrid(player_one_name)
-    Player.feed Event.new([:create, :player], %{name: player_one_name}), nil
+    player_1_name = "Filip"
+    player_1_id = Id.hrid(player_1_name)
+    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
     player_two_name = "Gustav"
     player_two_id = Id.hrid(player_two_name)
     Player.feed Event.new([:create, :player], %{name: player_two_name}), nil
@@ -51,7 +53,7 @@ defmodule PlayerTest do
 
     [game_created_event] = Game.feed Event.new([:create, :game], %{
           parts: [
-            %{details: %{deck_id: "festering", power: 2, fun: -1, player_id: player_one_id}, part: 1},
+            %{details: %{deck_id: "festering", power: 2, fun: -1, player_id: player_1_id}, part: 1},
             %{details: %{deck_id: "gloom", power: 1, fun: 2, player_id: player_two_id}, part: 2}
           ],
           winner: 2,
@@ -60,13 +62,17 @@ defmodule PlayerTest do
 
     resulting_events = Player.feed(game_created_event, nil)
     first_resulting_event = List.first(resulting_events)
+    player_log = Data.read_log_by_id("Player", player_1_id)
+
 
     #Assert
     assert 2 == Enum.count(resulting_events)
     assert [:player, :altered] == first_resulting_event.tags
-    assert "Game #{game_created_event.data.id} added to player #{player_one_id}" == first_resulting_event.data.out
+    assert "Game #{game_created_event.data.id} added to player #{player_1_id}" == first_resulting_event.data.out
+    assert 2 == Enum.count(player_log)
+
     #Cleanup
-    Data.wipe_test("Player", [player_one_id, player_two_id])
+    Data.wipe_test("Player", [player_1_id, player_two_id])
     Data.wipe_test("Game", game_created_event.data.id)
   end
 

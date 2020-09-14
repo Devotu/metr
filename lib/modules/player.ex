@@ -18,20 +18,24 @@ defmodule Metr.Player do
     [Event.new([:player, :created, repp], %{id: id})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :player]}, repp) do
-    players = Data.list_ids(__ENV__.module)
-    |> Enum.map(fn id -> recall(id) end)
-    [Event.new([:players, repp], %{players: players})]
+  def feed(%Event{id: _event_id, tags: [:deck, :created, _orepp] = tags, data: %{id: _deck_id, player_id: id} = data} = event, _repp) do
+    update(id, tags, data, event)
   end
 
-  def feed(%Event{id: _event_id, tags: [:deck, :created, _orepp] = tags, data: %{id: _deck_id, player_id: id} = data}, _repp) do
-    update(id, tags, data)
-  end
-
-  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{id: game_id, player_ids: player_ids}}, _repp) do
+  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{id: game_id, player_ids: player_ids}} = event, _repp) do
     #for each participant
     #call update
-    Enum.reduce(player_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, player_id: id}) end)
+    Enum.reduce(player_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, player_id: id}, event) end)
+  end
+
+  def feed(%Event{id: _event_id, tags: [:game, :deleted, _orepp] = tags, data: %{id: game_id}} = event, _repp) do
+    #for each player find connections to this game
+    player_ids = Data.list_ids(__ENV__.module)
+    |> Enum.map(fn id -> recall(id) end)
+    |> Enum.filter(fn p -> Enum.member?(p.games, game_id) end)
+    |> Enum.map(fn p -> p.id end)
+    #call update
+    Enum.reduce(player_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, player_id: id}, event) end)
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :player], data: %{player_id: id}}, repp) do
@@ -39,14 +43,10 @@ defmodule Metr.Player do
     [Event.new([:player, :read, repp], %{out: player})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:game, :deleted, _orepp] = tags, data: %{id: game_id}}, _repp) do
-    #for each player find connections to this game
-    player_ids = Data.list_ids(__ENV__.module)
+  def feed(%Event{id: _event_id, tags: [:list, :player]}, repp) do
+    players = Data.list_ids(__ENV__.module)
     |> Enum.map(fn id -> recall(id) end)
-    |> Enum.filter(fn p -> Enum.member?(p.games, game_id) end)
-    |> Enum.map(fn p -> p.id end)
-    #call update
-    Enum.reduce(player_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, player_id: id}) end)
+    [Event.new([:players, repp], %{players: players})]
   end
 
   def feed(_event, _orepp) do
@@ -54,10 +54,10 @@ defmodule Metr.Player do
   end
 
 
-  defp update(id, tags, data) do
+  defp update(id, tags, data, event) do
     ready_process(id)
     #Call update
-    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data})
+    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
     #Return
     [Event.new([:player, :altered], %{out: msg})]
   end
@@ -91,36 +91,29 @@ defmodule Metr.Player do
 
 
   @impl true
-  def handle_call(%{tags: [:deck, :created, _orepp], data: %{id: deck_id, player_id: id}}, _from, state) do
+  def handle_call(%{tags: [:deck, :created, _orepp], data: %{id: deck_id, player_id: id}, event: event}, _from, state) do
     new_state = Map.update!(state, :decks, &(&1 ++ [deck_id]))
-    #Save state
-    Data.save_state(__ENV__.module, id, new_state)
-    #Reply
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Deck #{deck_id} added to player #{id}", new_state}
   end
 
   @impl true
-  def handle_call(%{tags: [:game, :created, _orepp], data: %{id: game_id, player_id: id}}, _from, state) do
+  def handle_call(%{tags: [:game, :created, _orepp], data: %{id: game_id, player_id: id}, event: event}, _from, state) do
     new_state = Map.update!(state, :games, &(&1 ++ [game_id]))
-    #Save state
-    Data.save_state(__ENV__.module, id, new_state)
-    #Reply
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Game #{game_id} added to player #{id}", new_state}
   end
 
 
   @impl true
-  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: game_id, player_id: id}}, _from, state) do
+  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: game_id, player_id: id}, event: event}, _from, state) do
     new_state = Map.update!(state, :games, fn games -> List.delete(games, game_id) end)
-    #Save state
-    Data.save_state(__ENV__.module, id, new_state)
-    #Reply
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Game #{game_id} removed from player #{id}", new_state}
   end
 
   @impl true
   def handle_call(%{tags: [:read, :player]}, _from, state) do
-    #Reply
     {:reply, state, state}
   end
 end

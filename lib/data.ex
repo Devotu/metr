@@ -15,6 +15,12 @@ defmodule Metr.Data do
   end
 
 
+  def save_state_with_log(module_full_name, id, state, event) do
+    save_state(module_full_name, id, state)
+    log_by_id(module_full_name, id, event)
+  end
+
+
   def log_by_id(module_full_name, id, event) do
     path = event_path(module_full_name, id)
     bin = :erlang.term_to_binary(event)

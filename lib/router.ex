@@ -40,7 +40,7 @@ defmodule Metr.Router do
       Deck.feed(event, response_pid),
       Game.feed(event, response_pid),
       Log.feed(event, response_pid),
-      CLI.feed(event, response_pid),
+      # CLI.feed(event, response_pid),
       Metr.feed(event, response_pid),
     ]
     |> Enum.filter(fn e -> Enum.count(e) > 0 end)
