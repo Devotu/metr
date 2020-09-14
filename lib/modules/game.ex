@@ -203,8 +203,7 @@ defmodule Metr.Game do
       participants: participants,
       ranking: data.rank
     }
-    :ok = Data.save_state(__ENV__.module, id, state)
-    :ok = Data.log_by_id(__ENV__.module, id, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}
   end
 
