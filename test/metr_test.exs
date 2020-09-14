@@ -116,6 +116,7 @@ defmodule MetrTest do
 
     Data.wipe_test("Player", [player_1_id, player_2_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id])
+    Data.wipe_test("Game", [game_id])
   end
 
 
