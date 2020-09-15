@@ -43,6 +43,11 @@ defmodule Metr.Player do
     [Event.new([:player, :read, repp], %{out: player})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:read, :log, :player], data: %{player_id: id}}, repp) do
+    events = Data.read_log_by_id("Player", id)
+    [Event.new([:player, :log, :read, repp], %{out: events})]
+  end
+
   def feed(%Event{id: _event_id, tags: [:list, :player]}, repp) do
     players = Data.list_ids(__ENV__.module)
     |> Enum.map(fn id -> recall(id) end)
@@ -84,8 +89,7 @@ defmodule Metr.Player do
   @impl true
   def init({id, data, event}) do
     state = %Player{id: id, name: data.name}
-    :ok = Data.save_state(__ENV__.module, id, state)
-    :ok = Data.log_by_id(__ENV__.module, id, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}
   end
 

@@ -5,6 +5,7 @@ defmodule MetrTest do
   alias Metr.Data
   alias Metr.Deck
   alias Metr.Player
+  alias Metr.Router
   alias Metr.Id
 
   @id_length 14
@@ -173,6 +174,53 @@ defmodule MetrTest do
 
     Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
+    Data.wipe_test("Game", [game_1_id, game_2_id])
+  end
+
+
+  test "read log of x" do
+    player_1_name = "Kalle Metr"
+    player_1_id = Id.hrid(player_1_name)
+    deck_1_name = "Kilo Metr"
+    deck_1_id = Id.hrid(deck_1_name)
+
+    player_2_name = "Ludvig Metr"
+    player_2_id = Id.hrid(player_2_name)
+    deck_2_name = "Lima Metr"
+    deck_2_id = Id.hrid(deck_2_name)
+
+    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
+    Player.feed Event.new([:create, :player], %{name: player_2_name}), nil
+    Router.input Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id})
+    Router.input Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id})
+
+    #1 vs 2
+    game_1 = %{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_2_id,
+      :player_1 => player_1_id,
+      :player_2 => player_2_id,
+      :winner => 2}
+    game_1_id = Metr.create_game(game_1)
+
+    #1 vs 3
+    game_2 = %{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_2_id,
+      :player_1 => player_1_id,
+      :player_2 => player_2_id,
+      :winner => 1}
+    game_2_id = Metr.create_game(game_2)
+
+
+    deck_1_log = Metr.read_entity_log(:deck, deck_1_id)
+    assert 3 == Enum.count(deck_1_log)
+
+    player_1_log = Metr.read_entity_log(:player, player_1_id)
+    assert 4 == Enum.count(player_1_log)
+
+    Data.wipe_test("Player", [player_1_id, player_2_id])
+    Data.wipe_test("Deck", [deck_1_id, deck_2_id])
     Data.wipe_test("Game", [game_1_id, game_2_id])
   end
 end
