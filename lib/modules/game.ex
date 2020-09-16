@@ -34,6 +34,11 @@ defmodule Metr.Game do
     [Event.new([:deck, :read, repp], %{out: msg})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:read, :log, :game], data: %{game_id: id}}, repp) do
+    events = Data.read_log_by_id("Game", id)
+    [Event.new([:game, :log, :read, repp], %{out: events})]
+  end
+
   def feed(%Event{id: _event_id, tags: [:list, :game], data: %{ids: ids}}, repp) when is_list(ids) do
     games = Enum.map(ids, &recall/1)
     [Event.new([:games, repp], %{games: games})]
