@@ -93,6 +93,10 @@ defmodule Metr.Player do
     {:ok, state}
   end
 
+  def init(%Player{} = state) do
+    {:ok, state}
+  end
+
 
   @impl true
   def handle_call(%{tags: [:deck, :created, _orepp], data: %{id: deck_id, player_id: id}, event: event}, _from, state) do

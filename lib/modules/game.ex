@@ -48,6 +48,7 @@ defmodule Metr.Game do
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :game]}, repp) do
+    IO.puts("game - list")
     games = Data.list_ids(__ENV__.module)
     |> Enum.map(&recall/1)
     [Event.new([:games, repp], %{games: games})]
@@ -76,7 +77,6 @@ defmodule Metr.Game do
   end
 
   defp recall(id) do
-    ready_process(id)
     GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :game]})
   end
 
@@ -204,6 +204,10 @@ defmodule Metr.Game do
       ranking: data.rank
     }
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:ok, state}
+  end
+
+  def init(%Game{} = state) do
     {:ok, state}
   end
 

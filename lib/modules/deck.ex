@@ -140,6 +140,10 @@ defmodule Metr.Deck do
     {:ok, state}
   end
 
+  def init(%Deck{} = state) do
+    {:ok, state}
+  end
+
 
   @impl true
   def handle_call(%{tags: [:read, :deck]}, _from, state) do
