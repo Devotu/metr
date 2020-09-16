@@ -18,8 +18,8 @@ defmodule DeckTest do
     Player.feed Event.new([:create, :player], %{name: "Decky"}), nil
     [resulting_event] = Deck.feed Event.new([:create, :deck], %{name: "Create deck", player_id: "decky", colors: [:black, :red]}), nil
     assert [:deck, :created, nil] == resulting_event.tags
-    Data.wipe_state("Deck", resulting_event.data.id)
-    Data.wipe_state("Player", resulting_event.data.player_id)
+    Data.wipe_test("Deck", resulting_event.data.id)
+    Data.wipe_test("Player", resulting_event.data.player_id)
   end
 
 
@@ -57,15 +57,18 @@ defmodule DeckTest do
 
     resulting_events = Deck.feed game_created_event, nil
     first_resulting_event = List.first(resulting_events)
+    deck_log = Data.read_log_by_id("Deck", deck_1_id)
 
     #Assert
     assert 2 == Enum.count(resulting_events)
     assert [:deck, :altered] == first_resulting_event.tags
     assert "Game #{game_created_event.data.id} added to deck #{deck_1_id}" == first_resulting_event.data.out
+    assert 2 == Enum.count(deck_log)
+
     #Cleanup
-    Data.wipe_state("Player", [player_1_id, player_2_id])
-    Data.wipe_state("Deck", [deck_1_id, deck_2_id])
-    Data.wipe_state("Game", [game_created_event.data.id])
+    Data.wipe_test("Player", [player_1_id, player_2_id])
+    Data.wipe_test("Deck", [deck_1_id, deck_2_id])
+    Data.wipe_test("Game", [game_created_event.data.id])
   end
 
 
@@ -160,8 +163,8 @@ defmodule DeckTest do
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {-2,0}
 
-    Data.wipe_state("Deck", deck_1_id)
-    Data.wipe_state("Player", player_1_id)
+    Data.wipe_test("Deck", deck_1_id)
+    Data.wipe_test("Player", player_1_id)
   end
 
 
@@ -176,7 +179,7 @@ defmodule DeckTest do
     [deck_1] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id, change: 1}), nil
     assert deck_1.data.out.rank == {1,-1}
 
-    Data.wipe_state("Deck", deck_1_id)
-    Data.wipe_state("Player", player_1_id)
+    Data.wipe_test("Deck", deck_1_id)
+    Data.wipe_test("Player", player_1_id)
   end
 end

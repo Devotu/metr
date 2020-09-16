@@ -10,39 +10,41 @@ defmodule Metr.Deck do
   alias Metr.Rank
 
   ##feed
-  def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id} = data}, repp) do
+  def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id} = data} = event, repp) do
     case Data.state_exists?("Player", player_id) do
       false ->
         #Return
         [Event.new([:deck, :create, :fail], %{cause: "player not found", data: data})]
       true ->
-        #Create state
-        #The initialization is the only state change outside of a process
-        deck_state = build_state(Id.hrid(name), data)
-        #Save state
-        :ok = Data.save_state(__ENV__.module, deck_state.id, deck_state)
+        id = Id.hrid(name)
+        process_name = Data.genserver_id(__ENV__.module, id)
         #Start genserver
-        GenServer.start(Metr.Deck, deck_state, [name: Data.genserver_id(__ENV__.module, deck_state.id)])
+        GenServer.start(Metr.Deck, {id, data, event}, [name: process_name])
 
         #Return
-        [Event.new([:deck, :created, repp], %{id: deck_state.id, player_id: player_id})]
+        [Event.new([:deck, :created, repp], %{id: id, player_id: player_id})]
     end
   end
 
-  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{id: game_id, deck_ids: deck_ids}}, _repp) do
+  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{id: game_id, deck_ids: deck_ids}} = event, _repp) do
     #for each participant
     #call update
-    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}) end)
+    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}, event) end)
   end
 
-  def feed(%Event{id: _event_id, tags: [:game, :deleted, _orepp] = tags, data: %{id: game_id}}, _repp) do
+  def feed(%Event{id: _event_id, tags: [:game, :deleted, _orepp] = tags, data: %{id: game_id}} = event, _repp) do
     #for each deck find connections to this game
     deck_ids = Data.list_ids(__ENV__.module)
     |> Enum.map(fn id -> recall(id) end)
     |> Enum.filter(fn d -> Enum.member?(d.games, game_id) end)
     |> Enum.map(fn d -> d.id end)
     #call update
-    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}) end)
+    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}, event) end)
+  end
+
+  def feed(%Event{id: _event_id, tags: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
+    events = Data.read_log_by_id("Deck", id)
+    [Event.new([:deck, :log, :read, repp], %{out: events})]
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :deck], data: %{deck_id: id}}, repp) do
@@ -61,9 +63,9 @@ defmodule Metr.Deck do
     [{Event.new([:list, :game], %{ids: deck.games}), repp}]
   end
 
-  def feed(%Event{id: _event_id, tags: [:rank, :altered] = tags, data: %{deck_id: id, change: change}}, _repp) do
+  def feed(%Event{id: _event_id, tags: [:rank, :altered] = tags, data: %{deck_id: id, change: change}} = event, _repp) do
     #call update
-    update(id, tags, %{id: id, change: change})
+    update(id, tags, %{id: id, change: change}, event)
   end
 
   def feed(_event, _orepp) do
@@ -77,16 +79,16 @@ defmodule Metr.Deck do
     # Is running?
     if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
       #Get state
-      current_state = Data.recall_state(__ENV__.module, id)
+      current_state = Map.merge(%Deck{}, Data.recall_state(__ENV__.module, id))
       #Start process
       GenServer.start(Metr.Deck, current_state, [name: Data.genserver_id(__ENV__.module, id)])
     end
   end
 
-  defp update(id, tags, data) do
+  defp update(id, tags, data, event) do
     ready_process(id)
     #Call update
-    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data})
+    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
     #Return
     [Event.new([:deck, :altered], %{out: msg})]
   end
@@ -132,7 +134,13 @@ defmodule Metr.Deck do
 
   ## gen
   @impl true
-  def init(state) do
+  def init({id, data, event}) do
+    state = build_state(id, data)
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:ok, state}
+  end
+
+  def init(%Deck{} = state) do
     {:ok, state}
   end
 
@@ -145,31 +153,25 @@ defmodule Metr.Deck do
 
 
   @impl true
-  def handle_call(%{tags: [:game, :created, _orepp], data: %{id: game_id, deck_id: id}}, _from, state) do
+  def handle_call(%{tags: [:game, :created, _orepp], data: %{id: game_id, deck_id: id}, event: event}, _from, state) do
     new_state = Map.update!(state, :games, &(&1 ++ [game_id]))
-    #Save state
-    Data.save_state(__ENV__.module, id, new_state)
-    #Reply
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:reply, "Game #{game_id} added to deck #{id}", new_state}
   end
 
 #TODO refactor id order/names
   @impl true
-  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: game_id, deck_id: id}}, _from, state) do
+  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: game_id, deck_id: id}, event: event}, _from, state) do
     new_state = Map.update!(state, :games, fn games -> List.delete(games, game_id) end)
-    #Save state
-    Data.save_state(__ENV__.module, id, new_state)
-    #Reply
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:reply, "Game #{game_id} removed from deck #{id}", new_state}
   end
 
 
   @impl true
-  def handle_call(%{tags: [:rank, :altered], data: %{id: id, change: change}}, _from, state) do
+  def handle_call(%{tags: [:rank, :altered], data: %{id: id, change: change}, event: event}, _from, state) do
     new_state = Map.update!(state, :rank, fn rank -> Rank.apply_change(rank, change) end)
-    #Save state
-    Data.save_state(__ENV__.module, id, new_state)
-    #Reply
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:reply, "Deck #{id} rank altered to #{Kernel.inspect(new_state.rank)}", new_state}
   end
 end

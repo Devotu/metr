@@ -39,7 +39,7 @@ defmodule GameTest do
     assert ["erik", "fredrik"] == resulting_event.data.player_ids
     assert ["evil", "fungus"] == resulting_event.data.deck_ids
     assert is_bitstring(resulting_event.id)
-    Data.wipe_state("Game", resulting_event.data.id)
+    Data.wipe_test("Game", resulting_event.data.id)
   end
 
   test "select last x games" do
@@ -116,9 +116,9 @@ defmodule GameTest do
 
     assert 3 == Enum.count(Metr.list_games(3))
 
-    Data.wipe_state("Player", [player_1_id, player_2_id, player_3_id])
-    Data.wipe_state("Deck", [deck_1_id, deck_2_id, deck_3_id])
-    Data.wipe_state("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
+    Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
+    Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
+    Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
   end
 
 
@@ -196,9 +196,9 @@ defmodule GameTest do
 
     assert 4 == Enum.count(Metr.list_games(:deck, deck_2_id))
 
-    Data.wipe_state("Player", [player_1_id, player_2_id, player_3_id])
-    Data.wipe_state("Deck", [deck_1_id, deck_2_id, deck_3_id])
-    Data.wipe_state("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
+    Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
+    Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
+    Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
   end
 
 
@@ -369,9 +369,43 @@ defmodule GameTest do
     assert deck_3.rank == {0,0}
     assert deck_4.rank == {1,0}
 
-    Data.wipe_state("Player", [player_1_id, player_2_id, player_3_id, player_4_id])
-    Data.wipe_state("Deck", [deck_1_id, deck_2_id, deck_3_id, deck_4_id])
-    Data.wipe_state("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id,
+    Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id, player_4_id])
+    Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id, deck_4_id])
+    Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id,
+                            game_6_id, game_7_id, game_8_id, game_9_id, game_10_id,
+                            game_11_id])
+  end
+
+
+  test "rank altering game" do
+    player_1_name = "Quintus Game"
+    player_1_id = Id.hrid(player_1_name)
+    deck_1_name = "Qubec Game"
+    deck_1_id = Id.hrid(deck_1_name)
+
+    player_2_name = "Rudolf Game"
+    player_2_id = Id.hrid(player_2_name)
+    deck_2_name = "Romeo Game"
+    deck_2_id = Id.hrid(deck_2_name)
+
+    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
+    Player.feed Event.new([:create, :player], %{name: player_2_name}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil
+
+    game_1_id = Metr.create_game(%{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_2_id,
+      :player_1 => player_1_id,
+      :player_2 => player_2_id,
+      :rank => true,
+      :winner => 1})
+
+    Metr.read_deck()
+
+    Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id, player_4_id])
+    Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id, deck_4_id])
+    Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id,
                             game_6_id, game_7_id, game_8_id, game_9_id, game_10_id,
                             game_11_id])
   end

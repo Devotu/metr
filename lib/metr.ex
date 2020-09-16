@@ -41,6 +41,9 @@ defmodule Metr do
     read(:deck, id)
   end
 
+  def read_entity_log(type, id) when is_atom(type) do
+    read_log(type, id)
+  end
 
 
   def create_game(%{
@@ -147,6 +150,21 @@ defmodule Metr do
   end
 
 
+  defp read_log(type, id) when is_atom(type) do
+    #Start listener
+    listening_task = Task.async(&listen/0)
+
+    data = Map.put(%{}, type_id(type), id)
+
+    #Fire ze missiles
+    Event.new([:read, :log, type], data)
+    |> Router.input(listening_task.pid)
+
+    #Await response
+    Task.await(listening_task)
+  end
+
+
   defp listen() do
     receive do
       msg ->
@@ -164,6 +182,18 @@ defmodule Metr do
   end
 
 
+  def type_from_string(type) when is_bitstring(type) do
+    case type do
+      "player" -> :player
+      "Player" -> :player
+      "deck" -> :deck
+      "Deck" -> :deck
+      "game" -> :game
+      "Game" -> :game
+    end
+  end
+
+
 
   ## feed
   #by type
@@ -174,6 +204,11 @@ defmodule Metr do
 
   #by id
   def feed(%Event{tags: [type, _status, response_pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(response_pid) do
+    send response_pid, out
+    []
+  end
+
+  def feed(%Event{tags: [type, :log, _status, response_pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(response_pid) do
     send response_pid, out
     []
   end
