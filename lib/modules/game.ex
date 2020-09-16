@@ -48,7 +48,6 @@ defmodule Metr.Game do
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :game]}, repp) do
-    IO.puts("game - list")
     games = Data.list_ids(__ENV__.module)
     |> Enum.map(&recall/1)
     [Event.new([:games, repp], %{games: games})]
@@ -70,13 +69,14 @@ defmodule Metr.Game do
     # Is running?
     if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
       #Get state
-      current_state = Data.recall_state(__ENV__.module, id)
+      current_state = Map.merge(%Game{}, Data.recall_state(__ENV__.module, id))
       #Start process
       GenServer.start(Metr.Game, current_state, [name: Data.genserver_id(__ENV__.module, id)])
     end
   end
 
   defp recall(id) do
+    ready_process(id)
     GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :game]})
   end
 

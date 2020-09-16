@@ -79,7 +79,7 @@ defmodule Metr.Deck do
     # Is running?
     if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
       #Get state
-      current_state = Data.recall_state(__ENV__.module, id)
+      current_state = Map.merge(%Deck{}, Data.recall_state(__ENV__.module, id))
       #Start process
       GenServer.start(Metr.Deck, current_state, [name: Data.genserver_id(__ENV__.module, id)])
     end
