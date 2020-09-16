@@ -182,6 +182,18 @@ defmodule Metr do
   end
 
 
+  def type_from_string(type) when is_bitstring(type) do
+    case type do
+      "player" -> :player
+      "Player" -> :player
+      "deck" -> :deck
+      "Deck" -> :deck
+      "game" -> :game
+      "Game" -> :game
+    end
+  end
+
+
 
   ## feed
   #by type
