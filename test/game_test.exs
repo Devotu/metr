@@ -380,9 +380,9 @@ defmodule GameTest do
     assert deck_1.rank == {2,1}
     assert deck_4.rank == {2,-1}
 
-    Data.wipe_state("Player", [player_1_id, player_2_id, player_3_id, player_4_id])
-    Data.wipe_state("Deck", [deck_1_id, deck_2_id, deck_3_id, deck_4_id])
-    Data.wipe_state("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id,
+    Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id, player_4_id])
+    Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id, deck_4_id])
+    Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id,
                             game_6_id, game_7_id, game_8_id, game_9_id, game_10_id,
                             game_11_id])
   end
