@@ -41,6 +41,10 @@ defmodule Metr do
     read(:deck, id)
   end
 
+  def read_game(id) do
+    read(:game, id)
+  end
+
   def read_entity_log(type, id) when is_atom(type) do
     read_log(type, id)
   end

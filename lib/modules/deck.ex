@@ -131,6 +131,22 @@ defmodule Metr.Deck do
   end
 
 
+  defp find_original_rank(%Event{data: %{rank: rank}}), do: rank
+  defp find_original_rank(_), do: nil
+
+
+  defp recalculate_rank(state, base_rank) do
+    rank = state.games
+    |> Enum.map(fn game_id -> Metr.read_game(game_id) end)
+    |> Enum.filter(fn g -> g.ranking end)
+    |> Enum.reduce([], fn(g, acc) -> acc ++ g.participants end)
+    |> Enum.filter(fn p -> state.id == p.deck_id end)
+    |> Enum.reduce(base_rank, fn(p, acc) -> Rank.apply_change(acc, Rank.find_change(p)) end)
+
+    Map.put(state, :rank, rank)
+  end
+
+
 
   ## gen
   @impl true
@@ -162,8 +178,15 @@ defmodule Metr.Deck do
 #TODO refactor id order/names
   @impl true
   def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: game_id, deck_id: id}, event: event}, _from, state) do
-    new_state = Map.update!(state, :games, fn games -> List.delete(games, game_id) end)
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    original_rank = Data.read_log_by_id("Deck", id)
+      |> Enum.filter(fn e -> e.tags == [:create, :deck] end)
+      |> List.first()
+      |> find_original_rank()
+
+    new_state = state
+      |> Map.update!(:games, fn games -> List.delete(games, game_id) end)
+      |> recalculate_rank(original_rank)
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Game #{game_id} removed from deck #{id}", new_state}
   end
 
