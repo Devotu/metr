@@ -1,5 +1,13 @@
 defmodule Metr.Rank do
 
+  def find_change(%{place: p}) do
+    case p do
+      0 -> 0
+      1 -> 1
+      _ -> -1
+    end
+  end
+
   #No changes
   def apply_change(nil, 0), do: nil
   def apply_change(rank, 0), do: rank

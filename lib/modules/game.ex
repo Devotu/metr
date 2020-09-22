@@ -8,6 +8,7 @@ defmodule Metr.Game do
   alias Metr.Data
   alias Metr.Deck
   alias Metr.Game
+  alias Metr.Rank
 
 
   ## feed
@@ -183,18 +184,8 @@ defmodule Metr.Game do
 
 
   defp rank_participant(%{deck_id: deck_id} = p) do
-    Event.new([:rank, :altered], %{deck_id: deck_id, change: find_change(p)})
+    Event.new([:rank, :altered], %{deck_id: deck_id, change: Rank.find_change(p)})
   end
-
-
-  defp find_change(%{place: p}) do
-    case p do
-      0 -> 0
-      1 -> 1
-      _ -> -1
-    end
-  end
-
 
 
 
