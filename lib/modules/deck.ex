@@ -100,9 +100,12 @@ defmodule Metr.Deck do
 
 
 
-  defp build_state(id, %{name: name, player_id: _player_id} = data) do
+  defp build_state(id, %{name: name} = data) do
+    IO.inspect(data, label: "deck - data")
     %Deck{id: id, name: name}
     |> apply_colors(data)
+    |> apply_format(data)
+    |> IO.inspect(label: "deck - with format")
     |> apply_rank(data)
   end
 
@@ -118,6 +121,26 @@ defmodule Metr.Deck do
 
   defp apply_color(color, %Deck{} = deck) when is_atom(color) do
     Map.put(deck, color, true)
+  end
+
+
+  defp apply_format(%Deck{} = deck, data) when is_map(data) do
+    case Map.has_key?(data, :format) do
+      true ->
+        IO.inspect(data.format, label: "deck - input format")
+        format = find_valid_format(data.format)
+        IO.inspect(format, label: "deck - found format")
+        Map.put(deck, :format, format)
+      false ->
+        deck
+    end
+  end
+
+  defp find_valid_format(format_descriptor) when is_bitstring(format_descriptor) do
+    case String.downcase(format_descriptor) do
+      f when f in ["standard", "pauper"] -> format_descriptor
+      _ -> {:error, :format_invalid}
+    end
   end
 
 
