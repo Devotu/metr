@@ -39,7 +39,7 @@ defmodule Metr.Deck do
     |> Enum.filter(fn d -> Enum.member?(d.games, game_id) end)
     |> Enum.map(fn d -> d.id end)
     #call update
-    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}, event) end)
+    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: id, game_id: game_id}, event) end)
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
@@ -175,9 +175,9 @@ defmodule Metr.Deck do
     {:reply, "Game #{game_id} added to deck #{id}", new_state}
   end
 
-#TODO refactor id order/names
+
   @impl true
-  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: game_id, deck_id: id}, event: event}, _from, state) do
+  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: id, game_id: game_id}, event: event}, _from, state) do
     original_rank = Data.read_log_by_id("Deck", id)
       |> Enum.filter(fn e -> e.tags == [:create, :deck] end)
       |> List.first()
