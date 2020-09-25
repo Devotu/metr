@@ -1,7 +1,8 @@
 defmodule Metr.Deck do
   defstruct id: "", name: "", format: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: [], rank: nil
 
-  @formats ["block", "standard", "pauper"]
+  @formats [
+    "block", "commander", "draft", "modern", "mixblock", "minimander", "pauper", "premodern", "sealed", "singleton", "standard", "threecard"]
 
   use GenServer
 
