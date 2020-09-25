@@ -223,4 +223,10 @@ defmodule MetrTest do
     Data.wipe_test("Deck", [deck_1_id, deck_2_id])
     Data.wipe_test("Game", [game_1_id, game_2_id])
   end
+
+
+  test "format" do
+    assert "standard" in Metr.list_formats()
+    assert "pauper" in Metr.list_formats()
+  end
 end

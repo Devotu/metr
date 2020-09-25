@@ -53,11 +53,6 @@ defmodule DeckTest do
   end
 
 
-  test "format" do
-
-  end
-
-
   test "deck created" do
     #Players to participate
     player_1_name = "Helge"

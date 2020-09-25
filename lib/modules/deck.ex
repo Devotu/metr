@@ -68,6 +68,10 @@ defmodule Metr.Deck do
     update(id, tags, %{id: id, change: change}, event)
   end
 
+  def feed(%Event{id: _event_id, tags: [:list, :format]}, repp) do
+    [Event.new([:formats, repp], %{formats: list_formats()})]
+  end
+
   def feed(_event, _orepp) do
     []
   end
@@ -164,6 +168,11 @@ defmodule Metr.Deck do
     |> Enum.reduce(base_rank, fn(p, acc) -> Rank.apply_change(acc, Rank.find_change(p)) end)
 
     Map.put(state, :rank, rank)
+  end
+
+
+  defp list_formats() do
+    ["block", "standard", "pauper"]
   end
 
 
