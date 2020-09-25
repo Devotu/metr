@@ -1,6 +1,8 @@
 defmodule Metr.Deck do
   defstruct id: "", name: "", format: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: [], rank: nil
 
+  @formats ["block", "standard", "pauper"]
+
   use GenServer
 
   alias Metr.Event
@@ -69,7 +71,7 @@ defmodule Metr.Deck do
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :format]}, repp) do
-    [Event.new([:formats, repp], %{formats: list_formats()})]
+    [Event.new([:formats, repp], %{formats: @formats})]
   end
 
   def feed(_event, _orepp) do
@@ -138,7 +140,7 @@ defmodule Metr.Deck do
 
   defp apply_format(deck, format_descriptor) when is_bitstring(format_descriptor) do
     case String.downcase(format_descriptor) do
-      f when f in ["standard", "pauper"] -> Map.put(deck, :format, format_descriptor)
+      f when f in @formats -> Map.put(deck, :format, format_descriptor)
       _ -> {:error, :invalid_format}
     end
   end
@@ -168,11 +170,6 @@ defmodule Metr.Deck do
     |> Enum.reduce(base_rank, fn(p, acc) -> Rank.apply_change(acc, Rank.find_change(p)) end)
 
     Map.put(state, :rank, rank)
-  end
-
-
-  defp list_formats() do
-    ["block", "standard", "pauper"]
   end
 
 
