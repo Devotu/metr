@@ -1,6 +1,9 @@
 defmodule Metr.Deck do
   defstruct id: "", name: "", format: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: [], rank: nil
 
+  @formats [
+    "block", "commander", "draft", "modern", "mixblock", "minimander", "pauper", "premodern", "sealed", "singleton", "standard", "threecard"]
+
   use GenServer
 
   alias Metr.Event
@@ -19,10 +22,10 @@ defmodule Metr.Deck do
         id = Id.hrid(name)
         process_name = Data.genserver_id(__ENV__.module, id)
         #Start genserver
-        GenServer.start(Metr.Deck, {id, data, event}, [name: process_name])
-
-        #Return
-        [Event.new([:deck, :created, repp], %{id: id, player_id: player_id})]
+        case GenServer.start(Metr.Deck, {id, data, event}, [name: process_name]) do
+          {:ok, _pid} -> [Event.new([:deck, :created, repp], %{id: id, player_id: player_id})]
+          {:error, error} -> [Event.new([:deck, :not, :created, repp], %{errors: [error]})]
+        end
     end
   end
 
@@ -39,7 +42,7 @@ defmodule Metr.Deck do
     |> Enum.filter(fn d -> Enum.member?(d.games, game_id) end)
     |> Enum.map(fn d -> d.id end)
     #call update
-    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}, event) end)
+    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: id, game_id: game_id}, event) end)
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
@@ -68,6 +71,10 @@ defmodule Metr.Deck do
     update(id, tags, %{id: id, change: change}, event)
   end
 
+  def feed(%Event{id: _event_id, tags: [:list, :format]}, repp) do
+    [Event.new([:formats, repp], %{formats: @formats})]
+  end
+
   def feed(_event, _orepp) do
     []
   end
@@ -81,7 +88,7 @@ defmodule Metr.Deck do
       #Get state
       current_state = Map.merge(%Deck{}, Data.recall_state(__ENV__.module, id))
       #Start process
-      GenServer.start(Metr.Deck, current_state, [name: Data.genserver_id(__ENV__.module, id)])
+      {:ok, _pid} = GenServer.start(Metr.Deck, current_state, [name: Data.genserver_id(__ENV__.module, id)])
     end
   end
 
@@ -100,13 +107,15 @@ defmodule Metr.Deck do
 
 
 
-  defp build_state(id, %{name: name, player_id: _player_id} = data) do
+  defp build_state(id, %{name: name} = data) do
     %Deck{id: id, name: name}
     |> apply_colors(data)
+    |> apply_format(data)
     |> apply_rank(data)
   end
 
 
+  defp apply_colors({:error, _error} = e, _data), do: {e}
   defp apply_colors(%Deck{} = deck, data) when is_map(data) do
     case Map.has_key?(data, :colors) do
       true ->
@@ -120,7 +129,25 @@ defmodule Metr.Deck do
     Map.put(deck, color, true)
   end
 
+  defp apply_format({:error, _error} = e, _data), do: e
+  defp apply_format(%Deck{} = deck, data) when is_map(data) do
+    case Map.has_key?(data, :format) do
+      true ->
+        apply_format(deck, data.format)
+      false ->
+        deck
+    end
+  end
 
+  defp apply_format(deck, format_descriptor) when is_bitstring(format_descriptor) do
+    case String.downcase(format_descriptor) do
+      f when f in @formats -> Map.put(deck, :format, format_descriptor)
+      _ -> {:error, :invalid_format}
+    end
+  end
+
+
+  defp apply_rank({:error, _error} = e, _data), do: e
   defp apply_rank(%Deck{} = deck, data) when is_map(data) do
     case Map.has_key?(data, :rank) and is_tuple(data.rank) do
       true ->
@@ -151,9 +178,13 @@ defmodule Metr.Deck do
   ## gen
   @impl true
   def init({id, data, event}) do
-    state = build_state(id, data)
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-    {:ok, state}
+    case build_state(id, data) do
+      {:error, error} ->
+        {:stop, error}
+      state ->
+        :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+        {:ok, state}
+    end
   end
 
   def init(%Deck{} = state) do
@@ -175,9 +206,9 @@ defmodule Metr.Deck do
     {:reply, "Game #{game_id} added to deck #{id}", new_state}
   end
 
-#TODO refactor id order/names
+
   @impl true
-  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: game_id, deck_id: id}, event: event}, _from, state) do
+  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: id, game_id: game_id}, event: event}, _from, state) do
     original_rank = Data.read_log_by_id("Deck", id)
       |> Enum.filter(fn e -> e.tags == [:create, :deck] end)
       |> List.first()

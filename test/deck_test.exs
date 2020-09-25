@@ -29,6 +29,30 @@ defmodule DeckTest do
   end
 
 
+  test "create deck with format" do
+    Player.feed Event.new([:create, :player], %{name: "Ceasar Deck"}), nil
+    format = "pauper"
+    [create_event] = Deck.feed Event.new([:create, :deck], %{name: "Charlie Deck", player_id: "ceasar_deck", colors: [:green, :blue], format: format}), nil
+    assert [:deck, :created, nil] == create_event.tags
+    deck_id = create_event.data.id
+    [read_event] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_id}), nil
+    deck = read_event.data.out
+    assert format == deck.format
+    Data.wipe_test("Deck", deck_id)
+    Data.wipe_test("Player", create_event.data.player_id)
+  end
+
+
+  test "create deck with failed format" do
+    Player.feed Event.new([:create, :player], %{name: "David Deck"}), nil
+    format = "failingformat"
+    [create_event] = Deck.feed Event.new([:create, :deck], %{name: "Delta Deck", player_id: "david_deck", colors: [:green, :blue], format: format}), nil
+    assert [:deck, :not, :created, nil] == create_event.tags
+    assert [:invalid_format] == create_event.data.errors
+    Data.wipe_test("Player", "david_deck")
+  end
+
+
   test "deck created" do
     #Players to participate
     player_1_name = "Helge"

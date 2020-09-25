@@ -33,6 +33,11 @@ defmodule Metr do
   end
 
 
+  def list_formats() do
+    list(:format)
+  end
+
+
   def read_player(id) do
     read(:player, id)
   end
