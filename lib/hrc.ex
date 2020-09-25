@@ -24,7 +24,7 @@ defmodule Metr.HRC do
   end
 
 
-  defp parse_id({["all"|_remaining] = data_with_no_id, %{} = acc}) do
+  defp parse_id({["all"|_remaining], %{} = acc}) do
     {[], acc}
   end
 
