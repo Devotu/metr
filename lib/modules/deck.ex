@@ -19,10 +19,10 @@ defmodule Metr.Deck do
         id = Id.hrid(name)
         process_name = Data.genserver_id(__ENV__.module, id)
         #Start genserver
-        GenServer.start(Metr.Deck, {id, data, event}, [name: process_name])
-
-        #Return
-        [Event.new([:deck, :created, repp], %{id: id, player_id: player_id})]
+        case GenServer.start(Metr.Deck, {id, data, event}, [name: process_name]) do
+          {:ok, _pid} -> [Event.new([:deck, :created, repp], %{id: id, player_id: player_id})]
+          {:error, error} -> [Event.new([:deck, :not, :created, repp], %{errors: [error]})]
+        end
     end
   end
 
@@ -81,7 +81,7 @@ defmodule Metr.Deck do
       #Get state
       current_state = Map.merge(%Deck{}, Data.recall_state(__ENV__.module, id))
       #Start process
-      GenServer.start(Metr.Deck, current_state, [name: Data.genserver_id(__ENV__.module, id)])
+      {:ok, _pid} = GenServer.start(Metr.Deck, current_state, [name: Data.genserver_id(__ENV__.module, id)])
     end
   end
 
@@ -101,15 +101,14 @@ defmodule Metr.Deck do
 
 
   defp build_state(id, %{name: name} = data) do
-    IO.inspect(data, label: "deck - data")
     %Deck{id: id, name: name}
     |> apply_colors(data)
     |> apply_format(data)
-    |> IO.inspect(label: "deck - with format")
     |> apply_rank(data)
   end
 
 
+  defp apply_colors({:error, _error} = e, _data), do: {e}
   defp apply_colors(%Deck{} = deck, data) when is_map(data) do
     case Map.has_key?(data, :colors) do
       true ->
@@ -123,27 +122,25 @@ defmodule Metr.Deck do
     Map.put(deck, color, true)
   end
 
-
+  defp apply_format({:error, _error} = e, _data), do: e
   defp apply_format(%Deck{} = deck, data) when is_map(data) do
     case Map.has_key?(data, :format) do
       true ->
-        IO.inspect(data.format, label: "deck - input format")
-        format = find_valid_format(data.format)
-        IO.inspect(format, label: "deck - found format")
-        Map.put(deck, :format, format)
+        apply_format(deck, data.format)
       false ->
         deck
     end
   end
 
-  defp find_valid_format(format_descriptor) when is_bitstring(format_descriptor) do
+  defp apply_format(deck, format_descriptor) when is_bitstring(format_descriptor) do
     case String.downcase(format_descriptor) do
-      f when f in ["standard", "pauper"] -> format_descriptor
-      _ -> {:error, :format_invalid}
+      f when f in ["standard", "pauper"] -> Map.put(deck, :format, format_descriptor)
+      _ -> {:error, :invalid_format}
     end
   end
 
 
+  defp apply_rank({:error, _error} = e, _data), do: e
   defp apply_rank(%Deck{} = deck, data) when is_map(data) do
     case Map.has_key?(data, :rank) and is_tuple(data.rank) do
       true ->
@@ -174,9 +171,13 @@ defmodule Metr.Deck do
   ## gen
   @impl true
   def init({id, data, event}) do
-    state = build_state(id, data)
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-    {:ok, state}
+    case build_state(id, data) do
+      {:error, error} ->
+        {:stop, error}
+      state ->
+        :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+        {:ok, state}
+    end
   end
 
   def init(%Deck{} = state) do
