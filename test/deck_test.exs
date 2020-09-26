@@ -43,6 +43,24 @@ defmodule DeckTest do
   end
 
 
+  test "create deck with colors" do
+    Player.feed Event.new([:create, :player], %{name: "Erik Deck"}), nil
+    [create_event] = Deck.feed Event.new([:create, :deck], %{name: "Echo Deck", player_id: "erik_deck", colors: [:red, :blue]}), nil
+    assert [:deck, :created, nil] == create_event.tags
+    deck_id = create_event.data.id
+    [read_event] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_id}), nil
+    deck = read_event.data.out
+    assert false == deck.black
+    assert false == deck.white
+    assert true == deck.red
+    assert false == deck.green
+    assert true == deck.blue
+    assert false == deck.colorless
+    Data.wipe_test("Deck", deck_id)
+    Data.wipe_test("Player", create_event.data.player_id)
+  end
+
+
   test "create deck with failed format" do
     Player.feed Event.new([:create, :player], %{name: "David Deck"}), nil
     format = "failingformat"

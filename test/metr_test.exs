@@ -14,6 +14,34 @@ defmodule MetrTest do
     assert is_list Metr.list_players()
   end
 
+  test "create deck" do
+    Player.feed Event.new([:create, :player], %{name: "Martin Metr"}), nil
+    format = "commander"
+    deck_data = %{
+      black: false,
+      white: false,
+      red: true,
+      green: false,
+      blue: true,
+      colorless: false,
+      format: format,
+      name: "Mike Metr",
+      player_id: "martin_metr",
+      theme: "commanding"
+    }
+    deck_id = Metr.create_deck(deck_data)
+    [read_event] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_id}), nil
+    deck = read_event.data.out
+    assert false == deck.black
+    assert false == deck.white
+    assert true == deck.red
+    assert false == deck.green
+    assert true == deck.blue
+    assert false == deck.colorless
+    Data.wipe_test("Deck", deck_id)
+    Data.wipe_test("Player", deck_data.player_id)
+  end
+
   test "list decks" do
     assert is_list Metr.list_decks()
   end

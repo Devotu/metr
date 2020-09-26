@@ -117,13 +117,26 @@ defmodule Metr.Deck do
 
   defp apply_colors({:error, _error} = e, _data), do: {e}
   defp apply_colors(%Deck{} = deck, data) when is_map(data) do
-    case Map.has_key?(data, :colors) do
-      true ->
+    case color_data_type(data) do
+      :list ->
         Enum.reduce(data.colors, deck, fn c,d -> apply_color(c, d) end)
-      false ->
+      :bool ->
+        Map.merge(deck, data)
+      _ ->
         deck
     end
   end
+
+  defp color_data_type(%{colors: _colors}), do: :list
+  defp color_data_type(%{
+    black: _b,
+    white: _w,
+    red: _r,
+    green: _g,
+    blue: _bl,
+    colorless: _c
+    }), do: :bool
+  defp color_data_type(_), do: :none
 
   defp apply_color(color, %Deck{} = deck) when is_atom(color) do
     Map.put(deck, color, true)
