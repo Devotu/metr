@@ -185,6 +185,7 @@ defmodule Metr do
     receive do
       {:error, msg} ->
         IO.puts("!! Error -- #{msg} !!")
+        {:error, msg}
       msg ->
         msg
     end
