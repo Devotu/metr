@@ -27,7 +27,9 @@ defmodule MetrTest do
       format: format,
       name: "Mike Metr",
       player_id: "martin_metr",
-      theme: "commanding"
+      theme: "commanding",
+      rank: -1,
+      advantage: 1
     }
     deck_id = Metr.create_deck(deck_data)
     [read_event] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_id}), nil
@@ -38,6 +40,7 @@ defmodule MetrTest do
     assert false == deck.green
     assert true == deck.blue
     assert false == deck.colorless
+    assert {-1,1} == deck.rank
     Data.wipe_test("Deck", deck_id)
     Data.wipe_test("Player", deck_data.player_id)
   end

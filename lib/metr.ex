@@ -99,6 +99,13 @@ defmodule Metr do
   end
 
 
+  def create_deck(%{rank: r, advantage: a} = data) do
+    data
+    |> Map.delete(:advantage)
+    |> Map.put(:rank, {r, a})
+    |> create_deck()
+  end
+
   def create_deck(%{name: _n, player_id: _p} = data) do
     create(:deck, data)
   end
