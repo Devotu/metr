@@ -24,6 +24,7 @@ defmodule Metr.Game do
     case Enum.count(error_events) > 0 do
       true ->
         error_events
+        |> Enum.map(fn e -> Event.add_repp(e, repp) end)
       false ->
         rank_events ++ initiate_state({id, data, event}, repp)
     end
@@ -105,7 +106,7 @@ defmodule Metr.Game do
         deck_ids = Enum.map(participants, fn p -> p.deck_id end)
         [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank})]
       _ ->
-        Event.new([:error, :game], %{msg: "Could not save game state"})
+        Event.new([:game, :error, repp], %{msg: "Could not save game state"})
     end
   end
 
@@ -159,7 +160,7 @@ defmodule Metr.Game do
       true ->
         Enum.map(participants, fn p -> rank_participant(p) end)
       false ->
-        [Event.new([:error, :game], %{msg: "Ranks does not match"})]
+        [Event.new([:game, :error], %{msg: "Ranks does not match"})]
     end
   end
 

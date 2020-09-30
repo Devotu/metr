@@ -183,6 +183,8 @@ defmodule Metr do
 
   defp listen() do
     receive do
+      {:error, msg} ->
+        IO.puts("!! Error -- #{msg} !!")
       msg ->
         msg
     end
@@ -229,13 +231,18 @@ defmodule Metr do
     []
   end
 
+  def feed(%Event{tags: [type, :error, response_pid], data: data}, _orepp) when is_atom(type) and is_pid(response_pid) do
+    send response_pid, {:error, data.msg}
+    []
+  end
+
   def feed(%Event{tags: [type, _status, response_pid]} = event, _orepp) when is_atom(type) and is_pid(response_pid) do
     send response_pid, event.data.id
     []
   end
 
   #by id failure
-  def feed(%Event{tags: [type, :not, _status, response_pid]} = _event, _orepp) when is_atom(type) and is_pid(response_pid) do
+  def feed(%Event{tags: [type, :not, _status, response_pid]}, _orepp) when is_atom(type) and is_pid(response_pid) do
     send response_pid, :error
     []
   end

@@ -37,6 +37,12 @@ defmodule Metr.Event do
   end
 
 
+  def add_repp(event, repp) do
+    event
+    |> Map.put(:tags, event.tags ++ [repp])
+  end
+
+
 
   defp add_action({tags, data, %HRC{action: nil} = hrc}), do: {tags, data, hrc}
   defp add_action({tags, data, hrc}) do
