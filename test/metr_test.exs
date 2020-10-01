@@ -260,4 +260,27 @@ defmodule MetrTest do
     assert "standard" in Metr.list_formats()
     assert "pauper" in Metr.list_formats()
   end
+
+
+  test "adjust rank" do
+    player_name = "Olof Metr"
+    player_id = Id.hrid(player_name)
+    deck_name = "Oscar Metr"
+    deck_id = Id.hrid(deck_name)
+
+    Player.feed Event.new([:create, :player], %{name: player_name}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil
+
+    deck_initial = Metr.read_deck(deck_id)
+    assert nil == deck_initial.rank
+
+    deck_0_1 = Metr.read_deck(deck_id)
+    assert {0,1} == deck_0_1.rank
+
+    deck_2_0 = Metr.read_deck(deck_id)
+    assert {2,0} == deck_2_0.rank
+
+    Data.wipe_test("Player", [player_id])
+    Data.wipe_test("Deck", [deck_id])
+  end
 end
