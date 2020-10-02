@@ -66,9 +66,9 @@ defmodule Metr.Deck do
     [{Event.new([:list, :game], %{ids: deck.games}), repp}]
   end
 
-  def feed(%Event{id: _event_id, tags: [:rank, :altered] = tags, data: %{deck_id: id, change: change}} = event, _repp) do
+  def feed(%Event{id: _event_id, tags: [:rank, :altered] = tags, data: %{deck_id: id, change: change}} = event, repp) do
     #call update
-    update(id, tags, %{id: id, change: change}, event)
+    update(id, tags, %{id: id, change: change}, event, repp)
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :format]}, repp) do
@@ -92,12 +92,15 @@ defmodule Metr.Deck do
     end
   end
 
-  defp update(id, tags, data, event) do
+  defp update(id, tags, data, event, repp \\ nil) do
     ready_process(id)
     #Call update
     msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
     #Return
-    [Event.new([:deck, :altered], %{out: msg})]
+    case repp do
+      nil -> [Event.new([:deck, :altered], %{out: msg})]
+      _ -> [Event.new([:deck, :altered, repp], %{out: msg})]
+    end
   end
 
   defp recall(id) do

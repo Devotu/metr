@@ -199,7 +199,7 @@ defmodule MetrTest do
       :winner => 1}
     game_2_id = Metr.create_game(game_2)
 
-    assert 2 == Enum.count(Metr.list_games())
+    assert 2 <= Enum.count(Metr.list_games())
     assert 2 == Enum.count(Metr.list_games(:deck, deck_1_id))
     assert 1 == Enum.count(Metr.list_games(:deck, deck_2_id))
 
@@ -274,11 +274,29 @@ defmodule MetrTest do
     deck_initial = Metr.read_deck(deck_id)
     assert nil == deck_initial.rank
 
+    Metr.alter_rank(deck_id, :up) #01
+
     deck_0_1 = Metr.read_deck(deck_id)
     assert {0,1} == deck_0_1.rank
 
+    Metr.alter_rank(deck_id, :up) #10
+    Metr.alter_rank(deck_id, :up) #11
+    Metr.alter_rank(deck_id, :up) #20
+
     deck_2_0 = Metr.read_deck(deck_id)
     assert {2,0} == deck_2_0.rank
+
+    Metr.alter_rank(deck_id, :down) #2-1
+    Metr.alter_rank(deck_id, :down) #10
+    Metr.alter_rank(deck_id, :down) #1-1
+    Metr.alter_rank(deck_id, :down) #00
+    Metr.alter_rank(deck_id, :down) #0-1
+    Metr.alter_rank(deck_id, :down) #-10
+    Metr.alter_rank(deck_id, :down) #-1-1
+    Metr.alter_rank(deck_id, :down) #-20
+
+    deck_02_0 = Metr.read_deck(deck_id)
+    assert {-2,0} == deck_02_0.rank
 
     Data.wipe_test("Player", [player_id])
     Data.wipe_test("Deck", [deck_id])
