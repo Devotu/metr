@@ -18,11 +18,8 @@ defmodule Metr.Event do
     new(tags, merged_data)
   end
 
-  def new(tags) when is_list(tags) do
-    %Event{id: Id.guid(), tags: tags, data: %{}}
-  end
 
-  def new(tags, data) when is_list(tags) do
+  def new(tags, data \\ %{}) when is_list(tags) do
     %Event{id: Id.guid(), tags: tags, data: data}
   end
 
