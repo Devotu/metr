@@ -15,6 +15,8 @@ defmodule Metr.Rank do
   #Initialized
   def apply_change(nil, 1), do: {0,1}
   def apply_change(nil, -1), do: {0,-1}
+  def apply_change({"0", "0"}, 1), do: {0,1}
+  def apply_change({"0", "0"}, -1), do: {0,-1}
 
   #Positive
   def apply_change({2,1}, 1), do: {2,1} #Already TOTP => no change

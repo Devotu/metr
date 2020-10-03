@@ -9,6 +9,7 @@ defmodule Metr.Game do
   alias Metr.Deck
   alias Metr.Game
   alias Metr.Rank
+  alias Metr.Time
 
 
   ## feed
@@ -196,7 +197,7 @@ defmodule Metr.Game do
     participants = convert_to_participants(data.parts, data.winner)
     state = %Game{
       id: id,
-      time: DateTime.utc_now() |> DateTime.to_unix(),
+      time: Time.timestamp(),
       participants: participants,
       ranking: data.rank
     }

@@ -1,9 +1,10 @@
 defmodule Metr.Event do
-  defstruct id: "", tags: [], data: %{}
+  defstruct id: "", tags: [], data: %{}, time: 0
 
   alias Metr.Id
   alias Metr.Event
   alias Metr.HRC
+  alias Metr.Time
 
   def new(%HRC{} = hrc) do
     {tags, data, _hrc} =
@@ -18,14 +19,10 @@ defmodule Metr.Event do
     new(tags, merged_data)
   end
 
-  def new(tags) when is_list(tags) do
-    %Event{id: Id.guid(), tags: tags, data: %{}}
-  end
 
-  def new(tags, data) when is_list(tags) do
-    %Event{id: Id.guid(), tags: tags, data: data}
+  def new(tags, data \\ %{}) when is_list(tags) do
+    %Event{id: Id.guid(), tags: tags, data: data, time: Time.timestamp()}
   end
-
 
 
   def only_errors(events) when is_list(events) do
