@@ -1,5 +1,5 @@
 defmodule Metr.Event do
-  defstruct id: "", tags: [], data: %{}
+  defstruct id: "", tags: [], data: %{}, time: 0
 
   alias Metr.Id
   alias Metr.Event
