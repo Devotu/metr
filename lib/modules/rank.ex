@@ -29,4 +29,14 @@ defmodule Metr.Rank do
   def apply_change({r, -1}, -1), do: {r-1, 0} #Level down
   def apply_change({r, 0}, -1), do: {r, -1}
   def apply_change({r, 1}, -1), do: {r, 0}
+
+  
+  def uniform_rank({r, a}) do
+    {as_number(r), as_number(a)}
+  end
+  def uniform_rank(nil), do: nil
+
+  defp as_number(r) when is_number(r), do: r
+  defp as_number(r) when is_bitstring(r), do: String.to_integer(r)
+  defp as_number(_), do: :error
 end

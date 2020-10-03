@@ -167,14 +167,14 @@ defmodule Metr.Deck do
   defp apply_rank(%Deck{} = deck, data) when is_map(data) do
     case Map.has_key?(data, :rank) and is_tuple(data.rank) do
       true ->
-        Map.update!(deck, :rank, fn _r -> data.rank end)
+        Map.update!(deck, :rank, fn _r -> Rank.uniform_rank(data.rank) end)
       false ->
         deck
     end
   end
 
 
-  defp find_original_rank(%Event{data: %{rank: rank}}), do: rank
+  defp find_original_rank(%Event{data: %{rank: rank}}), do: Rank.uniform_rank(rank)
   defp find_original_rank(_), do: nil
 
 
