@@ -110,6 +110,15 @@ defmodule Metr do
     create(:deck, data)
   end
 
+  def alter_rank(deck_id, :up) do
+    Event.new([:rank, :altered], %{deck_id: deck_id, change: 1})
+    |> run()
+  end
+
+  def alter_rank(deck_id, :down) do
+    Event.new([:rank, :altered], %{deck_id: deck_id, change: -1})
+    |> run()
+  end
 
 
   ## private
@@ -175,6 +184,18 @@ defmodule Metr do
     #Fire ze missiles
     Event.new([:read, :log, type], data)
     |> Router.input(listening_task.pid)
+
+    #Await response
+    Task.await(listening_task)
+  end
+
+
+  defp run(%Event{} = event) do
+    #Start listener
+    listening_task = Task.async(&listen/0)
+
+    #Fire ze missiles
+    Router.input(event, listening_task.pid)
 
     #Await response
     Task.await(listening_task)
