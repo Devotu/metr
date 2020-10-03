@@ -4,6 +4,7 @@ defmodule Metr.Event do
   alias Metr.Id
   alias Metr.Event
   alias Metr.HRC
+  alias Metr.Time
 
   def new(%HRC{} = hrc) do
     {tags, data, _hrc} =
@@ -20,9 +21,8 @@ defmodule Metr.Event do
 
 
   def new(tags, data \\ %{}) when is_list(tags) do
-    %Event{id: Id.guid(), tags: tags, data: data}
+    %Event{id: Id.guid(), tags: tags, data: data, time: Time.timestamp()}
   end
-
 
 
   def only_errors(events) when is_list(events) do
