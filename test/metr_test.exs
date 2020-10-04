@@ -301,4 +301,69 @@ defmodule MetrTest do
     Data.wipe_test("Player", [player_id])
     Data.wipe_test("Deck", [deck_id])
   end
+
+
+
+  test "create match" do
+    player_1_name = "Petter Metr"
+    player_1_id = Id.hrid(player_1_name)
+    deck_1_name = "Papa Metr"
+    deck_1_id = Id.hrid(deck_1_name)
+
+    player_2_name = "Quintus Metr"
+    player_2_id = Id.hrid(player_2_name)
+    deck_2_name = "Qubec Metr"
+    deck_2_id = Id.hrid(deck_2_name)
+
+    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
+    Player.feed Event.new([:create, :player], %{name: player_2_name}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil
+
+    match_data = %{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_2_id,
+      :player_1 => player_1_id,
+      :player_2 => player_2_id}
+    match_id = Metr.create_match(match_data)
+
+    initial_match = Metr.read_match(match_id)
+    assert [] == initial_match.games
+    assert :initialized == initial_match.status
+    assert player_1_id == initial_match.player_1
+    assert deck_2_id == initial_match.deck_2
+
+    game_data = %{
+      :match => match_id,
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_2_id,
+      :player_1 => player_1_id,
+      :player_2 => player_2_id,
+      :winner => 2}
+    game_1_id = Metr.create_game(game_data)
+
+    ongoing_match = Metr.read_match(match_id)
+    assert 1 = ongoing_match.games |> Enum.count()
+    assert :open == initial_match.status
+
+    game_2_id = Metr.create_game(Map.put(game_data, :winner, 1))
+    game_3_id = Metr.create_game(game_data)
+
+    assert :ok == Metr.end_match(match_id, :true)
+
+    ended_match = Metr.read_match(match_id)
+    assert 3 = ended_match.games |> Enum.count()
+    assert :true == ended_match.ranking
+    assert :closed == ended_match.ranking
+
+    deck_1 = Metr.read_deck(deck_1_id)
+    assert {0,-1} == deck_1.rank
+    deck_2 = Metr.read_deck(deck_2_id)
+    assert {0,1} == deck_2.rank
+
+    Data.wipe_test("Player", [player_1_id, player_2_id])
+    Data.wipe_test("Deck", [deck_1_id, deck_2_id])
+    Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id])
+    Data.wipe_test("Match", [match_id])
+  end
 end
