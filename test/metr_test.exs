@@ -328,10 +328,11 @@ defmodule MetrTest do
     match_id = Metr.create_match(match_data)
 
     initial_match = Metr.read_match(match_id)
+    IO.inspect(initial_match, label: "metr test - initial")
     assert [] == initial_match.games
     assert :initialized == initial_match.status
-    assert player_1_id == initial_match.player_1
-    assert deck_2_id == initial_match.deck_2
+    assert player_1_id == initial_match.player_one
+    assert deck_2_id == initial_match.deck_two
 
     game_data = %{
       :match => match_id,
@@ -343,6 +344,7 @@ defmodule MetrTest do
     game_1_id = Metr.create_game(game_data)
 
     ongoing_match = Metr.read_match(match_id)
+    IO.inspect(ongoing_match, label: "metr test - ongoing")
     assert 1 = ongoing_match.games |> Enum.count()
     assert :open == initial_match.status
 

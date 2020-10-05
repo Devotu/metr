@@ -50,6 +50,10 @@ defmodule Metr do
     read(:game, id)
   end
 
+  def read_match(id) do
+    read(:match, id)
+  end
+
   def read_entity_log(type, id) when is_atom(type) do
     read_log(type, id)
   end
@@ -110,6 +114,7 @@ defmodule Metr do
     create(:deck, data)
   end
 
+
   def alter_rank(deck_id, :up) do
     Event.new([:rank, :altered], %{deck_id: deck_id, change: 1})
     |> run()
@@ -119,6 +124,12 @@ defmodule Metr do
     Event.new([:rank, :altered], %{deck_id: deck_id, change: -1})
     |> run()
   end
+
+
+  def create_match(%{:deck_1 => _deck_1_id, :deck_2 => _deck_2_id, :player_1 => _player_1_id, :player_2 => _player_2_id} = data) do
+    create(:match, data)
+  end
+
 
 
   ## private
@@ -218,6 +229,7 @@ defmodule Metr do
       :player -> :player_id
       :deck -> :deck_id
       :game -> :game_id
+      :match -> :match_id
     end
   end
 
@@ -230,6 +242,8 @@ defmodule Metr do
       "Deck" -> :deck
       "game" -> :game
       "Game" -> :game
+      "match" -> :match
+      "Match" -> :match
     end
   end
 

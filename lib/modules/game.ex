@@ -34,7 +34,7 @@ defmodule Metr.Game do
   def feed(%Event{id: _event_id, tags: [:read, :game] = tags, data: %{game_id: id}}, repp) do
     ready_process(id)
     msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
-    [Event.new([:deck, :read, repp], %{out: msg})]
+    [Event.new([:game, :read, repp], %{out: msg})]
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :log, :game], data: %{game_id: id}}, repp) do
