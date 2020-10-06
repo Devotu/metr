@@ -111,7 +111,9 @@ defmodule Metr.Match do
 
   @impl true
   def handle_call(%{tags: [:game, :created, _orepp], data: %{id: game_id, match_id: id}, event: event}, _from, state) do
-    new_state = Map.update!(state, :games, &(&1 ++ [game_id]))
+    new_state = state
+      |> Map.update!(:games, &(&1 ++ [game_id]))
+      |> Map.put(:status, :open)
     :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     #Reply
     {:reply, "Game #{game_id} added to match #{id}", new_state}

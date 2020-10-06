@@ -346,7 +346,7 @@ defmodule MetrTest do
     ongoing_match = Metr.read_match(match_id)
     IO.inspect(ongoing_match, label: "metr test - ongoing")
     assert 1 = ongoing_match.games |> Enum.count()
-    assert :open == initial_match.status
+    assert :open == ongoing_match.status
 
     game_2_id = Metr.create_game(Map.put(game_data, :winner, 1))
     game_3_id = Metr.create_game(game_data)
