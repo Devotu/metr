@@ -1,5 +1,5 @@
 defmodule Metr.Game do
-  defstruct id: "", time: 0, participants: [], ranking: false
+  defstruct id: "", time: 0, participants: [], ranking: false, match: nil
 
   use GenServer
 
@@ -99,13 +99,13 @@ defmodule Metr.Game do
 
   defp initiate_state({id, data, event}, repp) do
     process_name = Data.genserver_id(__ENV__.module, id)
-
     case GenServer.start(Metr.Game, {id, data, event}, [name: process_name]) do
       {:ok, _pid} ->
         participants = convert_to_participants(data.parts, data.winner)
         player_ids =  Enum.map(participants, fn p -> p.player_id end)
         deck_ids = Enum.map(participants, fn p -> p.deck_id end)
-        [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank})]
+        match_id = Map.get(data, :match, nil)
+        [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank, match_id: match_id})]
       _ ->
         Event.new([:game, :error, repp], %{msg: "Could not save game state"})
     end
@@ -190,17 +190,31 @@ defmodule Metr.Game do
   end
 
 
+  defp new(id, %{match: match} = data) do
+    %Game{
+      id: id,
+      time: Time.timestamp(),
+      participants: convert_to_participants(data.parts, data.winner),
+      ranking: data.rank,
+      match: match
+    }
+  end
+
+  defp new(id, data) do
+    %Game{
+      id: id,
+      time: Time.timestamp(),
+      participants: convert_to_participants(data.parts, data.winner),
+      ranking: data.rank
+    }
+  end
+
+
 
   ## gen
   @impl true
   def init({id, data, event}) do
-    participants = convert_to_participants(data.parts, data.winner)
-    state = %Game{
-      id: id,
-      time: Time.timestamp(),
-      participants: participants,
-      ranking: data.rank
-    }
+    state = new(id, data)
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}
   end

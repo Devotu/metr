@@ -49,6 +49,14 @@ defmodule Metr.Match do
     [Event.new([:matchs, repp], %{matches: matches})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp], data: %{id: _game_id, match_id: nil}}, _repp) do
+    []
+  end
+
+  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp], data: %{id: _game_id, match_id: id}} = event, _repp) do
+    update(id, event.tags, event.data, event)
+  end
+
   def feed(_event, _orepp) do
     []
   end
@@ -67,6 +75,14 @@ defmodule Metr.Match do
   defp recall(id) do
     ready_process(id)
     GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :match]})
+  end
+
+  defp update(id, tags, data, event) do
+    ready_process(id)
+    #Call update
+    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
+    #Return
+    [Event.new([:match, :altered], %{out: msg})]
   end
 
 
@@ -91,5 +107,13 @@ defmodule Metr.Match do
   def handle_call(%{tags: [:read, :match]}, _from, state) do
     #Reply
     {:reply, state, state}
+  end
+
+  @impl true
+  def handle_call(%{tags: [:game, :created, _orepp], data: %{id: game_id, match_id: id}, event: event}, _from, state) do
+    new_state = Map.update!(state, :games, &(&1 ++ [game_id]))
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
+    #Reply
+    {:reply, "Game #{game_id} added to match #{id}", new_state}
   end
 end

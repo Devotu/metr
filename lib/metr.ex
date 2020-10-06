@@ -6,7 +6,7 @@ defmodule Metr do
   @default_game %{
     :fun_1 => nil, :fun_2 => nil,
     :power_1 => nil, :power_2 => nil,
-    :winner => 0, rank: false
+    :winner => 0, rank: false, match: nil
     }
 
   ## api
@@ -64,12 +64,13 @@ defmodule Metr do
     :fun_1 => f1, :fun_2 => f2,
     :player_1 => p1, :player_2 => p2,
     :power_1 => s1, :power_2 => s2,
-    :winner => w, rank: r
+    :winner => w, rank: r, match: m
   }) do
 
     data = %{
       winner: w,
       rank: r,
+      match: m,
       parts: [
         %{part: 1, details: %{deck_id: d1, player_id: p1, power: s1, fun: f1}},
         %{part: 2, details: %{deck_id: d2, player_id: p2, power: s2, fun: f2}},
