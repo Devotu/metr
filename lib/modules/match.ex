@@ -4,7 +4,9 @@ defmodule Metr.Match do
   use GenServer
 
   alias Metr.Data
+  alias Metr.Deck
   alias Metr.Event
+  alias Metr.Game
   alias Metr.Id
   alias Metr.Match
 
@@ -27,8 +29,18 @@ defmodule Metr.Match do
     end
   end
 
-  def feed(%Event{id: _event_id, tags: [:end, :match], data: %{match_id: id, ranking: _ranking}} = event, repp) do
-    update(id, event.tags, event.data, event, repp)
+  def feed(%Event{id: _event_id, tags: [:end, :match], data: %{match_id: id, ranking: ranking}} = event, repp) do
+    current_state = recall(id)
+    rank_events = collect_rank_alterations(current_state, ranking)
+    error_events = Event.only_errors(rank_events) #If any contains errors don't alter state
+    #Return
+    case Enum.count(error_events) > 0 do
+      true ->
+        error_events
+        |> Enum.map(fn e -> Event.add_repp(e, repp) end)
+      false ->
+        close(id, event.tags, event.data, event, repp) ++ rank_events
+    end
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :match] = tags, data: %{match_id: id}}, repp) do
@@ -95,6 +107,76 @@ defmodule Metr.Match do
     msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
     #Return
     [Event.new([:match, :altered, repp], %{out: msg})]
+  end
+
+  defp close(id, tags, data, event, repp) do
+    ready_process(id)
+    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
+    [Event.new([:match, :ended, repp], %{out: msg})]
+  end
+
+
+  defp collect_rank_alterations(_state, :false), do: []
+  defp collect_rank_alterations(state, :true) do
+    deck_1 = get_deck(state.deck_one)
+    deck_2 = get_deck(state.deck_two)
+
+    case deck_1.rank == deck_2.rank do
+      true ->
+        rank_decks(state, deck_1.id, deck_2.id)
+      false ->
+        [Event.new([:game, :error], %{msg: "Ranks does not match"})]
+    end
+  end
+
+  defp get_deck(deck_id) do
+    Event.new([:read, :deck], %{deck_id: deck_id})
+      |> Deck.feed(nil)
+      |> Enum.map(&(&1.data.out))
+      |> List.first()
+  end
+
+  defp get_game(game_id) do
+    Event.new([:read, :game], %{game_id: game_id})
+      |> Game.feed(nil)
+      |> Enum.map(&(&1.data.out))
+      |> List.first()
+  end
+
+
+  defp rank_decks(state, deck_1_id, deck_2_id) do
+    tally = state.games
+      |> Enum.map(fn gid -> get_game(gid) end)
+      |> Enum.map(fn g -> extract_wins(g) end)
+      |> Enum.concat()
+      |> collect_wins()
+
+    case tally[deck_1_id] - tally[deck_2_id] do
+      0 -> []
+      x when x > 0 -> [new_rank_event(deck_1_id, 1), new_rank_event(deck_2_id, -1)]
+      x when x < 0 -> [new_rank_event(deck_1_id, -1), new_rank_event(deck_2_id, 1)]
+    end
+  end
+
+
+  defp extract_wins(game) do
+    Enum.map(game.participants, fn p -> {p.deck_id, p.place == 1} end)
+  end
+
+
+  defp collect_wins(results) do
+    Enum.reduce(results, %{}, fn {deck_id, win?}, acc -> add_win(acc, deck_id, win?) end)
+  end
+
+
+  defp add_win(acc, _deck_id, false), do: acc
+  defp add_win(acc, deck_id, true) do
+    Map.update(acc, deck_id, 1, &(&1 + 1))
+  end
+
+
+  defp new_rank_event(deck_id, change) do
+    Event.new([:rank, :altered], %{deck_id: deck_id, change: change})
   end
 
 
