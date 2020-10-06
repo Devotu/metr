@@ -27,6 +27,10 @@ defmodule Metr.Match do
     end
   end
 
+  def feed(%Event{id: _event_id, tags: [:end, :match], data: %{match_id: id, ranking: _ranking}} = event, repp) do
+    update(id, event.tags, event.data, event, repp)
+  end
+
   def feed(%Event{id: _event_id, tags: [:read, :match] = tags, data: %{match_id: id}}, repp) do
     ready_process(id)
     msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
@@ -85,6 +89,14 @@ defmodule Metr.Match do
     [Event.new([:match, :altered], %{out: msg})]
   end
 
+  defp update(id, tags, data, event, repp) do
+    ready_process(id)
+    #Call update
+    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
+    #Return
+    [Event.new([:match, :altered, repp], %{out: msg})]
+  end
+
 
 
   ## gen
@@ -107,6 +119,16 @@ defmodule Metr.Match do
   def handle_call(%{tags: [:read, :match]}, _from, state) do
     #Reply
     {:reply, state, state}
+  end
+
+  @impl true
+  def handle_call(%{tags: [:end, :match], data: %{match_id: id, ranking: ranking}, event: event}, _from, state) do
+    new_state = state
+      |> Map.put(:ranking, ranking)
+      |> Map.put(:status, :closed)
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
+    #Reply
+    {:reply, :ok, new_state}
   end
 
   @impl true
