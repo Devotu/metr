@@ -1,33 +1,29 @@
 defmodule Metr.Game do
-  defstruct id: "", time: 0, participants: [], ranking: false, match: nil
+  defstruct id: "", time: 0, participants: [], match: nil
 
   use GenServer
 
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
-  alias Metr.Deck
   alias Metr.Game
-  alias Metr.Rank
   alias Metr.Time
 
 
   ## feed
   def feed(%Event{id: _event_id, tags: [:create, :game], data: data} = event, repp) do
     id = Id.guid()
+    process_name = Data.genserver_id(__ENV__.module, id)
 
-    rank_events = collect_rank_alterations(data)
-
-    #If any contains errors don't alter state
-    error_events = Event.only_errors(rank_events)
-
-    #Return
-    case Enum.count(error_events) > 0 do
-      true ->
-        error_events
-        |> Enum.map(fn e -> Event.add_repp(e, repp) end)
-      false ->
-        rank_events ++ initiate_state({id, data, event}, repp)
+    case GenServer.start(Metr.Game, {id, data, event}, [name: process_name]) do
+      {:ok, _pid} ->
+        participants = convert_to_participants(data.parts, data.winner)
+        player_ids =  Enum.map(participants, fn p -> p.player_id end)
+        deck_ids = Enum.map(participants, fn p -> p.deck_id end)
+        match_id = Map.get(data, :match, nil)
+        [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank, match_id: match_id})]
+      _ ->
+        Event.new([:game, :error, repp], %{msg: "Could not save game state"})
     end
   end
 
@@ -97,21 +93,6 @@ defmodule Metr.Game do
   end
 
 
-  defp initiate_state({id, data, event}, repp) do
-    process_name = Data.genserver_id(__ENV__.module, id)
-    case GenServer.start(Metr.Game, {id, data, event}, [name: process_name]) do
-      {:ok, _pid} ->
-        participants = convert_to_participants(data.parts, data.winner)
-        player_ids =  Enum.map(participants, fn p -> p.player_id end)
-        deck_ids = Enum.map(participants, fn p -> p.deck_id end)
-        match_id = Map.get(data, :match, nil)
-        [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank, match_id: match_id})]
-      _ ->
-        Event.new([:game, :error, repp], %{msg: "Could not save game state"})
-    end
-  end
-
-
   defp fill_power(%{part: part, details: %{player_id: _player, deck_id: _deck, power: _power} = details}) do
     %{part: part, details: details}
   end
@@ -128,10 +109,6 @@ defmodule Metr.Game do
   defp fill_fun(%{part: part, details: %{player_id: _player, deck_id: _deck} = details}) do
     %{part: part, details: Map.put(details, :fun, nil)}
   end
-
-
-  defp fill_rank(%{rank: nil} = deck), do: Map.update!(deck, :rank, fn _r -> {0,0} end)
-  defp fill_rank(deck), do: deck
 
 
   defp part_to_participant(part, winner) do
@@ -154,48 +131,11 @@ defmodule Metr.Game do
   end
 
 
-  defp collect_rank_alterations(%{rank: false}), do: []
-  defp collect_rank_alterations(%{rank: true} = data) do
-    participants = convert_to_participants(data.parts, data.winner)
-    case ranks_match?(participants) do
-      true ->
-        Enum.map(participants, fn p -> rank_participant(p) end)
-      false ->
-        [Event.new([:game, :error], %{msg: "Ranks does not match"})]
-    end
-  end
-
-
-  defp ranks_match?(participants) do
-    1 == participants
-      |> Enum.map(fn p -> get_deck(p.deck_id) end)
-      |> Enum.map(fn e -> e.data.out end)
-      |> Enum.map(fn d -> fill_rank(d) end)
-      |> Enum.map(fn d -> d.rank end)
-      |> Enum.map(fn {rank, _delta} -> rank end)
-      |> Enum.dedup_by(fn r -> r end)
-      |> Enum.count()
-  end
-
-
-  defp get_deck(deck_id) do
-    Event.new([:read, :deck], %{deck_id: deck_id})
-      |> Deck.feed(nil)
-      |> List.first()
-  end
-
-
-  defp rank_participant(%{deck_id: deck_id} = p) do
-    Event.new([:alter, :rank], %{deck_id: deck_id, change: Rank.find_change(p)})
-  end
-
-
   defp new(id, %{match: match} = data) do
     %Game{
       id: id,
       time: Time.timestamp(),
       participants: convert_to_participants(data.parts, data.winner),
-      ranking: data.rank,
       match: match
     }
   end
@@ -205,7 +145,6 @@ defmodule Metr.Game do
       id: id,
       time: Time.timestamp(),
       participants: convert_to_participants(data.parts, data.winner),
-      ranking: data.rank
     }
   end
 
