@@ -176,7 +176,7 @@ defmodule Metr.Match do
 
 
   defp new_rank_event(deck_id, change) do
-    Event.new([:rank, :altered], %{deck_id: deck_id, change: change})
+    Event.new([:alter, :rank], %{deck_id: deck_id, change: change})
   end
 
 

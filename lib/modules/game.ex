@@ -186,7 +186,7 @@ defmodule Metr.Game do
 
 
   defp rank_participant(%{deck_id: deck_id} = p) do
-    Event.new([:rank, :altered], %{deck_id: deck_id, change: Rank.find_change(p)})
+    Event.new([:alter, :rank], %{deck_id: deck_id, change: Rank.find_change(p)})
   end
 
 

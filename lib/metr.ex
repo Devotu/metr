@@ -117,12 +117,12 @@ defmodule Metr do
 
 
   def alter_rank(deck_id, :up) do
-    Event.new([:rank, :altered], %{deck_id: deck_id, change: 1})
+    Event.new([:alter, :rank], %{deck_id: deck_id, change: 1})
     |> run()
   end
 
   def alter_rank(deck_id, :down) do
-    Event.new([:rank, :altered], %{deck_id: deck_id, change: -1})
+    Event.new([:alter, :rank], %{deck_id: deck_id, change: -1})
     |> run()
   end
 

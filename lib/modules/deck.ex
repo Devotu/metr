@@ -66,7 +66,7 @@ defmodule Metr.Deck do
     [{Event.new([:list, :game], %{ids: deck.games}), repp}]
   end
 
-  def feed(%Event{id: _event_id, tags: [:rank, :altered] = tags, data: %{deck_id: id, change: change}} = event, repp) do
+  def feed(%Event{id: _event_id, tags: [:alter, :rank] = tags, data: %{deck_id: id, change: change}} = event, repp) do
     #call update
     update(id, tags, %{id: id, change: change}, event, repp)
   end
@@ -239,7 +239,7 @@ defmodule Metr.Deck do
 
 
   @impl true
-  def handle_call(%{tags: [:rank, :altered], data: %{id: id, change: change}, event: event}, _from, state) do
+  def handle_call(%{tags: [:alter, :rank], data: %{id: id, change: change}, event: event}, _from, state) do
     new_state = Map.update!(state, :rank, fn rank -> Rank.apply_change(rank, change) end)
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:reply, "Deck #{id} rank altered to #{Kernel.inspect(new_state.rank)}", new_state}

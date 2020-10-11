@@ -125,83 +125,83 @@ defmodule DeckTest do
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id, change: 1}), nil
     assert deck.data.out.rank == nil
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {0,1}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {1,0}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {1,1}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {2,0}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {2,-1}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {2,0}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {2,1}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {2,1}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {2,0}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {2,-1}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {1,0}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {1,-1}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {0,0}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {0,-1}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {-1,0}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {-1,-1}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {-2,0}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {-2,-1}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: -1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {-2,-1}
 
-    Deck.feed Event.new([:rank, :altered], %{deck_id: deck_1_id, change: 1}), nil
+    Deck.feed Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil
     [deck] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_1_id}), nil
     assert deck.data.out.rank == {-2,0}
 
