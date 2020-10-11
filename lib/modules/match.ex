@@ -101,13 +101,6 @@ defmodule Metr.Match do
     [Event.new([:match, :altered], %{out: msg})]
   end
 
-  defp update(id, tags, data, event, repp) do
-    ready_process(id)
-    #Call update
-    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
-    #Return
-    [Event.new([:match, :altered, repp], %{out: msg})]
-  end
 
   defp close(id, tags, data, event, repp) do
     ready_process(id)
