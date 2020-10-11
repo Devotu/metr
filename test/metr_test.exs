@@ -324,7 +324,8 @@ defmodule MetrTest do
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
-      :player_2 => player_2_id}
+      :player_2 => player_2_id,
+      :ranking => :true}
     match_id = Metr.create_match(match_data)
 
     initial_match = Metr.read_match(match_id)
@@ -349,7 +350,7 @@ defmodule MetrTest do
     game_2_id = Metr.create_game(Map.put(game_data, :winner, 1))
     game_3_id = Metr.create_game(game_data)
 
-    assert :ok == Metr.end_match(match_id, :true)
+    assert :ok == Metr.end_match(match_id)
 
     ended_match = Metr.read_match(match_id)
     assert 3 = ended_match.games |> Enum.count()

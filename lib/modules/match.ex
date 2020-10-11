@@ -29,9 +29,9 @@ defmodule Metr.Match do
     end
   end
 
-  def feed(%Event{id: _event_id, tags: [:end, :match], data: %{match_id: id, ranking: ranking}} = event, repp) do
+  def feed(%Event{id: _event_id, tags: [:end, :match], data: %{match_id: id}} = event, repp) do
     current_state = recall(id)
-    rank_events = collect_rank_alterations(current_state, ranking)
+    rank_events = collect_rank_alterations(current_state)
     error_events = Event.only_errors(rank_events) #If any contains errors don't alter state
     #Return
     case Enum.count(error_events) > 0 do
@@ -109,8 +109,8 @@ defmodule Metr.Match do
   end
 
 
-  defp collect_rank_alterations(_state, :false), do: []
-  defp collect_rank_alterations(state, :true) do
+  defp collect_rank_alterations(%Match{ranking: false}), do: []
+  defp collect_rank_alterations(%Match{ranking: true} = state) do
     deck_1 = get_deck(state.deck_one)
     deck_2 = get_deck(state.deck_two)
 
@@ -183,6 +183,7 @@ defmodule Metr.Match do
       player_two: data.player_2,
       deck_one: data.deck_1,
       deck_two: data.deck_2,
+      ranking: data.ranking,
       status: :initialized
     }
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
@@ -197,9 +198,8 @@ defmodule Metr.Match do
   end
 
   @impl true
-  def handle_call(%{tags: [:end, :match], data: %{match_id: id, ranking: ranking}, event: event}, _from, state) do
+  def handle_call(%{tags: [:end, :match], data: %{match_id: id}, event: event}, _from, state) do
     new_state = state
-      |> Map.put(:ranking, ranking)
       |> Map.put(:status, :closed)
     :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     #Reply

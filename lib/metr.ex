@@ -131,8 +131,8 @@ defmodule Metr do
     create(:match, data)
   end
 
-  def end_match(match_id, ranking \\ :false) do
-    Event.new([:end, :match], %{match_id: match_id, ranking: ranking})
+  def end_match(match_id) do
+    Event.new([:end, :match], %{match_id: match_id})
     |> run()
   end
 
