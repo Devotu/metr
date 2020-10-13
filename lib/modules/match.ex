@@ -9,17 +9,17 @@ defmodule Metr.Match do
   alias Metr.Game
   alias Metr.Id
   alias Metr.Match
+  alias Metr.Player
 
 
   ## feed
   def feed(%Event{id: _event_id, tags: [:create, :match], data: data} = event, repp) do
-    id = Id.guid()
-
-    case Data.state_exists?("Player", data.player_1) do #TODO validate players and decks
-      false ->
+    case verify_input_data(data) do
+      {:error, error} ->
         #Return
-        [Event.new([:match, :create, :fail], %{cause: "player not found", data: data})]
-      true ->
+        [Event.new([:match, :create, :fail], %{cause: error, data: data})]
+      {:ok} ->
+        id = Id.guid()
         process_name = Data.genserver_id(__ENV__.module, id)
         #Start genserver
         case GenServer.start(Match, {id, data, event}, [name: process_name]) do
@@ -109,6 +109,45 @@ defmodule Metr.Match do
   end
 
 
+  defp verify_input_data(%{deck_1: deck_1_id, deck_2: deck_2_id, player_1: player_1_id, player_2: player_2_id, ranking: ranking}) do
+    {:ok}
+    |> verify_player(player_1_id)
+    |> verify_player(player_2_id)
+    |> verify_deck(deck_1_id)
+    |> verify_deck(deck_2_id)
+    |> verify_rank(deck_1_id, deck_2_id, ranking)
+  end
+
+
+  defp verify_player({:error, _cause} = error, _id), do: error
+  defp verify_player({:ok}, id) do
+    case get_player(id) do
+      nil ->  {:error, "player #{id} not found"}
+      _ ->    {:ok}
+    end
+  end
+
+  defp verify_deck({:error, _cause} = error, _id), do: error
+  defp verify_deck({:ok}, id) do
+    case get_deck(id) do
+      nil ->  {:error, "deck #{id} not found"}
+      _ ->    {:ok}
+    end
+  end
+
+  defp verify_rank({:error, _cause} = error, _deck_id_1, _deck_id_2, _ranking), do: error
+  defp verify_rank({:ok}, _deck_id_1, _deck_id_2, :false), do: {:ok}
+  defp verify_rank({:ok}, deck_id_1, deck_id_2, :true) do
+    deck_1 = get_deck(deck_id_1)
+    deck_2 = get_deck(deck_id_2)
+
+    case deck_1.rank == deck_2.rank do
+      false ->  {:error, "ranks does not match"}
+      _ ->      {:ok}
+    end
+  end
+
+
   defp collect_rank_alterations(%Match{ranking: false}), do: []
   defp collect_rank_alterations(%Match{ranking: true} = state) do
     deck_1 = get_deck(state.deck_one)
@@ -118,7 +157,7 @@ defmodule Metr.Match do
       true ->
         rank_decks(state, deck_1.id, deck_2.id)
       false ->
-        [Event.new([:game, :error], %{msg: "Ranks does not match"})]
+        [Event.new([:match, :error], %{msg: "ranks does not match"})]
     end
   end
 
@@ -132,6 +171,13 @@ defmodule Metr.Match do
   defp get_game(game_id) do
     Event.new([:read, :game], %{game_id: game_id})
       |> Game.feed(nil)
+      |> Enum.map(&(&1.data.out))
+      |> List.first()
+  end
+
+  defp get_player(player_id) do
+    Event.new([:read, :player], %{player_id: player_id})
+      |> Player.feed(nil)
       |> Enum.map(&(&1.data.out))
       |> List.first()
   end
