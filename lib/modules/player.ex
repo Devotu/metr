@@ -69,18 +69,27 @@ defmodule Metr.Player do
 
 
   defp recall(id) do
-    ready_process(id)
-    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :player]})
+    case ready_process(id) do
+      {:error, error} ->
+        {:error, error}
+      _ ->
+        GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :player]})
+    end
   end
 
 
   defp ready_process(id) do
     # Is running?
-    if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
-      #Get state
-      current_state = Map.merge(%Player{}, Data.recall_state(__ENV__.module, id))
-      #Start process
-      GenServer.start(Metr.Player, current_state, [name: Data.genserver_id(__ENV__.module, id)])
+    case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)), Data.state_exists?(__ENV__.module, id)} do
+      {nil, true} ->
+        #Get state
+        current_state = Map.merge(%Player{}, Data.recall_state(__ENV__.module, id))
+        #Start process
+        GenServer.start(Metr.Player, current_state, [name: Data.genserver_id(__ENV__.module, id)])
+      {nil, false} ->
+        {:error, :no_such_id}
+      _ ->
+        {:ok}
     end
   end
 
