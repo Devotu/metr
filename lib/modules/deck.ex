@@ -10,20 +10,21 @@ defmodule Metr.Deck do
   alias Metr.Id
   alias Metr.Data
   alias Metr.Deck
+  alias Metr.Player
   alias Metr.Rank
 
   ##feed
-  def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id} = data} = event, repp) do
-    case Data.state_exists?("Player", player_id) do
-      false ->
+  def feed(%Event{id: _event_id, tags: [:create, :deck], data: data} = event, repp) do
+    case verify_input_data(data) do
+      {:error, error} ->
         #Return
-        [Event.new([:deck, :create, :fail], %{cause: "player not found", data: data})]
-      true ->
-        id = Id.hrid(name)
+        [Event.new([:deck, :create, :fail], %{cause: error, data: data})]
+      {:ok} ->
+        id = Id.hrid(data.name)
         process_name = Data.genserver_id(__ENV__.module, id)
         #Start genserver
         case GenServer.start(Metr.Deck, {id, data, event}, [name: process_name]) do
-          {:ok, _pid} -> [Event.new([:deck, :created, repp], %{id: id, player_id: player_id})]
+          {:ok, _pid} -> [Event.new([:deck, :created, repp], %{id: id, player_id: data.player_id})]
           {:error, error} -> [Event.new([:deck, :not, :created, repp], %{errors: [error]})]
         end
     end
@@ -187,6 +188,42 @@ defmodule Metr.Deck do
     |> Enum.reduce(base_rank, fn(p, acc) -> Rank.apply_change(acc, Rank.find_change(p)) end)
 
     Map.put(state, :rank, rank)
+  end
+
+
+  defp verify_input_data(%{name: name, player_id: player_id}) do
+    {:ok}
+    |> verify_name(name)
+    |> verify_player(player_id)
+  end
+  defp verify_input_data(%{player_id: _player_id}), do: {:error, "missing name parameter"}
+  defp verify_input_data(%{name: _name}), do: {:error, "missing player_id parameter"}
+
+
+  defp verify_name({:error, _cause} = error, _id), do: error
+  defp verify_name({:ok}, name) do
+    case name do
+      nil ->  {:error, "no name"}
+      "" ->   {:error, "name cannot be blank"}
+      _ ->    {:ok}
+    end
+  end
+
+
+  defp verify_player({:error, _cause} = error, _id), do: error
+  defp verify_player({:ok}, id) do
+    case get_player(id) do
+      {:error, :no_such_id} ->  {:error, "player #{id} not found"}
+      nil ->  {:error, "player #{id} not found"}
+      _ ->    {:ok}
+    end
+  end
+
+  defp get_player(player_id) do
+    Event.new([:read, :player], %{player_id: player_id})
+      |> Player.feed(nil)
+      |> Enum.map(&(&1.data.out))
+      |> List.first()
   end
 
 
