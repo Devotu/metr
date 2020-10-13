@@ -5,8 +5,6 @@ defmodule MatchTest do
   alias Metr.Deck
   alias Metr.Match
   alias Metr.Event
-  alias Metr.Game
-  alias Metr.Id
   alias Metr.Player
 
 

@@ -28,8 +28,6 @@ defmodule DeckTest do
     name = "Fail create deck"
     [resulting_event] = Deck.feed Event.new([:create, :deck], %{name: name, player_id: player_id}), nil
     assert [:deck, :create, :fail] == resulting_event.tags
-
-    IO.inspect(resulting_event.data.cause, label: "deck test - resulting failure")
     assert "player #{player_id} not found" == resulting_event.data.cause
 
     [resulting_event] = Deck.feed Event.new([:create, :deck], %{name: name}), nil
