@@ -23,7 +23,7 @@ defmodule Metr.Match do
         process_name = Data.genserver_id(__ENV__.module, id)
         #Start genserver
         case GenServer.start(Match, {id, data, event}, [name: process_name]) do
-          {:ok, _pid} -> [Event.new([:match, :created, repp], %{id: id, player_1: data.player_1})] #TODO rest of players and decks
+          {:ok, _pid} -> [Event.new([:match, :created, repp], %{id: id, player_1_id: data.player_1_id})] #TODO rest of players and decks
           {:error, error} -> [Event.new([:match, :not, :created, repp], %{errors: [error]})]
         end
     end
@@ -109,7 +109,7 @@ defmodule Metr.Match do
   end
 
 
-  defp verify_input_data(%{deck_1: deck_1_id, deck_2: deck_2_id, player_1: player_1_id, player_2: player_2_id, ranking: ranking}) do
+  defp verify_input_data(%{deck_1_id: deck_1_id, deck_2_id: deck_2_id, player_1_id: player_1_id, player_2_id: player_2_id, ranking: ranking}) do
     {:ok}
     |> verify_player(player_1_id)
     |> verify_player(player_2_id)
@@ -225,10 +225,10 @@ defmodule Metr.Match do
   def init({id, data, event}) do
     state = %Match{
       id: id,
-      player_one: data.player_1,
-      player_two: data.player_2,
-      deck_one: data.deck_1,
-      deck_two: data.deck_2,
+      player_one: data.player_1_id,
+      player_two: data.player_2_id,
+      deck_one: data.deck_1_id,
+      deck_two: data.deck_2_id,
       ranking: data.ranking,
       status: :initialized
     }

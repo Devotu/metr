@@ -127,7 +127,7 @@ defmodule Metr do
   end
 
 
-  def create_match(%{:deck_1 => _deck_1_id, :deck_2 => _deck_2_id, :player_1 => _player_1_id, :player_2 => _player_2_id} = data) do
+  def create_match(%{:deck_1_id => _deck_1_id, :deck_2_id => _deck_2_id, :player_1_id => _player_1_id, :player_2_id => _player_2_id} = data) do
     create(:match, data)
   end
 

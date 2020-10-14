@@ -321,10 +321,10 @@ defmodule MetrTest do
     Deck.feed Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil
 
     match_data = %{
-      :deck_1 => deck_1_id,
-      :deck_2 => deck_2_id,
-      :player_1 => player_1_id,
-      :player_2 => player_2_id,
+      :deck_1_id => deck_1_id,
+      :deck_2_id => deck_2_id,
+      :player_1_id => player_1_id,
+      :player_2_id => player_2_id,
       :ranking => :true}
     match_id = Metr.create_match(match_data)
 
