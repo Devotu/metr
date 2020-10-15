@@ -59,13 +59,13 @@ defmodule Metr.Match do
 
   def feed(%Event{id: _event_id, tags: [:list, :match], data: %{ids: ids}}, repp) when is_list(ids) do
     matches = Enum.map(ids, &recall/1)
-    [Event.new([:matchs, repp], %{matches: matches})]
+    [Event.new([:matches, repp], %{matches: matches})]
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :match]}, repp) do
     matches = Data.list_ids(__ENV__.module)
     |> Enum.map(&recall/1)
-    [Event.new([:matchs, repp], %{matches: matches})]
+    [Event.new([:matches, repp], %{matches: matches})]
   end
 
   def feed(%Event{id: _event_id, tags: [:game, :created, _orepp], data: %{id: _game_id, match_id: nil}}, _repp) do
