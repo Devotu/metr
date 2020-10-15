@@ -1,5 +1,5 @@
 defmodule Metr.Match do
-  defstruct id: "", games: [], player_one: "", player_two: "", deck_one: "", deck_two: "", ranking: false, status: :new
+  defstruct id: "", games: [], player_one: "", player_two: "", deck_one: "", deck_two: "", ranking: false, status: nil
 
   use GenServer
 
@@ -83,13 +83,19 @@ defmodule Metr.Match do
 
   defp ready_process(id) do
     # Is running?
-    if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
-      #Get state
-      current_state = Map.merge(%Match{}, Data.recall_state(__ENV__.module, id))
-      #Start process
-      GenServer.start(Match, current_state, [name: Data.genserver_id(__ENV__.module, id)])
+    case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)), Data.state_exists?(__ENV__.module, id)} do
+      {nil, true} ->
+        #Get state
+        current_state = Map.merge(%Match{}, Data.recall_state(__ENV__.module, id))
+        #Start process
+        GenServer.start(Match, current_state, [name: Data.genserver_id(__ENV__.module, id)])
+      {nil, false} ->
+        {:error, :no_such_id}
+      _ ->
+        {:ok}
     end
   end
+
 
   defp recall(id) do
     ready_process(id)
@@ -222,10 +228,11 @@ defmodule Metr.Match do
   end
 
 
-
   ## gen
   @impl true
+
   def init({id, data, event}) do
+    data = Map.put_new(data, :status, :initialized)
     state = %Match{
       id: id,
       player_one: data.player_1_id,
@@ -237,6 +244,10 @@ defmodule Metr.Match do
     }
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}
+  end
+
+  def init(recalled_state) do
+    {:ok, recalled_state}
   end
 
 
