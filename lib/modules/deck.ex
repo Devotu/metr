@@ -1,5 +1,5 @@
 defmodule Metr.Deck do
-  defstruct id: "", name: "", format: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: [], rank: nil
+  defstruct id: "", name: "", format: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: [], matches: [], rank: nil
 
   @formats [
     "block", "commander", "draft", "modern", "mixblock", "minimander", "pauper", "premodern", "sealed", "singleton", "standard", "threecard"]
@@ -49,6 +49,12 @@ defmodule Metr.Deck do
   def feed(%Event{id: _event_id, tags: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
     events = Data.read_log_by_id("Deck", id)
     [Event.new([:deck, :log, :read, repp], %{out: events})]
+  end
+
+  def feed(%Event{id: _event_id, tags: [:match, :created, _orepp] = tags, data: %{id: match_id, deck_ids: deck_ids}} = event, _repp) do
+    #for each participant
+    #call update
+    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: match_id, deck_id: id}, event) end)
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :deck], data: %{deck_id: id}}, repp) do
@@ -257,6 +263,14 @@ defmodule Metr.Deck do
     new_state = Map.update!(state, :games, &(&1 ++ [game_id]))
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:reply, "Game #{game_id} added to deck #{id}", new_state}
+  end
+
+
+  @impl true
+  def handle_call(%{tags: [:match, :created, _orepp], data: %{id: match_id, deck_id: id}, event: event}, _from, state) do
+    new_state = Map.update!(state, :matches, &(&1 ++ [match_id]))
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:reply, "Game #{match_id} added to deck #{id}", new_state}
   end
 
 

@@ -23,7 +23,10 @@ defmodule Metr.Match do
         process_name = Data.genserver_id(__ENV__.module, id)
         #Start genserver
         case GenServer.start(Match, {id, data, event}, [name: process_name]) do
-          {:ok, _pid} -> [Event.new([:match, :created, repp], %{id: id, player_1_id: data.player_1_id})] #TODO rest of players and decks
+          {:ok, _pid} -> [Event.new(
+            [:match, :created, repp],
+            %{id: id, player_ids: [data.player_1_id, data.player_2_id], deck_ids: [data.deck_1_id, data.deck_2_id]}
+            )]
           {:error, error} -> [Event.new([:match, :not, :created, repp], %{errors: [error]})]
         end
     end
