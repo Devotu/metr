@@ -55,4 +55,24 @@ defmodule MatchTest do
     Data.wipe_test("Player", player_id)
     Data.wipe_test("Deck", [deck_id_1, deck_id_2])
   end
+
+  
+  test "list matches" do
+    [player_created_event] = Player.feed Event.new([:create, :player], %{name: "David Match"}), nil
+    player_id = player_created_event.data.id
+    [deck_created_event] = Deck.feed Event.new([:create, :deck], %{name: "Delta Match", player_id: player_id}), nil
+    deck_id = deck_created_event.data.id
+
+    Match.feed Event.new([:create, :match], %{player_1_id: player_id, deck_1_id: deck_id, player_2_id: player_id, deck_2_id: deck_id, ranking: :false}), nil
+    Match.feed Event.new([:create, :match], %{player_1_id: player_id, deck_1_id: deck_id, player_2_id: player_id, deck_2_id: deck_id, ranking: :true}), nil
+    Match.feed Event.new([:create, :match], %{player_1_id: player_id, deck_1_id: deck_id, player_2_id: player_id, deck_2_id: deck_id, ranking: :false}), nil
+
+    [match_list_event] = Match.feed Event.new([:list, :match], %{}), nil
+    matches = match_list_event.data.matches
+    assert 3 = Enum.count(matches)
+
+    Data.wipe_test("Match", Enum.map(matches, fn m -> m.id end))
+    Data.wipe_test("Player", player_id)
+    Data.wipe_test("Deck", deck_id)
+  end
 end
