@@ -23,6 +23,11 @@ defmodule Metr do
     list(:game, constraints)
   end
 
+  def list_games(game_ids) when is_list(game_ids) do
+    game_ids
+    |> Enum.map(fn gid -> read_game(gid) end)
+  end
+
   def list_games(limit) when is_number(limit) do
     constraints = Map.put(%{}, :limit, limit)
     list(:game, constraints)
@@ -32,6 +37,9 @@ defmodule Metr do
     list(:game)
   end
 
+  def list_matches() do
+    list(:match)
+  end
 
   def list_formats() do
     list(:format)

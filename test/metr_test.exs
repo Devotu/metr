@@ -367,4 +367,43 @@ defmodule MetrTest do
     Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id])
     Data.wipe_test("Match", [match_id])
   end
+
+
+  test "list games by ids" do
+    player_name = "Rudolf Metr"
+    player_id = Id.hrid(player_name)
+    deck_name = "Romeo Metr"
+    deck_id = Id.hrid(deck_name)
+
+    Player.feed Event.new([:create, :player], %{name: player_name}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil
+
+    game_1_data = %{
+      :deck_1 => deck_id,
+      :deck_2 => deck_id,
+      :player_1 => player_id,
+      :player_2 => player_id,
+      :winner => 1}
+    game_1_id = Metr.create_game(game_1_data)
+
+    game_2_data = %{
+      :deck_1 => deck_id,
+      :deck_2 => deck_id,
+      :player_1 => player_id,
+      :player_2 => player_id,
+      :winner => 1}
+    game_2_id = Metr.create_game(game_2_data)
+
+    game_ids = [game_1_id, game_2_id]
+
+    games = Metr.list_games(game_ids)
+    assert 2 == Enum.count games
+    first_game = List.first(games)
+    first_participant = List.first(first_game.participants)
+    assert deck_id == first_participant.deck_id
+
+    Data.wipe_test("Player", [player_id])
+    Data.wipe_test("Deck", [deck_id])
+    Data.wipe_test("Game", [game_1_id, game_2_id])
+  end
 end
