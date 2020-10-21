@@ -6,7 +6,7 @@ defmodule Metr do
   @default_game %{
     :fun_1 => nil, :fun_2 => nil,
     :power_1 => nil, :power_2 => nil,
-    :winner => 0, rank: false
+    :winner => 0, rank: false, match: nil
     }
 
   ## api
@@ -23,6 +23,11 @@ defmodule Metr do
     list(:game, constraints)
   end
 
+  def list_games(game_ids) when is_list(game_ids) do
+    game_ids
+    |> Enum.map(fn gid -> read_game(gid) end)
+  end
+
   def list_games(limit) when is_number(limit) do
     constraints = Map.put(%{}, :limit, limit)
     list(:game, constraints)
@@ -32,6 +37,9 @@ defmodule Metr do
     list(:game)
   end
 
+  def list_matches() do
+    list(:match)
+  end
 
   def list_formats() do
     list(:format)
@@ -50,6 +58,10 @@ defmodule Metr do
     read(:game, id)
   end
 
+  def read_match(id) do
+    read(:match, id)
+  end
+
   def read_entity_log(type, id) when is_atom(type) do
     read_log(type, id)
   end
@@ -60,12 +72,13 @@ defmodule Metr do
     :fun_1 => f1, :fun_2 => f2,
     :player_1 => p1, :player_2 => p2,
     :power_1 => s1, :power_2 => s2,
-    :winner => w, rank: r
+    :winner => w, rank: r, match: m
   }) do
 
     data = %{
       winner: w,
       rank: r,
+      match: m,
       parts: [
         %{part: 1, details: %{deck_id: d1, player_id: p1, power: s1, fun: f1}},
         %{part: 2, details: %{deck_id: d2, player_id: p2, power: s2, fun: f2}},
@@ -110,15 +123,27 @@ defmodule Metr do
     create(:deck, data)
   end
 
+
   def alter_rank(deck_id, :up) do
-    Event.new([:rank, :altered], %{deck_id: deck_id, change: 1})
+    Event.new([:alter, :rank], %{deck_id: deck_id, change: 1})
     |> run()
   end
 
   def alter_rank(deck_id, :down) do
-    Event.new([:rank, :altered], %{deck_id: deck_id, change: -1})
+    Event.new([:alter, :rank], %{deck_id: deck_id, change: -1})
     |> run()
   end
+
+
+  def create_match(%{:deck_1_id => _deck_1_id, :deck_2_id => _deck_2_id, :player_1_id => _player_1_id, :player_2_id => _player_2_id} = data) do
+    create(:match, data)
+  end
+
+  def end_match(match_id) do
+    Event.new([:end, :match], %{match_id: match_id})
+    |> run()
+  end
+
 
 
   ## private
@@ -218,6 +243,7 @@ defmodule Metr do
       :player -> :player_id
       :deck -> :deck_id
       :game -> :game_id
+      :match -> :match_id
     end
   end
 
@@ -230,6 +256,8 @@ defmodule Metr do
       "Deck" -> :deck
       "game" -> :game
       "Game" -> :game
+      "match" -> :match
+      "Match" -> :match
     end
   end
 

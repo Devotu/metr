@@ -6,6 +6,7 @@ defmodule Metr.Router do
   alias Metr.Deck
   alias Metr.Game
   alias Metr.Log
+  alias Metr.Match
   alias Metr.Player
 
   def input(events, response_pid) when is_list(events) and is_pid(response_pid) do
@@ -41,6 +42,7 @@ defmodule Metr.Router do
       Game.feed(event, response_pid),
       Log.feed(event, response_pid),
       # CLI.feed(event, response_pid),
+      Match.feed(event, response_pid),
       Metr.feed(event, response_pid),
     ]
     |> Enum.filter(fn e -> Enum.count(e) > 0 end)

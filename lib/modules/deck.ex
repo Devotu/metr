@@ -1,5 +1,5 @@
 defmodule Metr.Deck do
-  defstruct id: "", name: "", format: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: [], rank: nil
+  defstruct id: "", name: "", format: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: [], matches: [], rank: nil
 
   @formats [
     "block", "commander", "draft", "modern", "mixblock", "minimander", "pauper", "premodern", "sealed", "singleton", "standard", "threecard"]
@@ -10,20 +10,21 @@ defmodule Metr.Deck do
   alias Metr.Id
   alias Metr.Data
   alias Metr.Deck
+  alias Metr.Player
   alias Metr.Rank
 
   ##feed
-  def feed(%Event{id: _event_id, tags: [:create, :deck], data: %{name: name, player_id: player_id} = data} = event, repp) do
-    case Data.state_exists?("Player", player_id) do
-      false ->
+  def feed(%Event{id: _event_id, tags: [:create, :deck], data: data} = event, repp) do
+    case verify_input_data(data) do
+      {:error, error} ->
         #Return
-        [Event.new([:deck, :create, :fail], %{cause: "player not found", data: data})]
-      true ->
-        id = Id.hrid(name)
+        [Event.new([:deck, :create, :fail], %{cause: error, data: data})]
+      {:ok} ->
+        id = Id.hrid(data.name)
         process_name = Data.genserver_id(__ENV__.module, id)
         #Start genserver
         case GenServer.start(Metr.Deck, {id, data, event}, [name: process_name]) do
-          {:ok, _pid} -> [Event.new([:deck, :created, repp], %{id: id, player_id: player_id})]
+          {:ok, _pid} -> [Event.new([:deck, :created, repp], %{id: id, player_id: data.player_id})]
           {:error, error} -> [Event.new([:deck, :not, :created, repp], %{errors: [error]})]
         end
     end
@@ -50,6 +51,12 @@ defmodule Metr.Deck do
     [Event.new([:deck, :log, :read, repp], %{out: events})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:match, :created, _orepp] = tags, data: %{id: match_id, deck_ids: deck_ids}} = event, _repp) do
+    #for each participant
+    #call update
+    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: match_id, deck_id: id}, event) end)
+  end
+
   def feed(%Event{id: _event_id, tags: [:read, :deck], data: %{deck_id: id}}, repp) do
     deck = recall(id)
     [Event.new([:deck, :read, repp], %{out: deck})]
@@ -66,7 +73,7 @@ defmodule Metr.Deck do
     [{Event.new([:list, :game], %{ids: deck.games}), repp}]
   end
 
-  def feed(%Event{id: _event_id, tags: [:rank, :altered] = tags, data: %{deck_id: id, change: change}} = event, repp) do
+  def feed(%Event{id: _event_id, tags: [:alter, :rank] = tags, data: %{deck_id: id, change: change}} = event, repp) do
     #call update
     update(id, tags, %{id: id, change: change}, event, repp)
   end
@@ -190,6 +197,42 @@ defmodule Metr.Deck do
   end
 
 
+  defp verify_input_data(%{name: name, player_id: player_id}) do
+    {:ok}
+    |> verify_name(name)
+    |> verify_player(player_id)
+  end
+  defp verify_input_data(%{player_id: _player_id}), do: {:error, "missing name parameter"}
+  defp verify_input_data(%{name: _name}), do: {:error, "missing player_id parameter"}
+
+
+  defp verify_name({:error, _cause} = error, _id), do: error
+  defp verify_name({:ok}, name) do
+    case name do
+      nil ->  {:error, "no name"}
+      "" ->   {:error, "name cannot be blank"}
+      _ ->    {:ok}
+    end
+  end
+
+
+  defp verify_player({:error, _cause} = error, _id), do: error
+  defp verify_player({:ok}, id) do
+    case get_player(id) do
+      {:error, :no_such_id} ->  {:error, "player #{id} not found"}
+      nil ->  {:error, "player #{id} not found"}
+      _ ->    {:ok}
+    end
+  end
+
+  defp get_player(player_id) do
+    Event.new([:read, :player], %{player_id: player_id})
+      |> Player.feed(nil)
+      |> Enum.map(&(&1.data.out))
+      |> List.first()
+  end
+
+
 
   ## gen
   @impl true
@@ -224,6 +267,14 @@ defmodule Metr.Deck do
 
 
   @impl true
+  def handle_call(%{tags: [:match, :created, _orepp], data: %{id: match_id, deck_id: id}, event: event}, _from, state) do
+    new_state = Map.update!(state, :matches, &(&1 ++ [match_id]))
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:reply, "Game #{match_id} added to deck #{id}", new_state}
+  end
+
+
+  @impl true
   def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: id, game_id: game_id}, event: event}, _from, state) do
     original_rank = Data.read_log_by_id("Deck", id)
       |> Enum.filter(fn e -> e.tags == [:create, :deck] end)
@@ -239,7 +290,7 @@ defmodule Metr.Deck do
 
 
   @impl true
-  def handle_call(%{tags: [:rank, :altered], data: %{id: id, change: change}, event: event}, _from, state) do
+  def handle_call(%{tags: [:alter, :rank], data: %{id: id, change: change}, event: event}, _from, state) do
     new_state = Map.update!(state, :rank, fn rank -> Rank.apply_change(rank, change) end)
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:reply, "Deck #{id} rank altered to #{Kernel.inspect(new_state.rank)}", new_state}

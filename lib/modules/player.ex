@@ -1,5 +1,5 @@
 defmodule Metr.Player do
-  defstruct id: "", name: "", decks: [], games: []
+  defstruct id: "", name: "", decks: [], games: [], matches: []
 
   use GenServer
 
@@ -38,6 +38,12 @@ defmodule Metr.Player do
     Enum.reduce(player_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, player_id: id}, event) end)
   end
 
+  def feed(%Event{id: _event_id, tags: [:match, :created, _orepp] = tags, data: %{id: match_id, player_ids: player_ids}} = event, _repp) do
+    #for each participant
+    #call update
+    Enum.reduce(player_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: match_id, player_id: id}, event) end)
+  end
+
   def feed(%Event{id: _event_id, tags: [:read, :player], data: %{player_id: id}}, repp) do
     player = recall(id)
     [Event.new([:player, :read, repp], %{out: player})]
@@ -69,18 +75,27 @@ defmodule Metr.Player do
 
 
   defp recall(id) do
-    ready_process(id)
-    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :player]})
+    case ready_process(id) do
+      {:error, error} ->
+        {:error, error}
+      _ ->
+        GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :player]})
+    end
   end
 
 
   defp ready_process(id) do
     # Is running?
-    if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
-      #Get state
-      current_state = Map.merge(%Player{}, Data.recall_state(__ENV__.module, id))
-      #Start process
-      GenServer.start(Metr.Player, current_state, [name: Data.genserver_id(__ENV__.module, id)])
+    case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)), Data.state_exists?(__ENV__.module, id)} do
+      {nil, true} ->
+        #Get state
+        current_state = Map.merge(%Player{}, Data.recall_state(__ENV__.module, id))
+        #Start process
+        GenServer.start(Metr.Player, current_state, [name: Data.genserver_id(__ENV__.module, id)])
+      {nil, false} ->
+        {:error, :no_such_id}
+      _ ->
+        {:ok}
     end
   end
 
@@ -110,6 +125,13 @@ defmodule Metr.Player do
     new_state = Map.update!(state, :games, &(&1 ++ [game_id]))
     :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Game #{game_id} added to player #{id}", new_state}
+  end
+
+  @impl true
+  def handle_call(%{tags: [:match, :created, _orepp], data: %{id: match_id, player_id: id}, event: event}, _from, state) do
+    new_state = Map.update!(state, :matches, &(&1 ++ [match_id]))
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
+    {:reply, "Game #{match_id} added to player #{id}", new_state}
   end
 
 
