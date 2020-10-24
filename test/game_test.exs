@@ -200,4 +200,39 @@ defmodule GameTest do
     Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
     Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
   end
+
+
+  test "game with balance" do
+    player_1_name = "Martin Game"
+    player_1_id = Id.hrid(player_1_name)
+    deck_1_name = "Mike Game"
+    deck_1_id = Id.hrid(deck_1_name)
+
+    player_2_name = "Niklas Game"
+    player_2_id = Id.hrid(player_2_name)
+    deck_2_name = "November Game"
+    deck_2_id = Id.hrid(deck_2_name)
+
+    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
+    Player.feed Event.new([:create, :player], %{name: player_2_name}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil
+
+    game_input = %{
+      deck_1: deck_1_id,
+      deck_2: deck_2_id,
+      player_1: player_1_id,
+      player_2: player_2_id,
+      balance: {2,1},
+      winner: 2}
+    game_id = Metr.create_game(game_input)
+
+    game = Metr.read_game(game_id)
+
+    assert {2,1} == game.balance
+
+    Data.wipe_test("Player", [player_1_id, player_2_id])
+    Data.wipe_test("Deck", [deck_1_id, deck_2_id])
+    Data.wipe_test("Game", [game_id])
+  end
 end

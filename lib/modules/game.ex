@@ -1,5 +1,5 @@
 defmodule Metr.Game do
-  defstruct id: "", time: 0, participants: [], match: nil
+  defstruct id: "", time: 0, participants: [], match: nil, balance: nil
 
   use GenServer
 
