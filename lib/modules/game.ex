@@ -21,7 +21,8 @@ defmodule Metr.Game do
         player_ids =  Enum.map(participants, fn p -> p.player_id end)
         deck_ids = Enum.map(participants, fn p -> p.deck_id end)
         match_id = Map.get(data, :match, nil)
-        [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank, match_id: match_id})]
+        balance = Map.get(data, :balance, nil)
+        [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank, match_id: match_id, balance: balance})]
       _ ->
         Event.new([:game, :error, repp], %{msg: "Could not save game state"})
     end
@@ -131,21 +132,13 @@ defmodule Metr.Game do
   end
 
 
-  defp new(id, %{match: match} = data) do
-    %Game{
-      id: id,
-      time: Time.timestamp(),
-      participants: convert_to_participants(data.parts, data.winner),
-      match: match
-    }
-  end
-
   defp new(id, data) do
     %Game{
       id: id,
       time: Time.timestamp(),
       participants: convert_to_participants(data.parts, data.winner),
     }
+    |> Map.merge(data)
   end
 
 
