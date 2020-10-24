@@ -88,7 +88,12 @@ defmodule Metr do
     create(:game, data)
   end
 
-  def create_game(game_data) when is_map(game_data) do
+  def create_game(%{
+    :deck_1 => _d1, :deck_2 => _d2,
+    :player_1 => _p1, :player_2 => _p2
+  } = game_data)
+  when is_map(game_data)
+  do
     Map.merge(@default_game, game_data)
     |> create_game()
   end
