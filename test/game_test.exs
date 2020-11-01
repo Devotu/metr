@@ -200,4 +200,83 @@ defmodule GameTest do
     Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
     Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
   end
+
+
+  test "game with balance" do
+    player_name = "Martin Game"
+    player_id = Id.hrid(player_name)
+    deck_name = "Mike Game"
+    deck_id = Id.hrid(deck_name)
+
+    Player.feed Event.new([:create, :player], %{name: player_name}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil
+
+    game_1_input = %{
+      deck_1: deck_id,
+      deck_2: deck_id,
+      player_1: player_id,
+      player_2: player_id,
+      balance: {2,1},
+      winner: 2}
+    game_1_id = Metr.create_game(game_1_input)
+    game_1 = Metr.read_game(game_1_id)
+    assert {2,1} == game_1.balance
+
+    game_2_input = %{
+      deck_1: deck_id,
+      deck_2: deck_id,
+      player_1: player_id,
+      player_2: player_id,
+      balance: nil,
+      winner: 2}
+    game_2_id = Metr.create_game(game_2_input)
+    game_2 = Metr.read_game(game_2_id)
+    assert nil == game_2.balance
+
+    game_3_input = %{
+      deck_1: deck_id,
+      deck_2: deck_id,
+      player_1: player_id,
+      player_2: player_id,
+      winner: 2}
+    game_3_id = Metr.create_game(game_3_input)
+    game_3 = Metr.read_game(game_3_id)
+    assert nil == game_3.balance
+
+    Data.wipe_test("Player", [player_id])
+    Data.wipe_test("Deck", [deck_id])
+    Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id])
+  end
+
+
+  test "game with failing balance" do
+    player_name = "Niklas Game"
+    player_id = Id.hrid(player_name)
+    deck_name = "November Game"
+    deck_id = Id.hrid(deck_name)
+
+    Player.feed Event.new([:create, :player], %{name: player_name}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil
+
+    game_1_input = %{
+      deck_1: deck_id,
+      deck_2: deck_id,
+      player_1: player_id,
+      player_2: player_id,
+      balance: 1,
+      winner: 2}
+    {:error, "invalid input balance"} = Metr.create_game(game_1_input)
+
+    game_2_input = %{
+      deck_1: deck_id,
+      deck_2: deck_id,
+      player_1: player_id,
+      player_2: player_id,
+      balance: "2",
+      winner: 2}
+    {:error, "invalid input balance"} = Metr.create_game(game_2_input)
+
+    Data.wipe_test("Player", [player_id])
+    Data.wipe_test("Deck", [deck_id])
+  end
 end

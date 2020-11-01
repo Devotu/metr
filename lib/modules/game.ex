@@ -1,5 +1,5 @@
 defmodule Metr.Game do
-  defstruct id: "", time: 0, participants: [], match: nil
+  defstruct id: "", time: 0, participants: [], match: nil, balance: nil
 
   use GenServer
 
@@ -12,18 +12,25 @@ defmodule Metr.Game do
 
   ## feed
   def feed(%Event{id: _event_id, tags: [:create, :game], data: data} = event, repp) do
-    id = Id.guid()
-    process_name = Data.genserver_id(__ENV__.module, id)
-
-    case GenServer.start(Metr.Game, {id, data, event}, [name: process_name]) do
-      {:ok, _pid} ->
-        participants = convert_to_participants(data.parts, data.winner)
-        player_ids =  Enum.map(participants, fn p -> p.player_id end)
-        deck_ids = Enum.map(participants, fn p -> p.deck_id end)
-        match_id = Map.get(data, :match, nil)
-        [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank, match_id: match_id})]
-      _ ->
-        Event.new([:game, :error, repp], %{msg: "Could not save game state"})
+    case verify_input_data(data) do
+      {:error, error} ->
+        [Event.new([:game, :error, repp], %{cause: error, data: data})]
+      {:ok} ->
+        id = Id.guid()
+        process_name = Data.genserver_id(__ENV__.module, id)
+        case GenServer.start(Metr.Game, {id, data, event}, [name: process_name]) do
+          {:ok, _pid} ->
+            participants = convert_to_participants(data.parts, data.winner)
+            player_ids =  Enum.map(participants, fn p -> p.player_id end)
+            deck_ids = Enum.map(participants, fn p -> p.deck_id end)
+            match_id = Map.get(data, :match, nil)
+            balance = Map.get(data, :balance, nil)
+            [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank, match_id: match_id, balance: balance})]
+          {:error, error} ->
+            [Event.new([:game, :not, :created, repp], %{errors: [error]})]
+          _ ->
+            [Event.new([:game, :error, repp], %{msg: "Could not save game state"})]
+        end
     end
   end
 
@@ -111,6 +118,29 @@ defmodule Metr.Game do
   end
 
 
+  defp verify_input_data(data) do
+    {:ok}
+    |> verify_players(data)
+    |> verify_decks(data)
+    |> verify_balance(data)
+  end
+
+  defp verify_players({:error, _cause} = error, _id), do: error
+  defp verify_players({:ok}, %{parts: [%{details: %{player_id: _id1}}, %{details: %{player_id: _id2}}]}), do: {:ok}
+  defp verify_players({:ok}, %{player_1_id: _p1, player_2_id: _p2}), do: {:ok}
+  defp verify_players({:ok}, _data), do: {:error, "missing player_id parameter"}
+
+  defp verify_decks({:error, _cause} = error, _id), do: error
+  defp verify_decks({:ok}, %{parts: [%{details: %{deck_id: _id1}}, %{details: %{deck_id: _id2}}]}), do: {:ok}
+  defp verify_decks({:ok}, _data), do: {:error, "missing deck_id parameter"}
+
+  defp verify_balance({:error, _cause} = error, _id), do: error
+  defp verify_balance({:ok}, %{balance: {lean,x}}) when is_number(lean) and is_number(x), do: {:ok}
+  defp verify_balance({:ok}, %{balance: nil}), do: {:ok}
+  defp verify_balance({:ok}, %{balance: _b}), do: {:error, "invalid input balance"}
+  defp verify_balance({:ok}, _data), do: {:ok}
+
+
   defp part_to_participant(part, winner) do
     %{
       player_id: part.details.player_id,
@@ -131,21 +161,13 @@ defmodule Metr.Game do
   end
 
 
-  defp new(id, %{match: match} = data) do
-    %Game{
-      id: id,
-      time: Time.timestamp(),
-      participants: convert_to_participants(data.parts, data.winner),
-      match: match
-    }
-  end
-
   defp new(id, data) do
     %Game{
       id: id,
       time: Time.timestamp(),
       participants: convert_to_participants(data.parts, data.winner),
     }
+    |> Map.merge(data)
   end
 
 
