@@ -14,9 +14,7 @@ defmodule Metr.Game do
   def feed(%Event{id: _event_id, tags: [:create, :game], data: data} = event, repp) do
     case verify_input_data(data) do
       {:error, error} ->
-        error_event = Event.new([:game, :error], %{cause: error, data: data})
-          |> Event.add_repp(repp)
-        [error_event]
+        [Event.new([:game, :error, repp], %{cause: error, data: data})]
       {:ok} ->
         id = Id.guid()
         process_name = Data.genserver_id(__ENV__.module, id)
