@@ -406,4 +406,36 @@ defmodule MetrTest do
     Data.wipe_test("Deck", [deck_id])
     Data.wipe_test("Game", [game_1_id, game_2_id])
   end
+
+
+  test "read state of x" do
+    player_1_name = "Sigurd Metr"
+    player_1_id = Id.hrid(player_1_name)
+    deck_1_name = "Sierra Metr"
+    deck_1_id = Id.hrid(deck_1_name)
+
+    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
+    Router.input Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id})
+
+    game_1 = %{
+      :deck_1 => deck_1_id,
+      :deck_2 => deck_1_id,
+      :player_1 => player_1_id,
+      :player_2 => player_1_id,
+      :winner => 2}
+    game_1_id = Metr.create_game(game_1)
+
+    deck_1_state = Metr.read_state(:deck, deck_1_id)
+    assert [game_1_id, game_1_id] == deck_1_state.games
+
+    player_1_state = Metr.read_state(:player, player_1_id)
+    assert [game_1_id, game_1_id] == player_1_state.games
+
+    game_1_state = Metr.read_state(:game, game_1_id)
+    assert 2 == Enum.count(game_1_state.participants)
+
+    Data.wipe_test("Player", [player_1_id])
+    Data.wipe_test("Deck", [deck_1_id])
+    Data.wipe_test("Game", [game_1_id])
+  end
 end
