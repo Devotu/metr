@@ -66,6 +66,11 @@ defmodule Metr do
     read_log(type, id)
   end
 
+  def read_state(type, id) when is_atom(type) do
+    read(type, id)
+  end
+
+
 
   def create_game(%{
     :deck_1 => d1, :deck_2 => d2,
