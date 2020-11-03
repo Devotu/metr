@@ -8,7 +8,6 @@ defmodule Metr do
     power_1: nil, power_2: nil,
     winner: 0,
     rank: false, match: nil,
-    balance: nil
     }
 
   ## api
@@ -73,20 +72,18 @@ defmodule Metr do
   end
 
 
-
   def create_game(%{
     :deck_1 => d1, :deck_2 => d2,
     :fun_1 => f1, :fun_2 => f2,
     :player_1 => p1, :player_2 => p2,
     :power_1 => s1, :power_2 => s2,
-    :winner => w, rank: r, match: m, balance: b
+    :winner => w, rank: r, match: m
   }) do
 
     data = %{
       winner: w,
       rank: r,
       match: m,
-      balance: b,
       parts: [
         %{part: 1, details: %{deck_id: d1, player_id: p1, power: s1, fun: f1}},
         %{part: 2, details: %{deck_id: d2, player_id: p2, power: s2, fun: f2}},
@@ -94,6 +91,18 @@ defmodule Metr do
     }
 
     create(:game, data)
+  end
+
+  def create_game(%{balance: b} = game_data) do
+    case parse_balance(b) do
+      {:error, msg} ->
+        {:error, msg}
+      {pw1, pw2} ->
+        Map.merge(@default_game, game_data)
+        |> Map.put(:power_1, pw1)
+        |> Map.put(:power_2, pw2)
+        |> create_game()
+    end
   end
 
   def create_game(%{
@@ -273,6 +282,16 @@ defmodule Metr do
       "Match" -> :match
     end
   end
+
+
+  defp parse_balance(0, 0), do: {0, 0}
+  defp parse_balance(1, 1), do: {1, -1}
+  defp parse_balance(1, 2), do: {2, -2}
+  defp parse_balance(2, 1), do: {-1, 1}
+  defp parse_balance(2, 2), do: {-2, 2}
+  defp parse_balance(nil), do: {nil, nil}
+  defp parse_balance({advantage, level}), do: parse_balance(advantage, level)
+  defp parse_balance(_), do: {:error, "invalid input balance"}
 
 
 

@@ -271,7 +271,7 @@ defmodule GameTest do
       player_2: player_id,
       balance: 1,
       winner: 2}
-    {:error, "invalid input balance"} = Metr.create_game(game_1_input)
+      {:error, "invalid input balance"} = Metr.create_game(game_1_input)
 
     game_2_input = %{
       deck_1: deck_id,
