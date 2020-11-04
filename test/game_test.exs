@@ -220,7 +220,9 @@ defmodule GameTest do
       winner: 2}
     game_1_id = Metr.create_game(game_1_input)
     game_1 = Metr.read_game(game_1_id)
-    assert {2,1} == game_1.balance
+    [participant_11, participant_12] = game_1.participants
+    assert -1 == participant_11.power
+    assert 1 == participant_12.power
 
     game_2_input = %{
       deck_1: deck_id,
@@ -231,7 +233,9 @@ defmodule GameTest do
       winner: 2}
     game_2_id = Metr.create_game(game_2_input)
     game_2 = Metr.read_game(game_2_id)
-    assert nil == game_2.balance
+    [participant_21, participant_22] = game_2.participants
+    assert nil == participant_21.power
+    assert nil == participant_22.power
 
     game_3_input = %{
       deck_1: deck_id,
@@ -241,7 +245,9 @@ defmodule GameTest do
       winner: 2}
     game_3_id = Metr.create_game(game_3_input)
     game_3 = Metr.read_game(game_3_id)
-    assert nil == game_3.balance
+    [participant_31, participant_32] = game_3.participants
+    assert nil == participant_31.power
+    assert nil == participant_32.power
 
     Data.wipe_test("Player", [player_id])
     Data.wipe_test("Deck", [deck_id])
@@ -265,7 +271,7 @@ defmodule GameTest do
       player_2: player_id,
       balance: 1,
       winner: 2}
-    {:error, "invalid input balance"} = Metr.create_game(game_1_input)
+      {:error, "invalid input balance"} = Metr.create_game(game_1_input)
 
     game_2_input = %{
       deck_1: deck_id,
