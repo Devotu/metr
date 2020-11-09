@@ -1,5 +1,5 @@
 defmodule Metr.Deck do
-  defstruct id: "", name: "", format: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, games: [], matches: [], rank: nil
+  defstruct id: "", name: "", format: "", theme: "", black: false, white: false, red: false, green: false, blue: false, colorless: false, results: [], matches: [], rank: nil
 
   @formats [
     "block", "commander", "draft", "modern", "mixblock", "minimander", "pauper", "premodern", "sealed", "singleton", "standard", "threecard"]
@@ -12,6 +12,7 @@ defmodule Metr.Deck do
   alias Metr.Deck
   alias Metr.Player
   alias Metr.Rank
+  alias Metr.Result
 
   ##feed
   def feed(%Event{id: _event_id, tags: [:create, :deck], data: data} = event, repp) do
@@ -30,10 +31,16 @@ defmodule Metr.Deck do
     end
   end
 
-  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{id: game_id, deck_ids: deck_ids}} = event, _repp) do
+  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{result_ids: result_ids}} = event, _repp) do
+    deck_result_ids = result_ids
+      |> Enum.map(fn result_id -> Result.read(result_id) end)
+      |> Enum.map(fn r -> {r.deck_id, r.id} end)
     #for each participant
     #call update
-    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, deck_id: id}, event) end)
+    Enum.reduce(
+      deck_result_ids,
+      [],
+      fn {deck_id, result_id}, acc -> acc ++ update(deck_id, tags, %{id: result_id, deck_id: deck_id}, event) end)
   end
 
   def feed(%Event{id: _event_id, tags: [:game, :deleted, _orepp] = tags, data: %{id: game_id}} = event, _repp) do
@@ -68,9 +75,9 @@ defmodule Metr.Deck do
     [Event.new([:decks, repp], %{decks: decks})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :game], data: %{deck_id: id}}, repp) do
+  def feed(%Event{id: _event_id, tags: [:list, :results], data: %{deck_id: id}}, repp) do
     deck = recall(id)
-    [{Event.new([:list, :game], %{ids: deck.games}), repp}]
+    [{Event.new([:list, :results], %{ids: deck.results}), repp}]
   end
 
   def feed(%Event{id: _event_id, tags: [:alter, :rank] = tags, data: %{deck_id: id, change: change}} = event, repp) do
@@ -259,10 +266,10 @@ defmodule Metr.Deck do
 
 
   @impl true
-  def handle_call(%{tags: [:game, :created, _orepp], data: %{id: game_id, deck_id: id}, event: event}, _from, state) do
-    new_state = Map.update!(state, :games, &(&1 ++ [game_id]))
+  def handle_call(%{tags: [:game, :created, _orepp], data: %{id: result_id, deck_id: id}, event: event}, _from, state) do
+    new_state = Map.update!(state, :results, &(&1 ++ [result_id]))
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-    {:reply, "Game #{game_id} added to deck #{id}", new_state}
+    {:reply, "Result #{result_id} added to deck #{id}", new_state}
   end
 
 
@@ -282,7 +289,7 @@ defmodule Metr.Deck do
       |> find_original_rank()
 
     new_state = state
-      |> Map.update!(:games, fn games -> List.delete(games, game_id) end)
+      |> Map.update!(:results, fn results -> List.delete(results, game_id) end)
       |> recalculate_rank(original_rank)
     :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Game #{game_id} removed from deck #{id}", new_state}
