@@ -123,6 +123,7 @@ defmodule DeckTest do
     Data.wipe_test("Player", [player_1_id, player_2_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id])
     Data.wipe_test("Game", [game_created_event.data.id])
+    Data.wipe_test("Result", game_created_event.data.result_ids)
   end
 
 

@@ -75,6 +75,7 @@ defmodule PlayerTest do
     #Cleanup
     Data.wipe_test("Player", [player_1_id, player_two_id])
     Data.wipe_test("Game", game_created_event.data.id)
+    Data.wipe_test("Result", game_created_event.data.result_ids)
   end
 
 
