@@ -1,5 +1,5 @@
 defmodule Metr.Game do
-  defstruct id: "", time: 0, participants: [], match: nil
+  defstruct id: "", time: 0, results: [], match: nil
 
   use GenServer
 
@@ -8,6 +8,7 @@ defmodule Metr.Game do
   alias Metr.Data
   alias Metr.Game
   alias Metr.Time
+  alias Metr.Result
 
 
   ## feed
@@ -20,9 +21,11 @@ defmodule Metr.Game do
         process_name = Data.genserver_id(__ENV__.module, id)
         case GenServer.start(Metr.Game, {id, data, event}, [name: process_name]) do
           {:ok, _pid} ->
-            participants = convert_to_participants(data.parts, data.winner)
-            player_ids =  Enum.map(participants, fn p -> p.player_id end)
-            deck_ids = Enum.map(participants, fn p -> p.deck_id end)
+            results = convert_to_results(data.parts, data.winner)
+            result_ids = results
+              |> Enum.map(fn r -> Map.put(r, :game_id, id) end)
+              |> Enum.map(fn r -> Result.create(r, event) end)
+              |> Enum.map(fn {:ok, r} -> r.id end)
             match_id = Map.get(data, :match, nil)
             [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank, match_id: match_id})]
           {:error, error} ->
@@ -91,11 +94,11 @@ defmodule Metr.Game do
   end
 
 
-  defp convert_to_participants(parts, winner) do
+  defp convert_to_results(parts, winner) do
     parts
     |> Enum.map(fn p -> fill_power(p) end)
     |> Enum.map(fn p -> fill_fun(p) end)
-    |> Enum.map(fn p -> part_to_participant(p, winner) end)
+    |> Enum.map(fn p -> part_to_result(p, winner) end)
   end
 
 
@@ -133,8 +136,8 @@ defmodule Metr.Game do
   defp verify_decks({:ok}, _data), do: {:error, "missing deck_id parameter"}
 
 
-  defp part_to_participant(part, winner) do
-    %{
+  defp part_to_result(part, winner) do
+    %Result{
       player_id: part.details.player_id,
       deck_id: part.details.deck_id,
       place: place(part.part, winner),
@@ -157,7 +160,7 @@ defmodule Metr.Game do
     %Game{
       id: id,
       time: Time.timestamp(),
-      participants: convert_to_participants(data.parts, data.winner),
+      results: convert_to_results(data.parts, data.winner),
     }
     |> Map.merge(data)
   end

@@ -53,6 +53,10 @@ defmodule MetrTest do
     assert is_list Metr.list_games()
   end
 
+  test "list results" do
+    assert is_list Metr.list_results()
+  end
+
   test "create game" do
     player_1_name = "David Metr"
     player_1_id = Id.hrid(player_1_name)

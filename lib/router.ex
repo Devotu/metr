@@ -8,6 +8,7 @@ defmodule Metr.Router do
   alias Metr.Log
   alias Metr.Match
   alias Metr.Player
+  alias Metr.Result
 
   def input(events, response_pid) when is_list(events) and is_pid(response_pid) do
     Enum.each(events, fn e -> input(e, response_pid) end)
@@ -44,6 +45,7 @@ defmodule Metr.Router do
       # CLI.feed(event, response_pid),
       Match.feed(event, response_pid),
       Metr.feed(event, response_pid),
+      Result.feed(event, response_pid),
     ]
     |> Enum.filter(fn e -> Enum.count(e) > 0 end)
     |> Enum.each(fn e -> route(e) end)

@@ -38,6 +38,10 @@ defmodule Metr do
     list(:game)
   end
 
+  def list_results() do
+    list(:result)
+  end
+
   def list_matches() do
     list(:match)
   end
