@@ -23,7 +23,6 @@ defmodule Metr.Result do
   def feed(%Event{id: _event_id, tags: [:list, :result]}, repp) do
     results = Data.list_ids(__ENV__.module)
     |> Enum.map(fn id -> read(id) end)
-    |> IO.inspect(label: "result - results")
     [Event.new([:results, repp], %{results: results})]
   end
 
