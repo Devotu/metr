@@ -270,20 +270,18 @@ defmodule Metr do
       :deck -> :deck_id
       :game -> :game_id
       :match -> :match_id
+      :result -> :result_id
     end
   end
 
 
   def type_from_string(type) when is_bitstring(type) do
-    case type do
+    case String.downcase(type) do
       "player" -> :player
-      "Player" -> :player
       "deck" -> :deck
-      "Deck" -> :deck
       "game" -> :game
-      "Game" -> :game
       "match" -> :match
-      "Match" -> :match
+      "result" -> :result
     end
   end
 
