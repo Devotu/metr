@@ -1,5 +1,5 @@
 defmodule Metr.Player do
-  defstruct id: "", name: "", decks: [], games: [], matches: []
+  defstruct id: "", name: "", decks: [], results: [], matches: []
 
   use GenServer
 
@@ -7,6 +7,7 @@ defmodule Metr.Player do
   alias Metr.Id
   alias Metr.Data
   alias Metr.Player
+  alias Metr.Result
 
   def feed(%Event{id: _event_id, tags: [:create, :player], data: %{name: name} = data} = event, repp) do
     id = Id.hrid(name)
@@ -27,6 +28,19 @@ defmodule Metr.Player do
     #call update
     Enum.reduce(player_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: game_id, player_id: id}, event) end)
   end
+
+  def feed(%Event{id: _event_id, tags: [:game, :created, _orepp] = tags, data: %{result_ids: result_ids}} = event, _repp) do
+    player_result_ids = result_ids
+      |> Enum.map(fn result_id -> Result.read(result_id) end)
+      |> Enum.map(fn r -> {r.player_id, r.id} end)
+    #for each participant
+    #call update
+    Enum.reduce(
+      player_result_ids,
+      [],
+      fn {player_id, result_id}, acc -> acc ++ update(player_id, tags, %{id: result_id, player_id: player_id}, event) end)
+  end
+
 
   def feed(%Event{id: _event_id, tags: [:game, :deleted, _orepp] = tags, data: %{id: game_id}} = event, _repp) do
     #for each player find connections to this game
@@ -121,10 +135,10 @@ defmodule Metr.Player do
   end
 
   @impl true
-  def handle_call(%{tags: [:game, :created, _orepp], data: %{id: game_id, player_id: id}, event: event}, _from, state) do
-    new_state = Map.update!(state, :games, &(&1 ++ [game_id]))
+  def handle_call(%{tags: [:game, :created, _orepp], data: %{id: result_id, player_id: id}, event: event}, _from, state) do
+    new_state = Map.update!(state, :results, &(&1 ++ [result_id]))
     :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
-    {:reply, "Game #{game_id} added to player #{id}", new_state}
+    {:reply, "Result #{result_id} added to player #{id}", new_state}
   end
 
   @impl true
