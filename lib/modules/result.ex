@@ -27,6 +27,11 @@ defmodule Metr.Result do
     [Event.new([:results, repp], %{results: results})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:read, :result], data: %{result_id: id}}, repp) do
+    result = read(id)
+    [Event.new([:result, :read, repp], %{out: result})]
+  end
+
   def feed(_event, _orepp) do
     []
   end
