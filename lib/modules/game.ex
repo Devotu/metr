@@ -1,5 +1,5 @@
 defmodule Metr.Game do
-  defstruct id: "", time: 0, results: [], match: nil
+  defstruct id: "", time: 0, results: [], match: nil #TODO refactor to result_ids
 
   use GenServer
 
@@ -19,15 +19,15 @@ defmodule Metr.Game do
       {:ok} ->
         id = Id.guid()
         process_name = Data.genserver_id(__ENV__.module, id)
-        case GenServer.start(Metr.Game, {id, data, event}, [name: process_name]) do
+        results = convert_to_results(data.parts, data.winner)
+        result_ids = results
+          |> Enum.map(fn r -> Map.put(r, :game_id, id) end)
+          |> Enum.map(fn r -> Result.create(r, event) end)
+          |> Enum.map(fn {:ok, r} -> r.id end)
+        case GenServer.start(Metr.Game, {id, result_ids, event}, [name: process_name]) do
           {:ok, _pid} ->
-            results = convert_to_results(data.parts, data.winner)
-            result_ids = results
-              |> Enum.map(fn r -> Map.put(r, :game_id, id) end)
-              |> Enum.map(fn r -> Result.create(r, event) end)
-              |> Enum.map(fn {:ok, r} -> r.id end)
             match_id = Map.get(data, :match, nil)
-            [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank, match_id: match_id})]
+            [Event.new([:game, :created, repp], %{id: id, result_ids: result_ids, ranking: data.rank, match_id: match_id})]
           {:error, error} ->
             [Event.new([:game, :not, :created, repp], %{errors: [error]})]
           _ ->
@@ -156,21 +156,11 @@ defmodule Metr.Game do
   end
 
 
-  defp new(id, data) do
-    %Game{
-      id: id,
-      time: Time.timestamp(),
-      results: convert_to_results(data.parts, data.winner),
-    }
-    |> Map.merge(data)
-  end
-
-
 
   ## gen
   @impl true
-  def init({id, data, event}) do
-    state = new(id, data)
+  def init({id, result_ids, event}) do
+    state = %Game{id: id, time: Time.timestamp(), results: result_ids}
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}
   end

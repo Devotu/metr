@@ -50,6 +50,11 @@ defmodule Metr do
     list(:format)
   end
 
+  def list_states(type, ids) when is_atom(type) do
+    ids
+    |> Enum.map(fn id -> read(type, id) end)
+  end
+
 
   def read_player(id) do
     read(:player, id)
