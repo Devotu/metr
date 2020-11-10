@@ -163,7 +163,7 @@ defmodule MetrTest do
 
 
 
-  test "list games by deck" do
+  test "list results by deck" do
     player_1_name = "Helge Metr"
     player_1_id = Id.hrid(player_1_name)
     deck_1_name = "Hotel Metr"
@@ -209,13 +209,15 @@ defmodule MetrTest do
       :winner => 1}
     game_2_id = Metr.create_game(game_2)
 
-    assert 2 <= Enum.count(Metr.list_games())
-    assert 2 == Enum.count(Metr.list_games(:deck, deck_1_id))
-    assert 1 == Enum.count(Metr.list_games(:deck, deck_2_id))
+    results = Metr.list_results()
+    assert 4 == Enum.count(results)
+    assert 2 == Enum.count(Metr.list_states(:result, :deck, deck_1_id))
+    assert 1 == Enum.count(Metr.list_states(:result, :deck, deck_2_id))
 
     Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
     Data.wipe_test("Game", [game_1_id, game_2_id])
+    Data.wipe_test("Result", Enum.map(results, fn r -> r.id end))
   end
 
 
