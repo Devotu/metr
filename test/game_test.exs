@@ -194,11 +194,14 @@ defmodule GameTest do
       :winner => 2}
     game_5_id = Metr.create_game(game_5)
 
-    assert 4 == Enum.count(Metr.list_games(:deck, deck_2_id))
+    assert 5 == Enum.count(Metr.list_games(:deck, deck_2_id))
+
+    results = Metr.list_results()
 
     Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
     Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
+    Data.wipe_test("Result", Enum.map(results, fn r -> r.id end))
   end
 
 

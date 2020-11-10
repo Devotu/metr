@@ -20,9 +20,14 @@ defmodule Metr.Result do
     r
   end
 
+  def feed(%Event{id: _event_id, tags: [:list, :result], data: %{ids: ids}}, repp) when is_list(ids) do
+    results = Enum.map(ids, &read/1)
+    [Event.new([:results, repp], %{results: results})]
+  end
+
   def feed(%Event{id: _event_id, tags: [:list, :result]}, repp) do
     results = Data.list_ids(__ENV__.module)
-    |> Enum.map(fn id -> read(id) end)
+    |> Enum.map(&read/1)
     [Event.new([:results, repp], %{results: results})]
   end
 

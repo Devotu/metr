@@ -1,5 +1,5 @@
 defmodule Metr.Game do
-  defstruct id: "", time: 0, results: [], match: nil #TODO refactor to result_ids
+  defstruct id: "", time: 0, results: [], match: nil
 
   use GenServer
 
