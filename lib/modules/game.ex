@@ -66,6 +66,11 @@ defmodule Metr.Game do
     [Event.new([:games, repp], %{games: games})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:list, :result], data: %{game_id: id}}, repp) do
+    game = recall(id)
+    [{Event.new([:list, :result], %{ids: game.results}), repp}]
+  end
+
   def feed(%Event{id: _event_id, tags: [:delete, :game], data: %{game_id: game_id}}, repp) do
     case Data.wipe_state(__ENV__.module, game_id) do
       :ok -> [Event.new([:game, :deleted, repp], %{id: game_id})]
