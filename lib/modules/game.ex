@@ -78,6 +78,12 @@ defmodule Metr.Game do
   end
 
 
+  def read(id) do
+    ready_process(id)
+    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :game]})
+  end
+
+
   defp ready_process(id) do
     # Is running?
     if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do

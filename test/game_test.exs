@@ -194,7 +194,7 @@ defmodule GameTest do
       :winner => 2}
     game_5_id = Metr.create_game(game_5)
 
-    assert 5 == Enum.count(Metr.list_games(:deck, deck_2_id))
+    assert 4 == Enum.count(Metr.list_states(:game, :deck, deck_2_id))
 
     results = Metr.list_results()
 

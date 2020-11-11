@@ -10,6 +10,7 @@ defmodule Metr.Deck do
   alias Metr.Id
   alias Metr.Data
   alias Metr.Deck
+  alias Metr.Game
   alias Metr.Player
   alias Metr.Rank
   alias Metr.Result
@@ -75,9 +76,17 @@ defmodule Metr.Deck do
     [Event.new([:decks, repp], %{decks: decks})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :results], data: %{deck_id: id}}, repp) do
+  def feed(%Event{id: _event_id, tags: [:list, :game], data: %{deck_id: id}}, repp) do
     deck = recall(id)
-    [{Event.new([:list, :results], %{ids: deck.results}), repp}]
+    games = deck.results
+      |> Enum.map(fn rid -> Result.read(rid) end)
+      |> Enum.map(fn r -> Game.read(r.game_id) end)
+    [{Event.new([:games, repp], %{games: games}), repp}]
+  end
+
+  def feed(%Event{id: _event_id, tags: [:list, :result], data: %{deck_id: id}}, repp) do
+    deck = recall(id)
+    [{Event.new([:list, :result], %{ids: deck.results}), repp}]
   end
 
   def feed(%Event{id: _event_id, tags: [:alter, :rank] = tags, data: %{deck_id: id, change: change}} = event, repp) do
