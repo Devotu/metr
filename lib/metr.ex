@@ -76,8 +76,13 @@ defmodule Metr do
     read(:match, id)
   end
 
+  @spec read_entity_log(:deck | :game | :match | :player | :result, any) :: any
   def read_entity_log(type, id) when is_atom(type) do
     read_log(type, id)
+  end
+
+  def read_global_log(limit) when is_number(limit) do
+    read_log(limit)
   end
 
   def read_state(type, id) when is_atom(type) do
@@ -243,6 +248,18 @@ defmodule Metr do
 
     #Fire ze missiles
     Event.new([:read, :log, type], data)
+    |> Router.input(listening_task.pid)
+
+    #Await response
+    Task.await(listening_task)
+  end
+
+  defp read_log(limit) when is_number(limit) do
+    #Start listener
+    listening_task = Task.async(&listen/0)
+
+    #Fire ze missiles
+    Event.new([:read, :log], %{limit: limit})
     |> Router.input(listening_task.pid)
 
     #Await response
