@@ -14,6 +14,7 @@ defmodule Metr.Deck do
   alias Metr.Player
   alias Metr.Rank
   alias Metr.Result
+  alias Metr.Util
 
   ##feed
   def feed(%Event{id: _event_id, tags: [:create, :deck], data: data} = event, repp) do
@@ -44,15 +45,16 @@ defmodule Metr.Deck do
       fn {deck_id, result_id}, acc -> acc ++ update(deck_id, tags, %{id: result_id, deck_id: deck_id}, event) end)
   end
 
-  def feed(%Event{id: _event_id, tags: [:game, :deleted, _orepp] = tags, data: %{id: game_id}} = event, _repp) do
+  def feed(%Event{id: _event_id, tags: [:game, :deleted, _orepp] = tags, data: %{results: result_ids}} = event, _repp) do
     #for each deck find connections to this game
-    deck_ids = Data.list_ids(__ENV__.module)
+    deck_result_ids = Data.list_ids(__ENV__.module)
     |> Enum.map(fn id -> recall(id) end)
-    |> Enum.filter(fn d -> Enum.member?(d.games, game_id) end)
-    |> Enum.map(fn d -> d.id end)
+    |> Enum.filter(fn d -> Util.has_member?(d.results, result_ids) end)
+    |> Enum.map(fn d -> {d.id, Util.find_first_common_member(d.results, result_ids)} end)
     #call update
-    Enum.reduce(deck_ids, [], fn id, acc -> acc ++ update(id, tags, %{id: id, game_id: game_id}, event) end)
+    Enum.reduce(deck_result_ids, [], fn {id, result_id}, acc -> acc ++ update(id, tags, %{id: id, result_id: result_id}, event) end)
   end
+
 
   def feed(%Event{id: _event_id, tags: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
     events = Data.read_log_by_id("Deck", id)
@@ -202,10 +204,10 @@ defmodule Metr.Deck do
 
 
   defp recalculate_rank(state, base_rank) do
-    rank = state.games
+    rank = state.results
     |> Enum.map(fn game_id -> Metr.read_game(game_id) end)
     |> Enum.filter(fn g -> g.ranking end)
-    |> Enum.reduce([], fn(g, acc) -> acc ++ g.participants end)
+    |> Enum.reduce([], fn(g, acc) -> acc ++ g.results end)
     |> Enum.filter(fn p -> state.id == p.deck_id end)
     |> Enum.reduce(base_rank, fn(p, acc) -> Rank.apply_change(acc, Rank.find_change(p)) end)
 
@@ -286,22 +288,22 @@ defmodule Metr.Deck do
   def handle_call(%{tags: [:match, :created, _orepp], data: %{id: match_id, deck_id: id}, event: event}, _from, state) do
     new_state = Map.update!(state, :matches, &(&1 ++ [match_id]))
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-    {:reply, "Game #{match_id} added to deck #{id}", new_state}
+    {:reply, "Match #{match_id} added to deck #{id}", new_state}
   end
 
 
   @impl true
-  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: id, game_id: game_id}, event: event}, _from, state) do
+  def handle_call(%{tags: [:game, :deleted, _orepp], data: %{id: id, result_id: result_id}, event: event}, _from, state) do
     original_rank = Data.read_log_by_id("Deck", id)
       |> Enum.filter(fn e -> e.tags == [:create, :deck] end)
       |> List.first()
       |> find_original_rank()
 
     new_state = state
-      |> Map.update!(:results, fn results -> List.delete(results, game_id) end)
+      |> Map.update!(:results, fn results -> List.delete(results, result_id) end)
       |> recalculate_rank(original_rank)
     :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
-    {:reply, "Game #{game_id} removed from deck #{id}", new_state}
+    {:reply, "Result #{result_id} removed from deck #{id}", new_state}
   end
 
 
