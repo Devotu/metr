@@ -341,7 +341,7 @@ defmodule MetrTest do
     match_id = Metr.create_match(match_data)
 
     initial_match = Metr.read_match(match_id)
-    assert [] == initial_match.games
+    assert [] == initial_match.results
     assert :initialized == initial_match.status
     assert player_1_id == initial_match.player_one
     assert deck_2_id == initial_match.deck_two
@@ -356,7 +356,7 @@ defmodule MetrTest do
     game_1_id = Metr.create_game(game_data)
 
     ongoing_match = Metr.read_match(match_id)
-    assert 1 = ongoing_match.games |> Enum.count()
+    assert 1 = ongoing_match.results |> Enum.count()
     assert :open == ongoing_match.status
 
     game_2_id = Metr.create_game(Map.put(game_data, :winner, 1))
@@ -365,7 +365,7 @@ defmodule MetrTest do
     assert :ok == Metr.end_match(match_id)
 
     ended_match = Metr.read_match(match_id)
-    assert 3 = ended_match.games |> Enum.count()
+    assert 3 = ended_match.results |> Enum.count()
     assert :true == ended_match.ranking
     assert :closed == ended_match.status
 
