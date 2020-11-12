@@ -72,9 +72,14 @@ defmodule Metr.Game do
   end
 
   def feed(%Event{id: _event_id, tags: [:delete, :game], data: %{game_id: game_id}}, repp) do
-    case Data.wipe_state(__ENV__.module, game_id) do
-      :ok -> [Event.new([:game, :deleted, repp], %{id: game_id})]
-      _ -> [Event.new([:game, :not, :deleted, repp], %{id: game_id})]
+    delete_conclusion = game_id
+      |> read()
+      |> delete_game_results()
+      |> delete_game()
+    case delete_conclusion do
+      %Game{} = game -> [Event.new([:game, :deleted, repp], %{id: game_id, results: game.results})]
+      {:error, reason} -> [Event.new([:game, :error, repp], %{msg: reason})]
+      _ -> [Event.new([:game, :error, repp], %{msg: "unknown error"})]
     end
   end
 
@@ -84,8 +89,13 @@ defmodule Metr.Game do
 
 
   def read(id) do
-    ready_process(id)
-    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :game]})
+    case Data.state_exists?(__ENV__.module, id) do
+      true ->
+        ready_process(id)
+        GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :game]})
+      false ->
+        {:error, "not found"}
+    end
   end
 
 
@@ -163,6 +173,27 @@ defmodule Metr.Game do
     case part_id == winner_id do
       true -> 1
       false -> 2
+    end
+  end
+
+
+  defp delete_game_results({:error, reason}), do: {:error, reason}
+  defp delete_game_results(%Game{} = game) do
+    all_deleted? = game.results
+      |> Enum.map(fn rid -> Result.delete(rid) end)
+      |> Enum.all?(fn x -> x == :ok end)
+    case all_deleted? do
+      true -> game
+      false -> {:error, "Not all results deleted"}
+    end
+  end
+
+
+  defp delete_game({:error, reason}), do: {:error, reason}
+  defp delete_game(%Game{} = game) do
+    case Data.wipe_state(__ENV__.module, game.id) do
+      :ok -> game
+      _   -> {:error, "Could not delete game state"}
     end
   end
 

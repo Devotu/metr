@@ -46,4 +46,8 @@ defmodule Metr.Result do
   def read(id) do
     Data.recall_state(__ENV__.module, id)
   end
+
+  def delete(id) do
+    Data.wipe_state(__ENV__.module, id)
+  end
 end
