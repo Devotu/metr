@@ -4,6 +4,7 @@ defmodule MetrTest do
   alias Metr.Event
   alias Metr.Data
   alias Metr.Deck
+  alias Metr.Game
   alias Metr.Player
   alias Metr.Router
   alias Metr.Id
@@ -136,13 +137,14 @@ defmodule MetrTest do
     Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil
     Deck.feed Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil
 
-    game = %{
+    game_data = %{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
       :winner => 2}
-    game_id = Metr.create_game(game)
+    game_id = Metr.create_game(game_data)
+    game = Game.read(game_id)
     assert game_id == Metr.delete_game(game_id)
 
     deck_1 = Metr.read_deck(deck_1_id)
@@ -159,6 +161,7 @@ defmodule MetrTest do
     Data.wipe_test("Player", [player_1_id, player_2_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id])
     Data.wipe_test("Game", [game_id])
+    Data.wipe_test("Result", game.results)
   end
 
 

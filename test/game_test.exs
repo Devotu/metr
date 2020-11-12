@@ -260,6 +260,7 @@ defmodule GameTest do
     Data.wipe_test("Player", [player_id])
     Data.wipe_test("Deck", [deck_id])
     Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id])
+    Data.wipe_test("Result", [result_11_id, result_12_id, result_21_id, result_22_id, result_31_id, result_32_id])
   end
 
 
