@@ -173,13 +173,6 @@ defmodule Metr.Match do
   end
 
 
-  defp get_game(game_id) do
-    Event.new([:read, :game], %{game_id: game_id})
-      |> Game.feed(nil)
-      |> Enum.map(&(&1.data.out))
-      |> List.first()
-  end
-
   defp get_player(player_id) do
     Event.new([:read, :player], %{player_id: player_id})
       |> Player.feed(nil)
@@ -222,7 +215,7 @@ defmodule Metr.Match do
 
   defp find_winner(state) do
     tally = state.games
-    |> Enum.map(fn gid -> get_game(gid) end)
+    |> Enum.map(fn gid -> Game.read(gid) end)
     |> Enum.map(fn g -> extract_wins(g) end)
     |> Enum.concat()
     |> collect_wins()
