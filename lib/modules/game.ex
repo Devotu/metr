@@ -99,6 +99,7 @@ defmodule Metr.Game do
   end
 
 
+  ##private
   defp ready_process(id) do
     # Is running?
     if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do

@@ -80,6 +80,18 @@ defmodule Metr.Player do
   end
 
 
+  def read(id) do
+    case Data.state_exists?(__ENV__.module, id) do
+      true ->
+        ready_process(id)
+        GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :player]})
+      false ->
+        {:error, "not found"}
+    end
+  end
+
+
+  ##private
   defp update(id, tags, data, event) do
     ready_process(id)
     #Call update

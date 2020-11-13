@@ -131,8 +131,9 @@ defmodule Metr.Match do
 
   defp verify_player({:error, _cause} = error, _id), do: error
   defp verify_player({:ok}, id) do
-    case get_player(id) do
+    case Player.read(id) do
       nil ->  {:error, "player #{id} not found"}
+      {:error, reason} ->  {:error, reason}
       _ ->    {:ok}
     end
   end
