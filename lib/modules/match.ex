@@ -194,16 +194,10 @@ defmodule Metr.Match do
 
 
   defp rank_decks(state, deck_1_id, deck_2_id) do
-    tally = state.games
-      |> Enum.map(fn gid -> get_game(gid) end)
-      |> Enum.map(fn g -> extract_wins(g) end)
-      |> Enum.concat()
-      |> collect_wins()
-
-    case tally[deck_1_id] - tally[deck_2_id] do
+    case find_winner(state) do
       0 -> []
-      x when x > 0 -> [new_rank_event(deck_1_id, 1), new_rank_event(deck_2_id, -1)]
-      x when x < 0 -> [new_rank_event(deck_1_id, -1), new_rank_event(deck_2_id, 1)]
+      1 -> [new_rank_event(deck_1_id, 1), new_rank_event(deck_2_id, -1)]
+      2 -> [new_rank_event(deck_1_id, -1), new_rank_event(deck_2_id, 1)]
     end
   end
 
