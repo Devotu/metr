@@ -39,6 +39,7 @@ defmodule GameTest do
     assert [:game, :created, nil] == resulting_event.tags
     assert is_bitstring(resulting_event.id)
     Data.wipe_test("Game", resulting_event.data.id)
+    Data.wipe_test("Result", resulting_event.data.result_ids)
   end
 
   test "select last x games" do
@@ -113,11 +114,18 @@ defmodule GameTest do
       :winner => 2}
     game_5_id = Metr.create_game(game_5)
 
+    deck_1 = Metr.read_state(:deck, deck_1_id)
+    deck_2 = Metr.read_state(:deck, deck_2_id)
+    deck_3 = Metr.read_state(:deck, deck_3_id)
+
+    assert 5 == Enum.count(deck_1.results)
     assert 3 == Enum.count(Metr.list_games(3))
+
 
     Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
     Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
+    Data.wipe_test("Result", deck_1.results ++ deck_2.results ++ deck_3.results)
   end
 
 
