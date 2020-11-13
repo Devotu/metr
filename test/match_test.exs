@@ -56,7 +56,7 @@ defmodule MatchTest do
     Data.wipe_test("Deck", [deck_id_1, deck_id_2])
   end
 
-  
+
   test "list matches" do
     [player_created_event] = Player.feed Event.new([:create, :player], %{name: "David Match"}), nil
     player_id = player_created_event.data.id
