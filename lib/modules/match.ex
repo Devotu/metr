@@ -139,8 +139,9 @@ defmodule Metr.Match do
 
   defp verify_deck({:error, _cause} = error, _id), do: error
   defp verify_deck({:ok}, id) do
-    case get_deck(id) do
+    case Deck.read(id) do
       nil ->  {:error, "deck #{id} not found"}
+      {:error, reason} ->  {:error, reason}
       _ ->    {:ok}
     end
   end
@@ -148,8 +149,8 @@ defmodule Metr.Match do
   defp verify_rank({:error, _cause} = error, _deck_id_1, _deck_id_2, _ranking), do: error
   defp verify_rank({:ok}, _deck_id_1, _deck_id_2, :false), do: {:ok}
   defp verify_rank({:ok}, deck_id_1, deck_id_2, :true) do
-    deck_1 = get_deck(deck_id_1)
-    deck_2 = get_deck(deck_id_2)
+    deck_1 = Deck.read(deck_id_1)
+    deck_2 = Deck.read(deck_id_2)
 
     case deck_1.rank == deck_2.rank do
       false ->  {:error, "ranks does not match"}
@@ -160,8 +161,8 @@ defmodule Metr.Match do
 
   defp collect_rank_alterations(%Match{ranking: false}), do: []
   defp collect_rank_alterations(%Match{ranking: true} = state) do
-    deck_1 = get_deck(state.deck_one)
-    deck_2 = get_deck(state.deck_two)
+    deck_1 = Deck.read(state.deck_one)
+    deck_2 = Deck.read(state.deck_two)
 
     case deck_1.rank == deck_2.rank do
       true ->
@@ -171,12 +172,6 @@ defmodule Metr.Match do
     end
   end
 
-  defp get_deck(deck_id) do
-    Event.new([:read, :deck], %{deck_id: deck_id})
-      |> Deck.feed(nil)
-      |> Enum.map(&(&1.data.out))
-      |> List.first()
-  end
 
   defp get_game(game_id) do
     Event.new([:read, :game], %{game_id: game_id})
