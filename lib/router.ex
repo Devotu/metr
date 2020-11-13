@@ -8,6 +8,7 @@ defmodule Metr.Router do
   alias Metr.Log
   alias Metr.Match
   alias Metr.Player
+  alias Metr.Result
 
   def input(events, response_pid) when is_list(events) and is_pid(response_pid) do
     Enum.each(events, fn e -> input(e, response_pid) end)
@@ -35,6 +36,7 @@ defmodule Metr.Router do
   #The actual routing implementation
   defp route({%Event{} = event, response_pid}), do: route(event, response_pid)
   defp route(%Event{} = event, response_pid \\ nil) do
+    # IO.inspect(event, label: "routing")
     [
       # Module.feed(event),
       Player.feed(event, response_pid),
@@ -44,6 +46,7 @@ defmodule Metr.Router do
       # CLI.feed(event, response_pid),
       Match.feed(event, response_pid),
       Metr.feed(event, response_pid),
+      Result.feed(event, response_pid),
     ]
     |> Enum.filter(fn e -> Enum.count(e) > 0 end)
     |> Enum.each(fn e -> route(e) end)

@@ -1,5 +1,5 @@
 defmodule Metr.Game do
-  defstruct id: "", time: 0, participants: [], match: nil
+  defstruct id: "", time: 0, results: [], match: nil
 
   use GenServer
 
@@ -8,6 +8,7 @@ defmodule Metr.Game do
   alias Metr.Data
   alias Metr.Game
   alias Metr.Time
+  alias Metr.Result
 
 
   ## feed
@@ -18,13 +19,15 @@ defmodule Metr.Game do
       {:ok} ->
         id = Id.guid()
         process_name = Data.genserver_id(__ENV__.module, id)
-        case GenServer.start(Metr.Game, {id, data, event}, [name: process_name]) do
+        results = convert_to_results(data.parts, data.winner)
+        result_ids = results
+          |> Enum.map(fn r -> Map.put(r, :game_id, id) end)
+          |> Enum.map(fn r -> Result.create(r, event) end)
+          |> Enum.map(fn {:ok, r} -> r.id end)
+        case GenServer.start(Metr.Game, {id, result_ids, event}, [name: process_name]) do
           {:ok, _pid} ->
-            participants = convert_to_participants(data.parts, data.winner)
-            player_ids =  Enum.map(participants, fn p -> p.player_id end)
-            deck_ids = Enum.map(participants, fn p -> p.deck_id end)
             match_id = Map.get(data, :match, nil)
-            [Event.new([:game, :created, repp], %{id: id, player_ids: player_ids, deck_ids: deck_ids, ranking: data.rank, match_id: match_id})]
+            [Event.new([:game, :created, repp], %{id: id, result_ids: result_ids, ranking: data.rank, match_id: match_id})]
           {:error, error} ->
             [Event.new([:game, :not, :created, repp], %{errors: [error]})]
           _ ->
@@ -63,15 +66,36 @@ defmodule Metr.Game do
     [Event.new([:games, repp], %{games: games})]
   end
 
+  def feed(%Event{id: _event_id, tags: [:list, :result], data: %{game_id: id}}, repp) do
+    game = recall(id)
+    [{Event.new([:list, :result], %{ids: game.results}), repp}]
+  end
+
   def feed(%Event{id: _event_id, tags: [:delete, :game], data: %{game_id: game_id}}, repp) do
-    case Data.wipe_state(__ENV__.module, game_id) do
-      :ok -> [Event.new([:game, :deleted, repp], %{id: game_id})]
-      _ -> [Event.new([:game, :not, :deleted, repp], %{id: game_id})]
+    delete_conclusion = game_id
+      |> read()
+      |> delete_game_results()
+      |> delete_game()
+    case delete_conclusion do
+      %Game{} = game -> [Event.new([:game, :deleted, repp], %{id: game_id, results: game.results})]
+      {:error, reason} -> [Event.new([:game, :error, repp], %{msg: reason})]
+      _ -> [Event.new([:game, :error, repp], %{msg: "unknown error"})]
     end
   end
 
   def feed(_event, _orepp) do
     []
+  end
+
+
+  def read(id) do
+    case Data.state_exists?(__ENV__.module, id) do
+      true ->
+        ready_process(id)
+        GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :game]})
+      false ->
+        {:error, "not found"}
+    end
   end
 
 
@@ -91,11 +115,11 @@ defmodule Metr.Game do
   end
 
 
-  defp convert_to_participants(parts, winner) do
+  defp convert_to_results(parts, winner) do
     parts
     |> Enum.map(fn p -> fill_power(p) end)
     |> Enum.map(fn p -> fill_fun(p) end)
-    |> Enum.map(fn p -> part_to_participant(p, winner) end)
+    |> Enum.map(fn p -> part_to_result(p, winner) end)
   end
 
 
@@ -133,8 +157,8 @@ defmodule Metr.Game do
   defp verify_decks({:ok}, _data), do: {:error, "missing deck_id parameter"}
 
 
-  defp part_to_participant(part, winner) do
-    %{
+  defp part_to_result(part, winner) do
+    %Result{
       player_id: part.details.player_id,
       deck_id: part.details.deck_id,
       place: place(part.part, winner),
@@ -153,21 +177,32 @@ defmodule Metr.Game do
   end
 
 
-  defp new(id, data) do
-    %Game{
-      id: id,
-      time: Time.timestamp(),
-      participants: convert_to_participants(data.parts, data.winner),
-    }
-    |> Map.merge(data)
+  defp delete_game_results({:error, reason}), do: {:error, reason}
+  defp delete_game_results(%Game{} = game) do
+    all_deleted? = game.results
+      |> Enum.map(fn rid -> Result.delete(rid) end)
+      |> Enum.all?(fn x -> x == :ok end)
+    case all_deleted? do
+      true -> game
+      false -> {:error, "Not all results deleted"}
+    end
+  end
+
+
+  defp delete_game({:error, reason}), do: {:error, reason}
+  defp delete_game(%Game{} = game) do
+    case Data.wipe_state(__ENV__.module, game.id) do
+      :ok -> game
+      _   -> {:error, "Could not delete game state"}
+    end
   end
 
 
 
   ## gen
   @impl true
-  def init({id, data, event}) do
-    state = new(id, data)
+  def init({id, result_ids, event}) do
+    state = %Game{id: id, time: Time.timestamp(), results: result_ids}
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}
   end

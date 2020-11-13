@@ -1,5 +1,5 @@
 defmodule Metr.Match do
-  defstruct id: "", games: [], player_one: "", player_two: "", deck_one: "", deck_two: "", ranking: false, status: nil
+  defstruct id: "", results: [], player_one: "", player_two: "", deck_one: "", deck_two: "", ranking: false, status: nil
 
   use GenServer
 
@@ -10,6 +10,7 @@ defmodule Metr.Match do
   alias Metr.Id
   alias Metr.Match
   alias Metr.Player
+  alias Metr.Result
 
 
   ## feed
@@ -193,7 +194,7 @@ defmodule Metr.Match do
 
 
   defp rank_decks(state, deck_1_id, deck_2_id) do
-    tally = state.games
+    tally = state.results
       |> Enum.map(fn gid -> get_game(gid) end)
       |> Enum.map(fn g -> extract_wins(g) end)
       |> Enum.concat()
@@ -208,7 +209,9 @@ defmodule Metr.Match do
 
 
   defp extract_wins(game) do
-    Enum.map(game.participants, fn p -> {p.deck_id, p.place == 1} end)
+    game.results
+      |> Enum.map(fn rid -> Result.read(rid) end)
+      |> Enum.map(fn r -> {r.deck_id, r.place == 1} end)
   end
 
 
@@ -269,7 +272,7 @@ defmodule Metr.Match do
   @impl true
   def handle_call(%{tags: [:game, :created, _orepp], data: %{id: game_id, match_id: id}, event: event}, _from, state) do
     new_state = state
-      |> Map.update!(:games, &(&1 ++ [game_id]))
+      |> Map.update!(:results, &(&1 ++ [game_id]))
       |> Map.put(:status, :open)
     :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     #Reply

@@ -8,6 +8,7 @@ defmodule GameTest do
   alias Metr.HRC
   alias Metr.Id
   alias Metr.Player
+  alias Metr.Result
 
   test "create game" do
     hcr = HRC.parse("""
@@ -36,8 +37,6 @@ defmodule GameTest do
 
     [resulting_event] = Game.feed Event.new(hcr), nil
     assert [:game, :created, nil] == resulting_event.tags
-    assert ["erik", "fredrik"] == resulting_event.data.player_ids
-    assert ["evil", "fungus"] == resulting_event.data.deck_ids
     assert is_bitstring(resulting_event.id)
     Data.wipe_test("Game", resulting_event.data.id)
   end
@@ -194,11 +193,14 @@ defmodule GameTest do
       :winner => 2}
     game_5_id = Metr.create_game(game_5)
 
-    assert 4 == Enum.count(Metr.list_games(:deck, deck_2_id))
+    assert 4 == Enum.count(Metr.list_states(:game, :deck, deck_2_id))
+
+    results = Metr.list_results()
 
     Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
     Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
+    Data.wipe_test("Result", Enum.map(results, fn r -> r.id end))
   end
 
 
@@ -220,9 +222,11 @@ defmodule GameTest do
       winner: 2}
     game_1_id = Metr.create_game(game_1_input)
     game_1 = Metr.read_game(game_1_id)
-    [participant_11, participant_12] = game_1.participants
-    assert -1 == participant_11.power
-    assert 1 == participant_12.power
+    [result_11_id, result_12_id] = game_1.results
+    result_11 = Result.read(result_11_id)
+    result_12 = Result.read(result_12_id)
+    assert -1 == result_11.power
+    assert 1 == result_12.power
 
     game_2_input = %{
       deck_1: deck_id,
@@ -233,9 +237,11 @@ defmodule GameTest do
       winner: 2}
     game_2_id = Metr.create_game(game_2_input)
     game_2 = Metr.read_game(game_2_id)
-    [participant_21, participant_22] = game_2.participants
-    assert nil == participant_21.power
-    assert nil == participant_22.power
+    [result_21_id, result_22_id] = game_2.results
+    result_21 = Result.read(result_21_id)
+    result_22 = Result.read(result_22_id)
+    assert nil == result_21.power
+    assert nil == result_22.power
 
     game_3_input = %{
       deck_1: deck_id,
@@ -245,13 +251,16 @@ defmodule GameTest do
       winner: 2}
     game_3_id = Metr.create_game(game_3_input)
     game_3 = Metr.read_game(game_3_id)
-    [participant_31, participant_32] = game_3.participants
-    assert nil == participant_31.power
-    assert nil == participant_32.power
+    [result_31_id, result_32_id] = game_3.results
+    result_31 = Result.read(result_31_id)
+    result_32 = Result.read(result_32_id)
+    assert nil == result_31.power
+    assert nil == result_32.power
 
     Data.wipe_test("Player", [player_id])
     Data.wipe_test("Deck", [deck_id])
     Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id])
+    Data.wipe_test("Result", [result_11_id, result_12_id, result_21_id, result_22_id, result_31_id, result_32_id])
   end
 
 

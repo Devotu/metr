@@ -64,16 +64,18 @@ defmodule PlayerTest do
     first_resulting_event = List.first(resulting_events)
     player_log = Data.read_log_by_id("Player", player_1_id)
 
+    [first_result_id, _second_result_event] = game_created_event.data.result_ids
 
     #Assert
     assert 2 == Enum.count(resulting_events)
     assert [:player, :altered] == first_resulting_event.tags
-    assert "Game #{game_created_event.data.id} added to player #{player_1_id}" == first_resulting_event.data.out
+    assert "Result #{first_result_id} added to player #{player_1_id}" == first_resulting_event.data.out
     assert 2 == Enum.count(player_log)
 
     #Cleanup
     Data.wipe_test("Player", [player_1_id, player_two_id])
     Data.wipe_test("Game", game_created_event.data.id)
+    Data.wipe_test("Result", game_created_event.data.result_ids)
   end
 
 

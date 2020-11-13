@@ -38,12 +38,25 @@ defmodule Metr do
     list(:game)
   end
 
+  def list_results() do
+    list(:result)
+  end
+
   def list_matches() do
     list(:match)
   end
 
   def list_formats() do
     list(:format)
+  end
+
+  def list_states(type, ids) when is_atom(type) do
+    Enum.map(ids, fn id -> read(type, id) end)
+  end
+
+  def list_states(state_type, by_type, id) when is_atom(state_type) and is_atom(by_type) do
+    constraints = Map.put(%{}, type_id(by_type), id)
+    list(state_type, constraints)
   end
 
 
@@ -63,8 +76,13 @@ defmodule Metr do
     read(:match, id)
   end
 
+  @spec read_entity_log(:deck | :game | :match | :player | :result, any) :: any
   def read_entity_log(type, id) when is_atom(type) do
     read_log(type, id)
+  end
+
+  def read_global_log(limit) when is_number(limit) do
+    read_log(limit)
   end
 
   def read_state(type, id) when is_atom(type) do
@@ -236,6 +254,18 @@ defmodule Metr do
     Task.await(listening_task)
   end
 
+  defp read_log(limit) when is_number(limit) do
+    #Start listener
+    listening_task = Task.async(&listen/0)
+
+    #Fire ze missiles
+    Event.new([:read, :log], %{limit: limit})
+    |> Router.input(listening_task.pid)
+
+    #Await response
+    Task.await(listening_task)
+  end
+
 
   defp run(%Event{} = event) do
     #Start listener
@@ -266,20 +296,18 @@ defmodule Metr do
       :deck -> :deck_id
       :game -> :game_id
       :match -> :match_id
+      :result -> :result_id
     end
   end
 
 
   def type_from_string(type) when is_bitstring(type) do
-    case type do
+    case String.downcase(type) do
       "player" -> :player
-      "Player" -> :player
       "deck" -> :deck
-      "Deck" -> :deck
       "game" -> :game
-      "Game" -> :game
       "match" -> :match
-      "Match" -> :match
+      "result" -> :result
     end
   end
 
