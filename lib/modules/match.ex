@@ -165,7 +165,7 @@ defmodule Metr.Match do
 
     case deck_1.rank == deck_2.rank do
       true ->
-        rank_decks(state, deck_1.id, deck_2.id)
+        rank_decks(state)
       false ->
         [Event.new([:match, :error], %{msg: "ranks does not match"})]
     end
@@ -193,11 +193,11 @@ defmodule Metr.Match do
   end
 
 
-  defp rank_decks(state, deck_1_id, deck_2_id) do
+  defp rank_decks(state) do
     case find_winner(state) do
       0 -> []
-      1 -> [new_rank_event(deck_1_id, 1), new_rank_event(deck_2_id, -1)]
-      2 -> [new_rank_event(deck_1_id, -1), new_rank_event(deck_2_id, 1)]
+      1 -> [new_rank_event(state.deck_one, 1), new_rank_event(state.deck_two, -1)]
+      2 -> [new_rank_event(state.deck_one, -1), new_rank_event(state.deck_two, 1)]
     end
   end
 
