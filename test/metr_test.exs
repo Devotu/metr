@@ -361,6 +361,7 @@ defmodule MetrTest do
     ongoing_match = Metr.read_match(match_id)
     assert 1 = ongoing_match.games |> Enum.count()
     assert :open == ongoing_match.status
+    assert nil == ongoing_match.winner
 
     game_2_id = Metr.create_game(Map.put(game_data, :winner, 1))
     game_3_id = Metr.create_game(game_data)
@@ -371,6 +372,7 @@ defmodule MetrTest do
     assert 3 = ended_match.games |> Enum.count()
     assert :true == ended_match.ranking
     assert :closed == ended_match.status
+    assert 2 == ended_match.winner
 
     deck_1 = Metr.read_deck(deck_1_id)
     assert {0,-1} == deck_1.rank

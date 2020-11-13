@@ -1,5 +1,5 @@
 defmodule Metr.Match do
-  defstruct id: "", games: [], player_one: "", player_two: "", deck_one: "", deck_two: "", ranking: false, status: nil
+  defstruct id: "", games: [], player_one: "", player_two: "", deck_one: "", deck_two: "", ranking: false, status: nil, winner: nil
 
   use GenServer
 
@@ -231,6 +231,21 @@ defmodule Metr.Match do
   end
 
 
+  defp find_winner(state) do
+    tally = state.games
+    |> Enum.map(fn gid -> get_game(gid) end)
+    |> Enum.map(fn g -> extract_wins(g) end)
+    |> Enum.concat()
+    |> collect_wins()
+
+    case tally[state.deck_one] - tally[state.deck_two] do
+      0 -> 0
+      x when x > 0 -> 1
+      x when x < 0 -> 2
+    end
+  end
+
+
   ## gen
   @impl true
 
@@ -263,6 +278,7 @@ defmodule Metr.Match do
   @impl true
   def handle_call(%{tags: [:end, :match], data: %{match_id: id}, event: event}, _from, state) do
     new_state = state
+      |> Map.put(:winner, find_winner(state))
       |> Map.put(:status, :closed)
     :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     #Reply
