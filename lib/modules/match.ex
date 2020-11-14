@@ -1,5 +1,5 @@
 defmodule Metr.Match do
-  defstruct id: "", games: [], player_one: "", player_two: "", deck_one: "", deck_two: "", ranking: false, status: nil
+  defstruct id: "", games: [], player_one: "", player_two: "", deck_one: "", deck_two: "", ranking: false, status: nil, winner: nil
 
   use GenServer
 
@@ -131,16 +131,18 @@ defmodule Metr.Match do
 
   defp verify_player({:error, _cause} = error, _id), do: error
   defp verify_player({:ok}, id) do
-    case get_player(id) do
+    case Player.read(id) do
       nil ->  {:error, "player #{id} not found"}
+      {:error, reason} ->  {:error, reason}
       _ ->    {:ok}
     end
   end
 
   defp verify_deck({:error, _cause} = error, _id), do: error
   defp verify_deck({:ok}, id) do
-    case get_deck(id) do
+    case Deck.read(id) do
       nil ->  {:error, "deck #{id} not found"}
+      {:error, reason} ->  {:error, reason}
       _ ->    {:ok}
     end
   end
@@ -148,8 +150,8 @@ defmodule Metr.Match do
   defp verify_rank({:error, _cause} = error, _deck_id_1, _deck_id_2, _ranking), do: error
   defp verify_rank({:ok}, _deck_id_1, _deck_id_2, :false), do: {:ok}
   defp verify_rank({:ok}, deck_id_1, deck_id_2, :true) do
-    deck_1 = get_deck(deck_id_1)
-    deck_2 = get_deck(deck_id_2)
+    deck_1 = Deck.read(deck_id_1)
+    deck_2 = Deck.read(deck_id_2)
 
     case deck_1.rank == deck_2.rank do
       false ->  {:error, "ranks does not match"}
@@ -160,30 +162,17 @@ defmodule Metr.Match do
 
   defp collect_rank_alterations(%Match{ranking: false}), do: []
   defp collect_rank_alterations(%Match{ranking: true} = state) do
-    deck_1 = get_deck(state.deck_one)
-    deck_2 = get_deck(state.deck_two)
+    deck_1 = Deck.read(state.deck_one)
+    deck_2 = Deck.read(state.deck_two)
 
     case deck_1.rank == deck_2.rank do
       true ->
-        rank_decks(state, deck_1.id, deck_2.id)
+        rank_decks(state)
       false ->
         [Event.new([:match, :error], %{msg: "ranks does not match"})]
     end
   end
 
-  defp get_deck(deck_id) do
-    Event.new([:read, :deck], %{deck_id: deck_id})
-      |> Deck.feed(nil)
-      |> Enum.map(&(&1.data.out))
-      |> List.first()
-  end
-
-  defp get_game(game_id) do
-    Event.new([:read, :game], %{game_id: game_id})
-      |> Game.feed(nil)
-      |> Enum.map(&(&1.data.out))
-      |> List.first()
-  end
 
   defp get_player(player_id) do
     Event.new([:read, :player], %{player_id: player_id})
@@ -193,17 +182,11 @@ defmodule Metr.Match do
   end
 
 
-  defp rank_decks(state, deck_1_id, deck_2_id) do
-    tally = state.games
-      |> Enum.map(fn gid -> get_game(gid) end)
-      |> Enum.map(fn g -> extract_wins(g) end)
-      |> Enum.concat()
-      |> collect_wins()
-
-    case tally[deck_1_id] - tally[deck_2_id] do
+  defp rank_decks(state) do
+    case find_winner(state) do
       0 -> []
-      x when x > 0 -> [new_rank_event(deck_1_id, 1), new_rank_event(deck_2_id, -1)]
-      x when x < 0 -> [new_rank_event(deck_1_id, -1), new_rank_event(deck_2_id, 1)]
+      1 -> [new_rank_event(state.deck_one, 1), new_rank_event(state.deck_two, -1)]
+      2 -> [new_rank_event(state.deck_one, -1), new_rank_event(state.deck_two, 1)]
     end
   end
 
@@ -228,6 +211,21 @@ defmodule Metr.Match do
 
   defp new_rank_event(deck_id, change) do
     Event.new([:alter, :rank], %{deck_id: deck_id, change: change})
+  end
+
+
+  defp find_winner(state) do
+    tally = state.games
+    |> Enum.map(fn gid -> Game.read(gid) end)
+    |> Enum.map(fn g -> extract_wins(g) end)
+    |> Enum.concat()
+    |> collect_wins()
+
+    case tally[state.deck_one] - tally[state.deck_two] do
+      0 -> 0
+      x when x > 0 -> 1
+      x when x < 0 -> 2
+    end
   end
 
 
@@ -263,6 +261,7 @@ defmodule Metr.Match do
   @impl true
   def handle_call(%{tags: [:end, :match], data: %{match_id: id}, event: event}, _from, state) do
     new_state = state
+      |> Map.put(:winner, find_winner(state))
       |> Map.put(:status, :closed)
     :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     #Reply

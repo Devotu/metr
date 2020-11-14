@@ -105,6 +105,17 @@ defmodule Metr.Deck do
   end
 
 
+  def read(id) do
+    case Data.state_exists?(__ENV__.module, id) do
+      true ->
+        ready_process(id)
+        GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :deck]})
+      false ->
+        {:error, "not found"}
+    end
+  end
+
+
 
   ##private
   defp ready_process(id) do
