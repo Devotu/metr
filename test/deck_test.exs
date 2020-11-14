@@ -26,16 +26,16 @@ defmodule DeckTest do
   test "fail create deck" do
     player_id = "faily"
     name = "Fail create deck"
-    [resulting_event] = Deck.feed Event.new([:create, :deck], %{name: name, player_id: player_id}), nil
-    assert [:deck, :create, :fail] == resulting_event.tags
-    assert "player #{player_id} not found" == resulting_event.data.cause
+    [resulting_event] = Deck.feed Event.new([:create, :deck], %{name: name, player_id: player_id}), "repp"
+    assert [:deck, :error, "repp"] == resulting_event.tags
+    assert "player faily not found" == resulting_event.data.cause
 
     [resulting_event] = Deck.feed Event.new([:create, :deck], %{name: name}), nil
-    assert [:deck, :create, :fail] == resulting_event.tags
+    assert [:deck, :error, nil] == resulting_event.tags
     assert "missing player_id parameter" == resulting_event.data.cause
 
     [resulting_event] = Deck.feed Event.new([:create, :deck], %{player_id: player_id}), nil
-    assert [:deck, :create, :fail] == resulting_event.tags
+    assert [:deck, :error, nil] == resulting_event.tags
     assert "missing name parameter" == resulting_event.data.cause
   end
 
@@ -115,7 +115,7 @@ defmodule DeckTest do
 
     #Assert
     assert 2 == Enum.count(resulting_events)
-    assert [:deck, :altered] == first_resulting_event.tags
+    assert [:deck, :altered, nil] == first_resulting_event.tags
     assert "Result #{first_result_id} added to deck #{deck_1_id}" == first_resulting_event.data.out
     assert 2 == Enum.count(deck_log)
 

@@ -18,10 +18,10 @@ defmodule Metr.Deck do
 
   ##feed
   def feed(%Event{id: _event_id, tags: [:create, :deck], data: data} = event, repp) do
-    case verify_input_data(data) do
-      {:error, error} ->
+    case verify_creation_data(data) do
+      {:error, reason} ->
         #Return
-        [Event.new([:deck, :create, :fail], %{cause: error, data: data})]
+        [Event.new([:deck, :error, repp], %{cause: reason, data: data})]
       {:ok} ->
         id = Id.hrid(data.name)
         process_name = Data.genserver_id(__ENV__.module, id)
@@ -48,7 +48,7 @@ defmodule Metr.Deck do
   def feed(%Event{id: _event_id, tags: [:game, :deleted, _orepp] = tags, data: %{results: result_ids}} = event, _repp) do
     #for each deck find connections to this game
     deck_result_ids = Data.list_ids(__ENV__.module)
-    |> Enum.map(fn id -> recall(id) end)
+    |> Enum.map(fn id -> read(id) end)
     |> Enum.filter(fn d -> Util.has_member?(d.results, result_ids) end)
     |> Enum.map(fn d -> {d.id, Util.find_first_common_member(d.results, result_ids)} end)
     #call update
@@ -68,18 +68,18 @@ defmodule Metr.Deck do
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :deck], data: %{deck_id: id}}, repp) do
-    deck = recall(id)
+    deck = read(id)
     [Event.new([:deck, :read, repp], %{out: deck})]
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :deck]}, repp) do
     decks = Data.list_ids(__ENV__.module)
-    |> Enum.map(fn id -> recall(id) end)
+    |> Enum.map(fn id -> read(id) end)
     [Event.new([:decks, repp], %{decks: decks})]
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :game], data: %{deck_id: id}}, repp) do
-    deck = recall(id)
+    deck = read(id)
     games = deck.results
       |> Enum.map(fn rid -> Result.read(rid) end)
       |> Enum.map(fn r -> Game.read(r.game_id) end)
@@ -87,7 +87,7 @@ defmodule Metr.Deck do
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :result], data: %{deck_id: id}}, repp) do
-    deck = recall(id)
+    deck = read(id)
     [{Event.new([:list, :result], %{ids: deck.results}), repp}]
   end
 
@@ -106,42 +106,108 @@ defmodule Metr.Deck do
 
 
   def read(id) do
-    case Data.state_exists?(__ENV__.module, id) do
-      true ->
-        ready_process(id)
-        GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :deck]})
-      false ->
-        {:error, "not found"}
-    end
+    id
+    |> verify_id()
+    |> ready_process()
+    |> recall()
   end
 
+
+  def exist?(id) do
+    case verify_id(id) do
+      {:ok, _id} -> true
+      _ -> false
+    end
+  end
 
 
   ##private
-  defp ready_process(id) do
-    # Is running?
-    if GenServer.whereis(Data.genserver_id(__ENV__.module, id)) == nil do
-      #Get state
-      current_state = Map.merge(%Deck{}, Data.recall_state(__ENV__.module, id))
-      #Start process
-      {:ok, _pid} = GenServer.start(Metr.Deck, current_state, [name: Data.genserver_id(__ENV__.module, id)])
+  defp verify_id(id) do
+    case Data.state_exists?(__ENV__.module, id) do
+      true -> {:ok, id}
+      false -> {:error, "deck not found"}
     end
   end
+
+
+  defp recall({:error, reason}), do: {:error, reason}
+  defp recall({:ok, id}) do
+    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :deck]})
+  end
+
+
+  defp ready_process({:error, reason}), do: {:error, reason}
+  defp ready_process({:ok, id}) do
+    # Is running?
+    case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)), Data.state_exists?(__ENV__.module, id)} do
+      {nil, true} ->
+        start_process(id)
+      {nil, false} ->
+        {:error, :no_such_id}
+      _ ->
+        {:ok, id}
+    end
+  end
+  defp ready_process(id), do: ready_process({:ok, id})
+
+
+  defp start_process(id) do
+    #Get state
+    current_state = Map.merge(%Deck{}, Data.recall_state(__ENV__.module, id))
+    case GenServer.start(Metr.Deck, current_state, [name: Data.genserver_id(__ENV__.module, id)]) do
+      :ok -> {:ok, id}
+      x -> x
+    end
+  end
+
 
   defp update(id, tags, data, event, repp \\ nil) do
-    ready_process(id)
-    #Call update
-    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
-    #Return
-    case repp do
-      nil -> [Event.new([:deck, :altered], %{out: msg})]
-      _ -> [Event.new([:deck, :altered, repp], %{out: msg})]
+    response = id
+      |> verify_id()
+      |> ready_process()
+      |> alter(tags, data, event)
+
+    case response do
+      {:error, reason} ->
+        [Event.new([:deck, :error, repp], %{cause: reason})]
+      msg ->
+        [Event.new([:deck, :altered, repp], %{out: msg})]
     end
   end
 
-  defp recall(id) do
-    ready_process(id)
-    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :deck]})
+
+  defp verify_creation_data(%{name: name, player_id: player_id}) do
+    {:ok}
+    |> verify_name(name)
+    |> verify_player(player_id)
+  end
+  defp verify_creation_data(%{player_id: _player_id}), do: {:error, "missing name parameter"}
+  defp verify_creation_data(%{name: _name}), do: {:error, "missing player_id parameter"}
+
+
+  defp verify_name({:error, _cause} = error, _id), do: error
+  defp verify_name({:ok}, name) when is_bitstring(name) do
+    case name do
+      nil ->  {:error, "no name"}
+      "" ->   {:error, "name cannot be blank"}
+      _ ->    {:ok}
+    end
+  end
+
+
+  defp verify_player({:error, _cause} = error, _id), do: error
+  defp verify_player({:ok}, player_id) do
+    case Player.exist?(player_id) do
+      true -> {:ok}
+      false -> {:error, "player #{player_id} not found"}
+    end
+  end
+
+
+  defp alter({:error, reason}, _tags, _data, _event), do: {:error, reason}
+  defp alter({:ok, id}, tags, data, event) do
+    #Call update
+    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
   end
 
 
@@ -223,42 +289,6 @@ defmodule Metr.Deck do
     |> Enum.reduce(base_rank, fn(p, acc) -> Rank.apply_change(acc, Rank.find_change(p)) end)
 
     Map.put(state, :rank, rank)
-  end
-
-
-  defp verify_input_data(%{name: name, player_id: player_id}) do
-    {:ok}
-    |> verify_name(name)
-    |> verify_player(player_id)
-  end
-  defp verify_input_data(%{player_id: _player_id}), do: {:error, "missing name parameter"}
-  defp verify_input_data(%{name: _name}), do: {:error, "missing player_id parameter"}
-
-
-  defp verify_name({:error, _cause} = error, _id), do: error
-  defp verify_name({:ok}, name) do
-    case name do
-      nil ->  {:error, "no name"}
-      "" ->   {:error, "name cannot be blank"}
-      _ ->    {:ok}
-    end
-  end
-
-
-  defp verify_player({:error, _cause} = error, _id), do: error
-  defp verify_player({:ok}, id) do
-    case get_player(id) do
-      {:error, :no_such_id} ->  {:error, "player #{id} not found"}
-      nil ->  {:error, "player #{id} not found"}
-      _ ->    {:ok}
-    end
-  end
-
-  defp get_player(player_id) do
-    Event.new([:read, :player], %{player_id: player_id})
-      |> Player.feed(nil)
-      |> Enum.map(&(&1.data.out))
-      |> List.first()
   end
 
 
