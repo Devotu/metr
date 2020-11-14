@@ -174,14 +174,6 @@ defmodule Metr.Match do
   end
 
 
-  defp get_player(player_id) do
-    Event.new([:read, :player], %{player_id: player_id})
-      |> Player.feed(nil)
-      |> Enum.map(&(&1.data.out))
-      |> List.first()
-  end
-
-
   defp rank_decks(state) do
     case find_winner(state) do
       0 -> []
