@@ -155,8 +155,8 @@ defmodule Metr.Deck do
     #Get state
     current_state = Map.merge(%Deck{}, Data.recall_state(__ENV__.module, id))
     case GenServer.start(Metr.Deck, current_state, [name: Data.genserver_id(__ENV__.module, id)]) do
-      :ok -> {:ok, id}
-      x -> x
+      {:ok, _pid} -> {:ok, id}
+      x -> {:error, inspect(x)}
     end
   end
 
