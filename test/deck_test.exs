@@ -253,4 +253,31 @@ defmodule DeckTest do
     assert "excess params given" == resulting_event.data.cause
     Data.wipe_test("Player", player_id)
   end
+
+
+  test "create minimum deck" do
+    player_name = "Gustav Deck"
+    player_id = Id.hrid(player_name)
+    Player.feed Event.new([:create, :player], %{name: player_name}), nil
+    deck_name = "Golf Deck"
+    [resulting_event] = Deck.feed Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil
+    assert [:deck, :created, nil] == resulting_event.tags
+
+    deck = Deck.read(resulting_event.data.id)
+    assert "" == deck.format
+    assert "" == deck.theme
+    assert nil == deck.rank
+    assert nil == deck.price
+    assert [] == deck.matches
+    assert [] == deck.results
+    assert false == deck.black
+    assert false == deck.white
+    assert false == deck.red
+    assert false == deck.green
+    assert false == deck.blue
+    assert false == deck.colorless
+
+    Data.wipe_test("Deck", resulting_event.data.id)
+    Data.wipe_test("Player", player_id)
+  end
 end

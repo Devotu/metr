@@ -45,7 +45,6 @@ defmodule MetrTest do
     assert false == deck.colorless
     assert {-1,1} == deck.rank
     assert price == deck.price
-    assert !Map.has_key?(deck, :spoiler)
     Data.wipe_test("Deck", deck_id)
     Data.wipe_test("Player", deck_data.player_id)
   end
