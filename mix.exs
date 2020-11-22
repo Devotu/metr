@@ -4,7 +4,7 @@ defmodule Metr.MixProject do
   def project do
     [
       app: :metr,
-      version: "0.8.0",
+      version: "0.8.1",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       escript: [main_module: Metr.CLI],
