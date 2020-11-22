@@ -176,10 +176,11 @@ defmodule Metr.Deck do
   end
 
 
-  defp verify_creation_data(%{name: name, player_id: player_id}) do
+  defp verify_creation_data(%{name: name, player_id: player_id} = data) do
     {:ok}
     |> verify_name(name)
     |> verify_player(player_id)
+    |> verify_input_content(data)
   end
   defp verify_creation_data(%{player_id: _player_id}), do: {:error, "missing name parameter"}
   defp verify_creation_data(%{name: _name}), do: {:error, "missing player_id parameter"}
@@ -200,6 +201,33 @@ defmodule Metr.Deck do
     case Player.exist?(player_id) do
       true -> {:ok}
       false -> {:error, "player #{player_id} not found"}
+    end
+  end
+
+
+  defp verify_input_content({:error, _error} = e, _data), do: e
+  defp verify_input_content({:ok}, data) do
+    valid_input_data = %{
+      name: "",
+      player_id: "",
+      format: "",
+      theme: "",
+      rank: 0,
+      advantage: 0,
+      price: 0,
+      black: false,
+      white: false,
+      red: true,
+      green: false,
+      blue: true,
+      colorless: false,
+      colors: %{},
+      parts: []
+    }
+
+    case Enum.empty?(Map.keys(data) -- Map.keys(valid_input_data)) do
+      true -> {:ok}
+      false -> {:error, "excess params given"}
     end
   end
 
@@ -256,7 +284,6 @@ defmodule Metr.Deck do
         deck
     end
   end
-
   defp apply_format(deck, format_descriptor) when is_bitstring(format_descriptor) do
     case String.downcase(format_descriptor) do
       f when f in @formats -> Map.put(deck, :format, format_descriptor)
@@ -266,7 +293,7 @@ defmodule Metr.Deck do
 
 
   defp apply_rank({:error, _error} = e, _data), do: e
-  defp apply_rank(%Deck{} = deck, data) when is_map(data) do
+  defp apply_rank(%Deck{} = deck, data) do
     case Map.has_key?(data, :rank) and is_tuple(data.rank) do
       true ->
         Map.update!(deck, :rank, fn _r -> Rank.uniform_rank(data.rank) end)

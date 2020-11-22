@@ -18,6 +18,7 @@ defmodule MetrTest do
   test "create deck" do
     Player.feed Event.new([:create, :player], %{name: "Martin Metr"}), nil
     format = "commander"
+    price = 12.34
     deck_data = %{
       black: false,
       white: false,
@@ -30,7 +31,8 @@ defmodule MetrTest do
       player_id: "martin_metr",
       theme: "commanding",
       rank: -1,
-      advantage: 1
+      advantage: 1,
+      price: price
     }
     deck_id = Metr.create_deck(deck_data)
     [read_event] = Deck.feed Event.new([:read, :deck], %{deck_id: deck_id}), nil
@@ -42,6 +44,8 @@ defmodule MetrTest do
     assert true == deck.blue
     assert false == deck.colorless
     assert {-1,1} == deck.rank
+    assert price == deck.price
+    assert !Map.has_key?(deck, :spoiler)
     Data.wipe_test("Deck", deck_id)
     Data.wipe_test("Player", deck_data.player_id)
   end

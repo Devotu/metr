@@ -37,6 +37,10 @@ defmodule DeckTest do
     [resulting_event] = Deck.feed Event.new([:create, :deck], %{player_id: player_id}), nil
     assert [:deck, :error, nil] == resulting_event.tags
     assert "missing name parameter" == resulting_event.data.cause
+
+    [resulting_event] = Deck.feed Event.new([:create, :deck], %{name: name, player_id: player_id, excess_field: "xs"}), "repp"
+    assert [:deck, :error, "repp"] == resulting_event.tags
+    assert "player faily not found" == resulting_event.data.cause
   end
 
 
@@ -236,5 +240,17 @@ defmodule DeckTest do
 
     Data.wipe_test("Deck", deck_1_id)
     Data.wipe_test("Player", player_1_id)
+  end
+
+
+  test "fail create deck - excess data" do
+    player_name = "Fredrik Deck"
+    player_id = Id.hrid(player_name)
+    Player.feed Event.new([:create, :player], %{name: player_name}), nil
+    deck_name = "Fail create deck"
+    [resulting_event] = Deck.feed Event.new([:create, :deck], %{name: deck_name, player_id: player_id, excess_field: "xs"}), "repp"
+    assert [:deck, :error, "repp"] == resulting_event.tags
+    assert "excess params given" == resulting_event.data.cause
+    Data.wipe_test("Player", player_id)
   end
 end
