@@ -7,6 +7,7 @@ defmodule GameTest do
   alias Metr.Game
   alias Metr.HRC
   alias Metr.Id
+  alias Metr.Match
   alias Metr.Player
   alias Metr.Result
 
@@ -313,7 +314,8 @@ defmodule GameTest do
     Player.feed Event.new([:create, :player], %{name: player_name}), nil
     Deck.feed Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil
 
-    match_id = "match_game_o"
+    [match_created_event] = Match.feed Event.new([:create, :match], %{player_1_id: player_id, deck_1_id: deck_id, player_2_id: player_id, deck_2_id: deck_id, ranking: :false}), nil
+    match_id = match_created_event.data.id
 
     game_1_input = %{
       deck_1: deck_id,
@@ -321,7 +323,7 @@ defmodule GameTest do
       player_1: player_id,
       player_2: player_id,
       winner: 2,
-      match_id: match_id
+      match: match_id
     }
     game_1_id = Metr.create_game(game_1_input)
     game_1 = Metr.read_game(game_1_id)
@@ -332,5 +334,6 @@ defmodule GameTest do
     Data.wipe_test("Deck", [deck_id])
     Data.wipe_test("Game", [game_1_id])
     Data.wipe_test("Result", game_1.results)
+    Data.wipe_test("Match", match_id)
   end
 end

@@ -24,7 +24,8 @@ defmodule Metr.Game do
           |> Enum.map(fn r -> Map.put(r, :game_id, id) end)
           |> Enum.map(fn r -> Result.create(r, event) end)
           |> Enum.map(fn {:ok, r} -> r.id end)
-        case GenServer.start(Metr.Game, {id, result_ids, event}, [name: process_name]) do
+        match_id = find_match_id(data)
+        case GenServer.start(Metr.Game, {id, result_ids, match_id, event}, [name: process_name]) do
           {:ok, _pid} ->
             match_id = Map.get(data, :match, nil)
             [Event.new([:game, :created, repp], %{id: id, result_ids: result_ids, ranking: data.rank, match_id: match_id})]
@@ -209,6 +210,10 @@ defmodule Metr.Game do
   end
 
 
+  defp find_match_id(%{match: match_id}), do: match_id
+  defp find_match_id(_), do: nil
+
+
   defp delete_game_results({:error, reason}), do: {:error, reason}
   defp delete_game_results(%Game{} = game) do
     all_deleted? = game.results
@@ -233,8 +238,8 @@ defmodule Metr.Game do
 
   ## gen
   @impl true
-  def init({id, result_ids, event}) do
-    state = %Game{id: id, time: Time.timestamp(), results: result_ids}
+  def init({id, result_ids, match_id, event}) do
+    state = %Game{id: id, time: Time.timestamp(), results: result_ids, match: match_id}
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}
   end
