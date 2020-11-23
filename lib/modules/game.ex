@@ -37,9 +37,14 @@ defmodule Metr.Game do
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :game] = tags, data: %{game_id: id}}, repp) do
-    ready_process(id)
-    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
-    [Event.new([:game, :read, repp], %{out: msg})]
+    case ready_process(id) do
+      {:ok, id} ->
+        msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
+        [Event.new([:game, :read, repp], %{out: msg})]
+      x ->
+        [Event.new([:game, :error, repp], %{out: Kernel.inspect(x)})]
+    end
+
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :log, :game], data: %{game_id: id}}, repp) do
@@ -135,7 +140,7 @@ defmodule Metr.Game do
   defp start_process(id) do
     #Get state
     current_state = Map.merge(%Game{}, Data.recall_state(__ENV__.module, id))
-    case GenServer.start(Game.Player, current_state, [name: Data.genserver_id(__ENV__.module, id)]) do
+    case GenServer.start(Metr.Game, current_state, [name: Data.genserver_id(__ENV__.module, id)]) do
       :ok -> {:ok, id}
       x -> x
     end
