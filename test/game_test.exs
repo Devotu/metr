@@ -302,4 +302,35 @@ defmodule GameTest do
     Data.wipe_test("Player", [player_id])
     Data.wipe_test("Deck", [deck_id])
   end
+
+
+  test "game in match created" do
+    player_name = "Olof Game"
+    player_id = Id.hrid(player_name)
+    deck_name = "Oscar Game"
+    deck_id = Id.hrid(deck_name)
+
+    Player.feed Event.new([:create, :player], %{name: player_name}), nil
+    Deck.feed Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil
+
+    match_id = "match_game_o"
+
+    game_1_input = %{
+      deck_1: deck_id,
+      deck_2: deck_id,
+      player_1: player_id,
+      player_2: player_id,
+      winner: 2,
+      match_id: match_id
+    }
+    game_1_id = Metr.create_game(game_1_input)
+    game_1 = Metr.read_game(game_1_id)
+
+    assert match_id == game_1.match
+
+    Data.wipe_test("Player", [player_id])
+    Data.wipe_test("Deck", [deck_id])
+    Data.wipe_test("Game", [game_1_id])
+    Data.wipe_test("Result", game_1.results)
+  end
 end
