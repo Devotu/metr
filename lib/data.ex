@@ -1,5 +1,5 @@
 defmodule Metr.Data do
-  @delimiter "**"
+  @delimiter "*___*_*_*"
 
   defp data_dir(), do: File.cwd! <> "/data"
 
