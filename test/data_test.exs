@@ -4,7 +4,6 @@ defmodule DataTest do
   alias Metr.Data
   alias Metr.Event
 
-
   test "log and retrieve by id" do
     module_name = "DataTest_Log_and_retrieve_by_id"
     id1 = "id1"
@@ -25,14 +24,13 @@ defmodule DataTest do
     {:error, :not_found} = Data.read_log_by_id(module_name, id2)
   end
 
-
   test "delimiter mixup" do
     module_name = "DataTest_Delimiter_mixup"
     id = "id"
 
-    #Becomes <<131, 98, 95, 192, 31, 42>> when turned into binary
-    #<<42>> is same as first of log delimiter and this should not be a problem
-    specific_time = 1606426410
+    # Becomes <<131, 98, 95, 192, 31, 42>> when turned into binary
+    # <<42>> is same as first of log delimiter and this should not be a problem
+    specific_time = 1_606_426_410
     specific_event = %Event{id: "dataTest_delimiter_mixup", time: specific_time}
 
     Data.log_by_id(module_name, id, Event.new([:correct], %{data: "first"}))

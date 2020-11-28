@@ -12,31 +12,34 @@ defmodule GameTest do
   alias Metr.Result
 
   test "create game" do
-    hcr = HRC.parse("""
-    create game
-      with
-        part 1
-        player_id erik
-        and deck_id evil
-        and power positive
-        and fun bad
-      with
-        part 2
-        player_id fredrik
-        and deck_id fungus
-      with winner 2
-    """)
+    hcr =
+      HRC.parse("""
+      create game
+        with
+          part 1
+          player_id erik
+          and deck_id evil
+          and power positive
+          and fun bad
+        with
+          part 2
+          player_id fredrik
+          and deck_id fungus
+        with winner 2
+      """)
+
     assert is_struct(hcr)
     assert hcr.action == :create
     assert hcr.subject == :game
     assert hcr.details == %{winner: 2}
-    assert hcr.parts ==
-      [
-        %{part: 1, details: %{deck_id: "evil", player_id: "erik", power: 1, fun: -2}},
-        %{part: 2, details: %{deck_id: "fungus", player_id: "fredrik"}}
-      ]
 
-    [resulting_event] = Game.feed Event.new(hcr), nil
+    assert hcr.parts ==
+             [
+               %{part: 1, details: %{deck_id: "evil", player_id: "erik", power: 1, fun: -2}},
+               %{part: 2, details: %{deck_id: "fungus", player_id: "fredrik"}}
+             ]
+
+    [resulting_event] = Game.feed(Event.new(hcr), nil)
     assert [:game, :created, nil] == resulting_event.tags
     assert is_bitstring(resulting_event.id)
     Data.wipe_test("Game", resulting_event.data.id)
@@ -59,23 +62,25 @@ defmodule GameTest do
     deck_3_name = "India Game"
     deck_3_id = Id.hrid(deck_3_name)
 
-    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
-    Player.feed Event.new([:create, :player], %{name: player_2_name}), nil
-    Player.feed Event.new([:create, :player], %{name: player_3_name}), nil
-    Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil
-    Deck.feed Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil
-    Deck.feed Event.new([:create, :deck], %{name: deck_3_name, player_id: player_3_id}), nil
+    Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
+    Player.feed(Event.new([:create, :player], %{name: player_2_name}), nil)
+    Player.feed(Event.new([:create, :player], %{name: player_3_name}), nil)
+    Deck.feed(Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %{name: deck_3_name, player_id: player_3_id}), nil)
 
-    #1
+    # 1
     game_1 = %{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
-      :winner => 2}
+      :winner => 2
+    }
+
     game_1_id = Metr.create_game(game_1)
 
-    #2
+    # 2
     game_2 = %{
       :deck_1 => deck_1_id,
       :deck_2 => deck_3_id,
@@ -85,34 +90,42 @@ defmodule GameTest do
       :player_2 => player_3_id,
       :power_1 => 2,
       :power_2 => -2,
-      :winner => 1}
+      :winner => 1
+    }
+
     game_2_id = Metr.create_game(game_2)
 
-    #3
+    # 3
     game_3 = %{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
-      :winner => 2}
+      :winner => 2
+    }
+
     game_3_id = Metr.create_game(game_3)
 
-    #4
+    # 4
     game_4 = %{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
-      :winner => 1}
+      :winner => 1
+    }
+
     game_4_id = Metr.create_game(game_4)
 
-    #5
+    # 5
     game_5 = %{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
-      :winner => 2}
+      :winner => 2
+    }
+
     game_5_id = Metr.create_game(game_5)
 
     deck_1 = Metr.read_state(:deck, deck_1_id)
@@ -122,13 +135,11 @@ defmodule GameTest do
     assert 5 == Enum.count(deck_1.results)
     assert 3 == Enum.count(Metr.list_games(3))
 
-
     Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
     Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
     Data.wipe_test("Result", deck_1.results ++ deck_2.results ++ deck_3.results)
   end
-
 
   test "select games by deck" do
     player_1_name = "Johan Game"
@@ -146,23 +157,25 @@ defmodule GameTest do
     deck_3_name = "Lima Game"
     deck_3_id = Id.hrid(deck_3_name)
 
-    Player.feed Event.new([:create, :player], %{name: player_1_name}), nil
-    Player.feed Event.new([:create, :player], %{name: player_2_name}), nil
-    Player.feed Event.new([:create, :player], %{name: player_3_name}), nil
-    Deck.feed Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil
-    Deck.feed Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil
-    Deck.feed Event.new([:create, :deck], %{name: deck_3_name, player_id: player_3_id}), nil
+    Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
+    Player.feed(Event.new([:create, :player], %{name: player_2_name}), nil)
+    Player.feed(Event.new([:create, :player], %{name: player_3_name}), nil)
+    Deck.feed(Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %{name: deck_3_name, player_id: player_3_id}), nil)
 
-    #1v2
+    # 1v2
     game_1 = %{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
-      :winner => 2}
+      :winner => 2
+    }
+
     game_1_id = Metr.create_game(game_1)
 
-    #1v3
+    # 1v3
     game_2 = %{
       :deck_1 => deck_1_id,
       :deck_2 => deck_3_id,
@@ -172,34 +185,42 @@ defmodule GameTest do
       :player_2 => player_3_id,
       :power_1 => 2,
       :power_2 => -2,
-      :winner => 1}
+      :winner => 1
+    }
+
     game_2_id = Metr.create_game(game_2)
 
-    #1v2
+    # 1v2
     game_3 = %{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
-      :winner => 2}
+      :winner => 2
+    }
+
     game_3_id = Metr.create_game(game_3)
 
-    #1v2
+    # 1v2
     game_4 = %{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
-      :winner => 1}
+      :winner => 1
+    }
+
     game_4_id = Metr.create_game(game_4)
 
-    #1v2
+    # 1v2
     game_5 = %{
       :deck_1 => deck_1_id,
       :deck_2 => deck_2_id,
       :player_1 => player_1_id,
       :player_2 => player_2_id,
-      :winner => 2}
+      :winner => 2
+    }
+
     game_5_id = Metr.create_game(game_5)
 
     assert 4 == Enum.count(Metr.list_states(:game, :deck, deck_2_id))
@@ -212,23 +233,24 @@ defmodule GameTest do
     Data.wipe_test("Result", Enum.map(results, fn r -> r.id end))
   end
 
-
   test "game with balance" do
     player_name = "Martin Game"
     player_id = Id.hrid(player_name)
     deck_name = "Mike Game"
     deck_id = Id.hrid(deck_name)
 
-    Player.feed Event.new([:create, :player], %{name: player_name}), nil
-    Deck.feed Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil
+    Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
+    Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
 
     game_1_input = %{
       deck_1: deck_id,
       deck_2: deck_id,
       player_1: player_id,
       player_2: player_id,
-      balance: {2,1},
-      winner: 2}
+      balance: {2, 1},
+      winner: 2
+    }
+
     game_1_id = Metr.create_game(game_1_input)
     game_1 = Metr.read_game(game_1_id)
     [result_11_id, result_12_id] = game_1.results
@@ -243,7 +265,9 @@ defmodule GameTest do
       player_1: player_id,
       player_2: player_id,
       balance: nil,
-      winner: 2}
+      winner: 2
+    }
+
     game_2_id = Metr.create_game(game_2_input)
     game_2 = Metr.read_game(game_2_id)
     [result_21_id, result_22_id] = game_2.results
@@ -257,7 +281,9 @@ defmodule GameTest do
       deck_2: deck_id,
       player_1: player_id,
       player_2: player_id,
-      winner: 2}
+      winner: 2
+    }
+
     game_3_id = Metr.create_game(game_3_input)
     game_3 = Metr.read_game(game_3_id)
     [result_31_id, result_32_id] = game_3.results
@@ -269,9 +295,16 @@ defmodule GameTest do
     Data.wipe_test("Player", [player_id])
     Data.wipe_test("Deck", [deck_id])
     Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id])
-    Data.wipe_test("Result", [result_11_id, result_12_id, result_21_id, result_22_id, result_31_id, result_32_id])
-  end
 
+    Data.wipe_test("Result", [
+      result_11_id,
+      result_12_id,
+      result_21_id,
+      result_22_id,
+      result_31_id,
+      result_32_id
+    ])
+  end
 
   test "game with failing balance" do
     player_name = "Niklas Game"
@@ -279,8 +312,8 @@ defmodule GameTest do
     deck_name = "November Game"
     deck_id = Id.hrid(deck_name)
 
-    Player.feed Event.new([:create, :player], %{name: player_name}), nil
-    Deck.feed Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil
+    Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
+    Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
 
     game_1_input = %{
       deck_1: deck_id,
@@ -288,8 +321,10 @@ defmodule GameTest do
       player_1: player_id,
       player_2: player_id,
       balance: 1,
-      winner: 2}
-      {:error, "invalid input balance"} = Metr.create_game(game_1_input)
+      winner: 2
+    }
+
+    {:error, "invalid input balance"} = Metr.create_game(game_1_input)
 
     game_2_input = %{
       deck_1: deck_id,
@@ -297,13 +332,14 @@ defmodule GameTest do
       player_1: player_id,
       player_2: player_id,
       balance: "2",
-      winner: 2}
+      winner: 2
+    }
+
     {:error, "invalid input balance"} = Metr.create_game(game_2_input)
 
     Data.wipe_test("Player", [player_id])
     Data.wipe_test("Deck", [deck_id])
   end
-
 
   test "game in match created" do
     player_name = "Olof Game"
@@ -311,10 +347,21 @@ defmodule GameTest do
     deck_name = "Oscar Game"
     deck_id = Id.hrid(deck_name)
 
-    Player.feed Event.new([:create, :player], %{name: player_name}), nil
-    Deck.feed Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil
+    Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
+    Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
 
-    [match_created_event] = Match.feed Event.new([:create, :match], %{player_1_id: player_id, deck_1_id: deck_id, player_2_id: player_id, deck_2_id: deck_id, ranking: :false}), nil
+    [match_created_event] =
+      Match.feed(
+        Event.new([:create, :match], %{
+          player_1_id: player_id,
+          deck_1_id: deck_id,
+          player_2_id: player_id,
+          deck_2_id: deck_id,
+          ranking: false
+        }),
+        nil
+      )
+
     match_id = match_created_event.data.id
 
     game_1_input = %{
@@ -325,6 +372,7 @@ defmodule GameTest do
       winner: 2,
       match: match_id
     }
+
     game_1_id = Metr.create_game(game_1_input)
     game_1 = Metr.read_game(game_1_id)
 

@@ -1,5 +1,4 @@
 defmodule Metr.Router do
-
   alias Metr.Event
   alias Metr.CLI
   alias Metr.Data
@@ -28,13 +27,13 @@ defmodule Metr.Router do
     route(event, nil)
   end
 
-
   defp route(events) when is_list(events) do
     Enum.each(events, &route/1)
   end
 
-  #The actual routing implementation
+  # The actual routing implementation
   defp route({%Event{} = event, response_pid}), do: route(event, response_pid)
+
   defp route(%Event{} = event, response_pid \\ nil) do
     # IO.inspect(event, label: "routing")
     [
@@ -46,7 +45,7 @@ defmodule Metr.Router do
       # CLI.feed(event, response_pid),
       Match.feed(event, response_pid),
       Metr.feed(event, response_pid),
-      Result.feed(event, response_pid),
+      Result.feed(event, response_pid)
     ]
     |> Enum.filter(fn e -> Enum.count(e) > 0 end)
     |> Enum.each(fn e -> route(e) end)

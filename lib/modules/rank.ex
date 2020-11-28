@@ -1,5 +1,4 @@
 defmodule Metr.Rank do
-
   def find_change(%{place: p}) do
     case p do
       0 -> 0
@@ -8,32 +7,36 @@ defmodule Metr.Rank do
     end
   end
 
-  #No changes
+  # No changes
   def apply_change(nil, 0), do: nil
   def apply_change(rank, 0), do: rank
 
-  #Initialized
-  def apply_change(nil, 1), do: {0,1}
-  def apply_change(nil, -1), do: {0,-1}
-  def apply_change({"0", "0"}, 1), do: {0,1}
-  def apply_change({"0", "0"}, -1), do: {0,-1}
+  # Initialized
+  def apply_change(nil, 1), do: {0, 1}
+  def apply_change(nil, -1), do: {0, -1}
+  def apply_change({"0", "0"}, 1), do: {0, 1}
+  def apply_change({"0", "0"}, -1), do: {0, -1}
 
-  #Positive
-  def apply_change({2,1}, 1), do: {2,1} #Already TOTP => no change
+  # Positive
+  # Already TOTP => no change
+  def apply_change({2, 1}, 1), do: {2, 1}
   def apply_change({r, -1}, 1), do: {r, 0}
   def apply_change({r, 0}, 1), do: {r, 1}
-  def apply_change({r, 1}, 1), do: {r+1, 0} #Level up
+  # Level up
+  def apply_change({r, 1}, 1), do: {r + 1, 0}
 
-  #Negative
-  def apply_change({-2,-1}, -1), do: {-2,-1} #Already rock bottom => no change
-  def apply_change({r, -1}, -1), do: {r-1, 0} #Level down
+  # Negative
+  # Already rock bottom => no change
+  def apply_change({-2, -1}, -1), do: {-2, -1}
+  # Level down
+  def apply_change({r, -1}, -1), do: {r - 1, 0}
   def apply_change({r, 0}, -1), do: {r, -1}
   def apply_change({r, 1}, -1), do: {r, 0}
 
-  
   def uniform_rank({r, a}) do
     {as_number(r), as_number(a)}
   end
+
   def uniform_rank(nil), do: nil
 
   defp as_number(r) when is_number(r), do: r

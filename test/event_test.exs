@@ -4,7 +4,6 @@ defmodule EventTest do
   alias Metr.Event
 
   test "only errors" do
-
     regular_event = Event.new([:read, :log], %{limit: 3})
     error_event = Event.new([:error, :log], %{msg: "something is wrong"})
 

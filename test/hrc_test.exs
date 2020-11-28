@@ -20,7 +20,9 @@ defmodule HRCTest do
   end
 
   test "parse create deck with colors" do
-    data = HRC.parse("create deck with name Bravo and player_id bertil and color black and color red")
+    data =
+      HRC.parse("create deck with name Bravo and player_id bertil and color black and color red")
+
     assert is_struct(data)
     assert data.action == :create
     assert data.subject == :deck
