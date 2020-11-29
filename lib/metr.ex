@@ -61,6 +61,13 @@ defmodule Metr do
     list(state_type, constraints)
   end
 
+  def list_states(type) when is_bitstring(type) do
+    type
+    |> type_from_string()
+    |> list()
+  end
+
+
   def read_player(id) do
     read(:player, id)
   end
