@@ -93,8 +93,18 @@ defmodule Metr do
     read_log(limit)
   end
 
-  def read_state(type, id) when is_atom(type) do
+  def read_state(type, id) when is_atom(type) and is_bitstring(id)  do
     read(type, id)
+  end
+
+  def read_state(type, id) when is_bitstring(type) and is_bitstring(id) do
+    type
+    |> type_from_string()
+    |> read(id)
+  end
+
+  def read_state(_type, _id) do
+    {:error, "Bad argument(s)"}
   end
 
   def create_game(%{
