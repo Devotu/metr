@@ -12,6 +12,7 @@ defmodule Metr.Result do
   alias Metr.Id
   alias Metr.Event
   alias Metr.Result
+  alias Metr.Time
 
   def create(%Result{} = result, event) do
     id = Id.guid()
@@ -20,6 +21,7 @@ defmodule Metr.Result do
       result
       |> verify_data()
       |> Map.put(:id, id)
+      |> Map.put(:time, Time.timestamp())
 
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}

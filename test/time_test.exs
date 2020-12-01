@@ -5,9 +5,9 @@ defmodule TimeTest do
   alias Metr.Event
   alias Metr.Data
   alias Metr.Deck
-  alias Metr.Game
   alias Metr.Match
   alias Metr.Player
+  alias Metr.Result
   alias Metr.Time
 
 
@@ -49,6 +49,10 @@ defmodule TimeTest do
 
     assert 0 != game.time
     assert 0 >= game.time - time_of_creation
+
+    result = Result.read(game.results |> List.first())
+    assert 0 != result.time
+    assert 0 >= result.time - time_of_creation
 
     Match.feed(Event.new([:create, :match],
       %{
