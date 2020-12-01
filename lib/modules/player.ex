@@ -1,5 +1,5 @@
 defmodule Metr.Player do
-  defstruct id: "", name: "", decks: [], results: [], matches: []
+  defstruct id: "", name: "", decks: [], results: [], matches: [], time: 0
 
   use GenServer
 
@@ -9,6 +9,7 @@ defmodule Metr.Player do
   alias Metr.Player
   alias Metr.Result
   alias Metr.Util
+  alias Metr.Time
 
   def feed(
         %Event{id: _event_id, tags: [:create, :player], data: %{name: name} = data} = event,
@@ -212,7 +213,7 @@ defmodule Metr.Player do
   ## gen
   @impl true
   def init({id, data, event}) do
-    state = %Player{id: id, name: data.name}
+    state = %Player{id: id, name: data.name, time: Time.timestamp()}
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}
   end

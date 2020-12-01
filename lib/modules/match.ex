@@ -7,7 +7,8 @@ defmodule Metr.Match do
             deck_two: "",
             ranking: false,
             status: nil,
-            winner: nil
+            winner: nil,
+            time: 0
 
   use GenServer
 
@@ -19,6 +20,7 @@ defmodule Metr.Match do
   alias Metr.Match
   alias Metr.Player
   alias Metr.Result
+  alias Metr.Time
 
   ## feed
   def feed(%Event{id: _event_id, tags: [:create, :match], data: data} = event, repp) do
@@ -51,7 +53,7 @@ defmodule Metr.Match do
   end
 
   def feed(%Event{id: _event_id, tags: [:end, :match], data: %{match_id: id}} = event, repp) do
-    current_state = recall(id)
+    current_state = read(id)
     rank_events = collect_rank_alterations(current_state)
     # If any contains errors don't alter state
     error_events = Event.only_errors(rank_events)
@@ -86,7 +88,7 @@ defmodule Metr.Match do
   def feed(%Event{id: _event_id, tags: [:list, :match]}, repp) do
     matches =
       Data.list_ids(__ENV__.module)
-      |> Enum.map(&recall/1)
+      |> Enum.map(&read/1)
 
     [Event.new([:matches, repp], %{matches: matches})]
   end
@@ -117,27 +119,61 @@ defmodule Metr.Match do
     []
   end
 
-  defp ready_process(id) do
+
+  #private
+  def read(id) do
+    id
+    |> verify_id()
+    |> ready_process()
+    |> recall()
+  end
+
+  def exist?(id) do
+    id
+    |> verify_id()
+  end
+
+  ## private
+  defp verify_id(id) do
+    case Data.state_exists?(__ENV__.module, id) do
+      true -> {:ok, id}
+      false -> {:error, "match not found"}
+    end
+  end
+
+  defp recall({:error, reason}), do: {:error, reason}
+
+  defp recall({:ok, id}) do
+    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :match]})
+  end
+
+  defp ready_process({:error, reason}), do: {:error, reason}
+
+  defp ready_process({:ok, id}) do
     # Is running?
     case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)),
           Data.state_exists?(__ENV__.module, id)} do
       {nil, true} ->
-        # Get state
-        current_state = Map.merge(%Match{}, Data.recall_state(__ENV__.module, id))
-        # Start process
-        GenServer.start(Match, current_state, name: Data.genserver_id(__ENV__.module, id))
+        start_process(id)
 
       {nil, false} ->
         {:error, :no_such_id}
 
       _ ->
-        {:ok}
+        {:ok, id}
     end
   end
 
-  defp recall(id) do
-    ready_process(id)
-    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :match]})
+  defp ready_process(id), do: ready_process({:ok, id})
+
+  defp start_process(id) do
+    # Get state
+    current_state = Map.merge(%Match{}, Data.recall_state(__ENV__.module, id))
+
+    case GenServer.start(Metr.Match, current_state, name: Data.genserver_id(__ENV__.module, id)) do
+      :ok -> {:ok, id}
+      x -> x
+    end
   end
 
   defp update(id, tags, data, event) do
@@ -286,7 +322,8 @@ defmodule Metr.Match do
       deck_one: data.deck_1_id,
       deck_two: data.deck_2_id,
       ranking: data.ranking,
-      status: :initialized
+      status: :initialized,
+      time: Time.timestamp()
     }
 
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)

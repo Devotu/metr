@@ -12,7 +12,8 @@ defmodule Metr.Deck do
             results: [],
             matches: [],
             rank: nil,
-            price: nil
+            price: nil,
+            time: 0
 
   @formats [
     "block",
@@ -41,6 +42,7 @@ defmodule Metr.Deck do
   alias Metr.Rank
   alias Metr.Result
   alias Metr.Util
+  alias Metr.Time
 
   ## feed
   def feed(%Event{id: _event_id, tags: [:create, :deck], data: data} = event, repp) do
@@ -311,7 +313,7 @@ defmodule Metr.Deck do
   end
 
   defp build_state(id, %{name: name} = data) do
-    %Deck{id: id, name: name}
+    %Deck{id: id, name: name, time: Time.timestamp()}
     |> apply_colors(data)
     |> apply_format(data)
     |> apply_rank(data)
