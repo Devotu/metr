@@ -48,6 +48,7 @@ defmodule ResultTest do
     assert 0 != result.time
 
     assert result == Metr.read_state(result.id, :result)
+    assert result == Metr.list_states(game.results, :result) |> List.first()
 
     Data.wipe_test("Deck", id)
     Data.wipe_test("Player", id)

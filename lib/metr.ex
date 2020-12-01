@@ -56,6 +56,10 @@ defmodule Metr do
     Enum.map(ids, fn id -> read(type, id) end)
   end
 
+  def list_states(ids, type) when is_atom(type) do
+    Enum.map(ids, fn id -> read(type, id) end)
+  end
+
   def list_states(state_type, by_type, id) when is_atom(state_type) and is_atom(by_type) do
     constraints = Map.put(%{}, type_id(by_type), id)
     list(state_type, constraints)
