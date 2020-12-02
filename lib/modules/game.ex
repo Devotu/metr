@@ -170,8 +170,9 @@ defmodule Metr.Game do
     current_state = Map.merge(%Game{}, Data.recall_state(__ENV__.module, id))
 
     case GenServer.start(Metr.Game, current_state, name: Data.genserver_id(__ENV__.module, id)) do
-      :ok -> {:ok, id}
-      x -> x
+      {:ok, _pid} -> {:ok, id}
+      {:error, reason} -> {:error, reason}
+      x -> {:error, inspect(x)}
     end
   end
 

@@ -183,6 +183,7 @@ defmodule Metr.Player do
 
     case GenServer.start(Metr.Player, current_state, name: Data.genserver_id(__ENV__.module, id)) do
       {:ok, _pid} -> {:ok, id}
+      {:error, reason} -> {:error, reason}
       x -> {:error, inspect(x)}
     end
   end

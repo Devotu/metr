@@ -170,8 +170,9 @@ defmodule Metr.Match do
     current_state = Map.merge(%Match{}, Data.recall_state(__ENV__.module, id))
 
     case GenServer.start(Metr.Match, current_state, name: Data.genserver_id(__ENV__.module, id)) do
-      :ok -> {:ok, id}
-      x -> x
+      {:ok, _pid} -> {:ok, id}
+      {:error, reason} -> {:error, reason}
+      x -> {:error, inspect(x)}
     end
   end
 
