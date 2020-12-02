@@ -1,4 +1,4 @@
-defmodule Metr.Deck do
+defmodule Metr.Modules.Deck do
   defstruct id: "",
             name: "",
             format: "",
@@ -36,11 +36,11 @@ defmodule Metr.Deck do
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
-  alias Metr.Deck
-  alias Metr.Game
-  alias Metr.Player
+  alias Metr.Modules.Deck
+  alias Metr.Modules.Game
+  alias Metr.Modules.Player
   alias Metr.Rank
-  alias Metr.Result
+  alias Metr.Modules.Result
   alias Metr.Util
   alias Metr.Time
 
@@ -55,7 +55,7 @@ defmodule Metr.Deck do
         id = Id.hrid(data.name)
         process_name = Data.genserver_id(__ENV__.module, id)
         # Start genserver
-        case GenServer.start(Metr.Deck, {id, data, event}, name: process_name) do
+        case GenServer.start(Metr.Modules.Deck, {id, data, event}, name: process_name) do
           {:ok, _pid} ->
             [Event.new([:deck, :created, repp], %{id: id, player_id: data.player_id})]
 
@@ -227,7 +227,7 @@ defmodule Metr.Deck do
     # Get state
     current_state = Map.merge(%Deck{}, Data.recall_state(__ENV__.module, id))
 
-    case GenServer.start(Metr.Deck, current_state, name: Data.genserver_id(__ENV__.module, id)) do
+    case GenServer.start(Metr.Modules.Deck, current_state, name: Data.genserver_id(__ENV__.module, id)) do
       {:ok, _pid} -> {:ok, id}
       {:error, reason} -> {:error, reason}
       x -> {:error, inspect(x)}

@@ -1,4 +1,4 @@
-defmodule Metr.Match do
+defmodule Metr.Modules.Match do
   defstruct id: "",
             games: [],
             player_one: "",
@@ -13,13 +13,13 @@ defmodule Metr.Match do
   use GenServer
 
   alias Metr.Data
-  alias Metr.Deck
+  alias Metr.Modules.Deck
   alias Metr.Event
-  alias Metr.Game
+  alias Metr.Modules.Game
   alias Metr.Id
-  alias Metr.Match
-  alias Metr.Player
-  alias Metr.Result
+  alias Metr.Modules.Match
+  alias Metr.Modules.Player
+  alias Metr.Modules.Result
   alias Metr.Time
 
   ## feed
@@ -169,7 +169,7 @@ defmodule Metr.Match do
     # Get state
     current_state = Map.merge(%Match{}, Data.recall_state(__ENV__.module, id))
 
-    case GenServer.start(Metr.Match, current_state, name: Data.genserver_id(__ENV__.module, id)) do
+    case GenServer.start(Metr.Modules.Match, current_state, name: Data.genserver_id(__ENV__.module, id)) do
       {:ok, _pid} -> {:ok, id}
       {:error, reason} -> {:error, reason}
       x -> {:error, inspect(x)}

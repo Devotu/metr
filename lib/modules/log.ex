@@ -1,4 +1,4 @@
-defmodule Metr.Log do
+defmodule Metr.Modules.Log do
   alias Metr.Event
   alias Metr.Data
 

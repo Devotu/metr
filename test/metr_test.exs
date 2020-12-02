@@ -3,9 +3,9 @@ defmodule MetrTest do
 
   alias Metr.Event
   alias Metr.Data
-  alias Metr.Deck
-  alias Metr.Game
-  alias Metr.Player
+  alias Metr.Modules.Deck
+  alias Metr.Modules.Game
+  alias Metr.Modules.Player
   alias Metr.Router
   alias Metr.Id
 

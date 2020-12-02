@@ -2,10 +2,10 @@ defmodule MatchTest do
   use ExUnit.Case
 
   alias Metr.Data
-  alias Metr.Deck
-  alias Metr.Match
+  alias Metr.Modules.Deck
+  alias Metr.Modules.Match
   alias Metr.Event
-  alias Metr.Player
+  alias Metr.Modules.Player
   alias Metr.Router
 
   test "basic feed" do

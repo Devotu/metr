@@ -1,4 +1,4 @@
-defmodule Metr.Player do
+defmodule Metr.Modules.Player do
   defstruct id: "", name: "", decks: [], results: [], matches: [], time: 0
 
   use GenServer
@@ -6,8 +6,8 @@ defmodule Metr.Player do
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
-  alias Metr.Player
-  alias Metr.Result
+  alias Metr.Modules.Player
+  alias Metr.Modules.Result
   alias Metr.Util
   alias Metr.Time
 
@@ -18,7 +18,7 @@ defmodule Metr.Player do
     id = Id.hrid(name)
 
     # Start genserver
-    GenServer.start(Metr.Player, {id, data, event}, name: Data.genserver_id(__ENV__.module, id))
+    GenServer.start(Metr.Modules.Player, {id, data, event}, name: Data.genserver_id(__ENV__.module, id))
 
     # Return
     [Event.new([:player, :created, repp], %{id: id})]
@@ -181,7 +181,7 @@ defmodule Metr.Player do
     # Get state
     current_state = Map.merge(%Player{}, Data.recall_state(__ENV__.module, id))
 
-    case GenServer.start(Metr.Player, current_state, name: Data.genserver_id(__ENV__.module, id)) do
+    case GenServer.start(Metr.Modules.Player, current_state, name: Data.genserver_id(__ENV__.module, id)) do
       {:ok, _pid} -> {:ok, id}
       {:error, reason} -> {:error, reason}
       x -> {:error, inspect(x)}

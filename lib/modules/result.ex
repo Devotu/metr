@@ -1,4 +1,4 @@
-defmodule Metr.Result do
+defmodule Metr.Modules.Result do
   defstruct id: "",
             time: 0,
             game_id: "",
@@ -11,7 +11,7 @@ defmodule Metr.Result do
   alias Metr.Data
   alias Metr.Id
   alias Metr.Event
-  alias Metr.Result
+  alias Metr.Modules.Result
   alias Metr.Time
 
   def create(%Result{} = result, event) do
