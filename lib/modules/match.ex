@@ -119,8 +119,7 @@ defmodule Metr.Match do
     []
   end
 
-
-  #private
+  # private
   def read(id) do
     id
     |> verify_id()

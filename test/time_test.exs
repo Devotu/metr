@@ -10,7 +10,6 @@ defmodule TimeTest do
   alias Metr.Result
   alias Metr.Time
 
-
   test "state timestamps" do
     name = "Adam Time"
     id = Id.hrid(name)
@@ -18,27 +17,37 @@ defmodule TimeTest do
     # with one second interval the entire test should pass on the same timestamp or the next
     time_of_creation = Time.timestamp()
 
-    Player.feed(Event.new([:create, :player],
-      %{
-        name: name
-        }), nil)
+    Player.feed(
+      Event.new(
+        [:create, :player],
+        %{
+          name: name
+        }
+      ),
+      nil
+    )
 
     player = Player.read(id)
     assert 0 != player.time
     assert 0 >= player.time - time_of_creation
 
-    Deck.feed(Event.new([:create, :deck],
-      %{
-        name: name,
-        player_id: id
-        }), nil)
+    Deck.feed(
+      Event.new(
+        [:create, :deck],
+        %{
+          name: name,
+          player_id: id
+        }
+      ),
+      nil
+    )
 
     deck = Deck.read(id)
     assert 0 != deck.time
     assert 0 >= deck.time - time_of_creation
 
-    game = Metr.create_game(
-      %{
+    game =
+      Metr.create_game(%{
         :deck_1 => id,
         :deck_2 => id,
         :player_1 => id,
@@ -54,16 +63,22 @@ defmodule TimeTest do
     assert 0 != result.time
     assert 0 >= result.time - time_of_creation
 
-    Match.feed(Event.new([:create, :match],
-      %{
-        player_1_id: id,
-        deck_1_id: id,
-        player_2_id: id,
-        deck_2_id: id,
-        ranking: false
-      }), nil)
+    Match.feed(
+      Event.new(
+        [:create, :match],
+        %{
+          player_1_id: id,
+          deck_1_id: id,
+          player_2_id: id,
+          deck_2_id: id,
+          ranking: false
+        }
+      ),
+      nil
+    )
 
-    match = Metr.list_states("Match")
+    match =
+      Metr.list_states("Match")
       |> List.first()
 
     assert 0 != match.time

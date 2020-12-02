@@ -37,13 +37,13 @@ defmodule Metr.Result do
   end
 
   defp data_is_valid(%Result{} = r) do
-    valid_id(r.id)
-    and valid_id(r.deck_id)
-    and valid_id(r.player_id)
-    and valid_number(r.power)
-    and valid_number(r.place)
-    and valid_number(r.fun)
-    and valid_time(r.time)
+    valid_id(r.id) and
+      valid_id(r.deck_id) and
+      valid_id(r.player_id) and
+      valid_number(r.power) and
+      valid_number(r.place) and
+      valid_number(r.fun) and
+      valid_time(r.time)
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :result], data: %{ids: ids}}, repp)
@@ -77,17 +77,16 @@ defmodule Metr.Result do
     Data.wipe_state(__ENV__.module, id)
   end
 
+  defp valid_id(nil), do: false
+  defp valid_id(x) when is_bitstring(x), do: true
+  defp valid_id(_), do: false
 
-  defp valid_id(nil), do: :false
-  defp valid_id(x) when is_bitstring(x), do: :true
-  defp valid_id(_), do: :false
+  defp valid_number(nil), do: true
+  defp valid_number(x) when is_number(x), do: true
+  defp valid_number(_), do: false
 
-  defp valid_number(nil), do: :true
-  defp valid_number(x) when is_number(x), do: :true
-  defp valid_number(_), do: :false
-
-  defp valid_time(nil), do: :false
-  defp valid_time(0), do: :false
-  defp valid_time(x) when is_number(x), do: :true
-  defp valid_time(_), do: :false
+  defp valid_time(nil), do: false
+  defp valid_time(0), do: false
+  defp valid_time(x) when is_number(x), do: true
+  defp valid_time(_), do: false
 end

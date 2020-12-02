@@ -8,26 +8,35 @@ defmodule ResultTest do
   alias Metr.Player
   alias Metr.Result
 
-
   test "valid created" do
     name = "Adam Result"
     id = Id.hrid(name)
 
-    Player.feed(Event.new([:create, :player],
-      %{
-        name: name
-        }), nil)
+    Player.feed(
+      Event.new(
+        [:create, :player],
+        %{
+          name: name
+        }
+      ),
+      nil
+    )
 
-    Deck.feed(Event.new([:create, :deck],
-      %{
-        name: name,
-        player_id: id
-        }), nil)
+    Deck.feed(
+      Event.new(
+        [:create, :deck],
+        %{
+          name: name,
+          player_id: id
+        }
+      ),
+      nil
+    )
 
     deck = Deck.read(id)
 
-    game = Metr.create_game(
-      %{
+    game =
+      Metr.create_game(%{
         :deck_1 => id,
         :deck_2 => id,
         :player_1 => id,
@@ -36,7 +45,7 @@ defmodule ResultTest do
         :fun_1 => 1,
         :fun_2 => -2,
         :power_1 => 2,
-        :power_2 => -2,
+        :power_2 => -2
       })
       |> Metr.read_state(:game)
 

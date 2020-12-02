@@ -480,7 +480,7 @@ defmodule MetrTest do
     game_1_state = Metr.read_state(:game, game_1_id)
     assert 2 == Enum.count(game_1_state.results)
 
-    assert {:error, "Bad argument(s)"} == Metr.read_state("Game", 123456)
+    assert {:error, "Bad argument(s)"} == Metr.read_state("Game", 123_456)
 
     Data.wipe_test("Player", [player_1_id])
     Data.wipe_test("Deck", [deck_1_id])

@@ -71,7 +71,6 @@ defmodule Metr do
     |> list()
   end
 
-
   def read_player(id) do
     read(:player, id)
   end
@@ -97,11 +96,11 @@ defmodule Metr do
     read_log(limit)
   end
 
-  def read_state(id, type) when is_atom(type) and is_bitstring(id)  do
+  def read_state(id, type) when is_atom(type) and is_bitstring(id) do
     read(type, id)
   end
 
-  def read_state(type, id) when is_atom(type) and is_bitstring(id)  do
+  def read_state(type, id) when is_atom(type) and is_bitstring(id) do
     read(type, id)
   end
 
