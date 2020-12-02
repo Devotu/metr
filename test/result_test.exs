@@ -33,8 +33,6 @@ defmodule ResultTest do
       nil
     )
 
-    deck = Deck.read(id)
-
     game =
       Metr.create_game(%{
         :deck_1 => id,
