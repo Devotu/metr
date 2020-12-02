@@ -37,7 +37,6 @@ defmodule Metr.Result do
   end
 
   defp data_is_valid(%Result{} = r) do
-    IO.inspect(r, label: "result")
     valid_id(r.id)
     and valid_id(r.deck_id)
     and valid_id(r.player_id)
