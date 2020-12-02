@@ -9,8 +9,8 @@ defmodule BaseTest do
   test "verify id" do
     [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "Adam Base"}), nil)
     player_id = resulting_event.data.id
-    assert Base.verify_id(player_id, :player)
-    assert Base.verify_id("not a correct id", :player)
+    assert Base.verified_id(player_id, "Player")
+    assert not Base.verified_id("not a correct id", "Player")
     Data.wipe_test("Player", player_id)
   end
 

@@ -1,8 +1,11 @@
 defmodule Metr.Modules.Player do
   defstruct id: "", name: "", decks: [], results: [], matches: [], time: 0
 
+  @name "Player"
+
   use GenServer
 
+  alias Metr.Modules.Base
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
@@ -134,26 +137,16 @@ defmodule Metr.Modules.Player do
 
   def read(id) do
     id
-    |> verify_id()
+    |> Base.verified_id(@name)
     |> ready_process()
     |> recall()
   end
 
   def exist?(id) do
-    case verify_id(id) do
-      {:ok, _id} -> true
-      _ -> false
-    end
+    Base.module_has_state(id, @name)
   end
 
   ## private
-  defp verify_id(id) do
-    case Data.state_exists?(__ENV__.module, id) do
-      true -> {:ok, id}
-      false -> {:error, "player not found"}
-    end
-  end
-
   defp recall({:error, reason}), do: {:error, reason}
 
   defp recall({:ok, id}) do
@@ -191,7 +184,7 @@ defmodule Metr.Modules.Player do
   defp update(id, tags, data, event, repp \\ nil) do
     response =
       id
-      |> verify_id()
+      |> Base.verified_id(@name)
       |> ready_process()
       |> alter(tags, data, event)
 

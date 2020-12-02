@@ -2,20 +2,34 @@ defmodule Metr.Modules.Base do
 
   alias Metr.Data
 
-  def verify_id(id, module) when is_bitstring(id) and is_atom(module) do
-    case Data.state_exists?(module_data_name(module), id) do
-      true -> {:ok, id}
-      false -> {:error, "deck not found"}
+  def validate_module_name({:error, e}), do: {:error, e}
+  def validate_module_name(module_name) when is_bitstring(module_name) do
+    case module_name do
+      "Player" -> {:ok}
+      "Deck" -> {:ok}
+      "Game" -> {:ok}
+      "Match" -> {:ok}
+      "Result" -> {:ok}
+      _ -> {:error, "#{module_name} is not a valid module name"}
     end
   end
 
-  def module_data_name(module) when is_atom(module) do
-    case module do
-      :player -> "player"
-      :deck -> "deck"
-      :game -> "game"
-      :match -> "match"
-      :result -> "result"
+  def module_has_state({:error, e}), do: {:error, e}
+  def module_has_state({:ok}, id, module_name) when is_bitstring(id) and is_bitstring(module_name) do
+    Data.state_exists?(module_name, id)
+  end
+  def module_has_state(id, module_name) when is_bitstring(id) and is_bitstring(module_name) do
+    case validate_module_name(module_name) do
+      {:ok} -> Data.state_exists?(module_name, id)
+      e -> e
     end
   end
+
+  def verified_id(id, module_name) when is_bitstring(id) and is_bitstring(module_name) do
+    case module_has_state(id, module_name) do
+      true -> {:ok, id}
+      e -> e
+    end
+  end
+
 end
