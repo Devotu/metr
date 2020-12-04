@@ -7,6 +7,15 @@ defmodule Metr.Modules.Base do
     |> validate_module()
     |> module_has_state()
   end
+
+
+  def read(id, module_name) do
+    {:ok, id, module_name}
+    |> validate_module()
+    |> verified_id()
+    |> ready_process()
+    |> recall()
+  end
     case module_name do
       "Player" -> {:ok}
       "Deck" -> {:ok}

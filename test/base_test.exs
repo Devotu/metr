@@ -14,4 +14,11 @@ defmodule BaseTest do
     Data.wipe_test("Player", player_id)
   end
 
+  test "read state" do
+    [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "Bertil Base"}), nil)
+    player_id = resulting_event.data.id
+    player = Base.read(player_id, "Player")
+    assert player_id == player.id
+    Data.wipe_test("Player", player_id)
+  end
 end
