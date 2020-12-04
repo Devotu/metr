@@ -32,7 +32,7 @@ defmodule Metr.Modules.Base do
   end
 
 
-  def update(id, module_name, tags, data, event, repp \\ nil) do
+  def update(id, module_name, tags, data, event) do
     {:ok, id, module_name}
     |> validate_module()
     |> verified_id()
