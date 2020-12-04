@@ -2,8 +2,11 @@ defmodule Metr.Modules.Base do
 
   alias Metr.Data
 
-  def validate_module_name({:error, e}), do: {:error, e}
-  def validate_module_name(module_name) when is_bitstring(module_name) do
+  def exist?(id, module_name) do
+    {:ok, id, module_name}
+    |> validate_module()
+    |> module_has_state()
+  end
     case module_name do
       "Player" -> {:ok}
       "Deck" -> {:ok}
