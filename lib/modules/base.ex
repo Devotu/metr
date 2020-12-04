@@ -16,6 +16,19 @@ defmodule Metr.Modules.Base do
     |> ready_process()
     |> recall()
   end
+
+
+  def ready(id, module_name) do
+    result = {:ok, id, module_name}
+      |> validate_module()
+      |> verified_id()
+      |> ready_process()
+
+    case result do
+      {:ok, _id, _module} -> {:ok}
+      x -> x
+    end
+  end
     case module_name do
       "Player" -> {:ok}
       "Deck" -> {:ok}

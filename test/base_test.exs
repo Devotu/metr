@@ -21,4 +21,12 @@ defmodule BaseTest do
     assert player_id == player.id
     Data.wipe_test("Player", player_id)
   end
+
+  test "ready" do
+    assert {:error, "Player not_yet_created not found"} == Base.ready("not_yet_created", "Player")
+    [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "Ceasar Base"}), nil)
+    player_id = resulting_event.data.id
+    assert {:ok} == Base.ready(player_id, "Player")
+    Data.wipe_test("Player", player_id)
+  end
 end
