@@ -41,7 +41,7 @@ defmodule BaseTest do
 
   test "to_event" do
     expected_output = "Expected output"
-    e = Base.out_to_event("Player", [:altered, nil], expected_output)
+    e = Base.out_to_event(expected_output, "Player", [:altered, nil])
     assert [:player, :altered, nil] == e.tags
     assert %{out: expected_output} == e.data
   end

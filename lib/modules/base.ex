@@ -3,6 +3,14 @@ defmodule Metr.Modules.Base do
   alias Metr.Data
   alias Metr.Event
 
+  alias Metr.Modules.Deck
+  alias Metr.Modules.Game
+  alias Metr.Modules.Match
+  alias Metr.Modules.Player
+  alias Metr.Modules.Result
+
+
+
   def exist?(id, module_name) do
     {:ok, id, module_name}
     |> validate_module()
@@ -42,7 +50,7 @@ defmodule Metr.Modules.Base do
 
 
 
-  def out_to_event(module_name, tags, msg) when is_bitstring(module_name) do
+  def out_to_event(msg, module_name, tags) when is_bitstring(module_name) do
     Event.new([select_module_atom(module_name)] ++ tags, %{out: msg})
   end
 
@@ -57,18 +65,29 @@ defmodule Metr.Modules.Base do
     end
   end
 
+  defp select_module(module_name) when is_bitstring(module_name) do
+    case module_name do
+      "Player" -> %Player{}
+      "Deck" -> %Deck{}
+      "Game" -> %Game{}
+      "Match" -> %Match{}
+      "Result" -> %Result{}
+      _ -> {:error, "#{module_name} is not a valid module"}
+    end
+  end
+
 
 
 
   defp validate_module({:error, e}), do: {:error, e}
-  defp validate_module({:ok, id, module}) when is_bitstring(module) do
-    case module do
-      "Player" -> {:ok, id, module}
-      "Deck" -> {:ok, id, module}
-      "Game" -> {:ok, id, module}
-      "Match" -> {:ok, id, module}
-      "Result" -> {:ok, id, module}
-      _ -> {:error, "#{module} is not a valid module name"}
+  defp validate_module({:ok, id, module_name}) when is_bitstring(module_name) do
+    case module_name do
+      "Player" -> {:ok, id, module_name}
+      "Deck" -> {:ok, id, module_name}
+      "Game" -> {:ok, id, module_name}
+      "Match" -> {:ok, id, module_name}
+      "Result" -> {:ok, id, module_name}
+      _ -> {:error, "#{module_name} is not a valid module name"}
     end
   end
 
@@ -109,7 +128,7 @@ defmodule Metr.Modules.Base do
 
   defp start_process({:ok, id, module}) do
     # Get state
-    current_state = Map.merge(%Player{}, Data.recall_state(module, id))
+    current_state = Map.merge(select_module(module), Data.recall_state(module, id))
 
     case GenServer.start(Metr.Modules.Player, current_state, name: Data.genserver_id(module, id)) do
       {:ok, _pid} -> {:ok, id}
