@@ -42,6 +42,23 @@ defmodule Metr.Modules.Base do
 
 
 
+  def out_to_event(module_name, tags, msg) when is_bitstring(module_name) do
+    Event.new([select_module_atom(module_name)] ++ tags, %{out: msg})
+  end
+
+  defp select_module_atom(module_name) when is_bitstring(module_name) do
+    case module_name do
+      "Player" -> :player
+      "Deck" -> :deck
+      "Game" -> :game
+      "Match" -> :match
+      "Result" -> :result
+      _ -> {:error, "#{module_name} is not a valid module"}
+    end
+  end
+
+
+
 
   defp validate_module({:error, e}), do: {:error, e}
   defp validate_module({:ok, id, module}) when is_bitstring(module) do

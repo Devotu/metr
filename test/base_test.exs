@@ -35,7 +35,14 @@ defmodule BaseTest do
     [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "David Base"}), nil)
     player_id = resulting_event.data.id
     event = Event.new([:deck, :created, nil], %{id: "deck_id", player_id: player_id})
-    assert "Deck deck_id added to player david_base" == Base.update(player_id, "Player", event.tags, event.data, event)
+    assert "Deck deck_id added to player #{player_id}" == Base.update(player_id, "Player", event.tags, event.data, event)
     Data.wipe_test("Player", player_id)
+  end
+
+  test "to_event" do
+    expected_output = "Expected output"
+    e = Base.out_to_event("Player", [:altered, nil], expected_output)
+    assert [:player, :altered, nil] == e.tags
+    assert %{out: expected_output} == e.data
   end
 end
