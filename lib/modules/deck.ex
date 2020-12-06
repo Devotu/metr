@@ -69,27 +69,31 @@ defmodule Metr.Modules.Deck do
   end
 
   def feed(
-        %Event{
-          id: _event_id,
-          tags: [:game, :created, _orepp] = tags,
-          data: %{result_ids: result_ids}
-        } = event,
-        _repp
-      ) do
-    deck_result_ids =
-      result_ids
-      |> Enum.map(fn result_id -> Result.read(result_id) end)
-      |> Enum.map(fn r -> {r.deck_id, r.id} end)
+    %Event{
+      id: _event_id,
+      tags: [:game, :created, _orepp] = tags,
+      data: %{result_ids: result_ids}
+    } = event,
+    repp
+  ) do
+  deck_result_ids =
+    result_ids
+    |> Enum.map(fn result_id -> Result.read(result_id) end)
+    |> Enum.map(fn r -> {r.deck_id, r.id} end)
 
-    # for each participant
-    # call update
-    Enum.reduce(
-      deck_result_ids,
-      [],
-      fn {deck_id, result_id}, acc ->
-        acc ++ update(deck_id, tags, %{id: result_id, deck_id: deck_id}, event)
-      end
-    )
+  # for each participant
+  # call update
+  Enum.reduce(
+    deck_result_ids,
+    [],
+    fn {id, result_id}, acc ->
+      acc ++
+        [
+          Base.update(id, @name, tags, %{id: result_id, deck_id: id}, event)
+          |> Base.out_to_event(@name, [:altered, repp])
+        ]
+    end
+  )
   end
 
   def feed(
@@ -200,11 +204,11 @@ defmodule Metr.Modules.Deck do
     end
   end
 
-  defp recall({:error, reason}), do: {:error, reason}
+  # defp recall({:error, reason}), do: {:error, reason}
 
-  defp recall({:ok, id}) do
-    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :deck]})
-  end
+  # defp recall({:ok, id}) do
+  #   GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :deck]})
+  # end
 
   defp ready_process({:error, reason}), do: {:error, reason}
 
