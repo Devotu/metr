@@ -56,15 +56,9 @@ defmodule Metr.Modules.Game do
     end
   end
 
-  def feed(%Event{id: _event_id, tags: [:read, :game] = tags, data: %{game_id: id}}, repp) do
-    case ready_process(id) do
-      {:ok, id} ->
-        msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
-        [Event.new([:game, :read, repp], %{out: msg})]
-
-      x ->
-        [Event.new([:game, :error, repp], %{out: Kernel.inspect(x)})]
-    end
+  def feed(%Event{id: _event_id, tags: [:read, :game], data: %{game_id: id}}, repp) do
+    game = read(id)
+    [Event.new([:game, :read, repp], %{out: game})]
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :log, :game], data: %{game_id: id}}, repp) do
@@ -152,37 +146,37 @@ defmodule Metr.Modules.Game do
   #   GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :game]})
   # end
 
-  defp ready_process({:error, reason}), do: {:error, reason}
+  # defp ready_process({:error, reason}), do: {:error, reason}
 
-  defp ready_process({:ok, id}) do
-    # Is running?
-    case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)),
-          Data.state_exists?(__ENV__.module, id)} do
-      {nil, true} ->
-        start_process(id)
+  # defp ready_process({:ok, id}) do
+  #   # Is running?
+  #   case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)),
+  #         Data.state_exists?(__ENV__.module, id)} do
+  #     {nil, true} ->
+  #       start_process(id)
 
-      {nil, false} ->
-        {:error, :no_such_id}
+  #     {nil, false} ->
+  #       {:error, :no_such_id}
 
-      _ ->
-        {:ok, id}
-    end
-  end
+  #     _ ->
+  #       {:ok, id}
+  #   end
+  # end
 
-  defp ready_process(id), do: ready_process({:ok, id})
+  # defp ready_process(id), do: ready_process({:ok, id})
 
-  defp start_process(id) do
-    # Get state
-    current_state = Map.merge(%Game{}, Data.recall_state(__ENV__.module, id))
+  # defp start_process(id) do
+  #   # Get state
+  #   current_state = Map.merge(%Game{}, Data.recall_state(__ENV__.module, id))
 
-    case GenServer.start(Metr.Modules.Game, current_state,
-           name: Data.genserver_id(__ENV__.module, id)
-         ) do
-      {:ok, _pid} -> {:ok, id}
-      {:error, reason} -> {:error, reason}
-      x -> {:error, inspect(x)}
-    end
-  end
+  #   case GenServer.start(Metr.Modules.Game, current_state,
+  #          name: Data.genserver_id(__ENV__.module, id)
+  #        ) do
+  #     {:ok, _pid} -> {:ok, id}
+  #     {:error, reason} -> {:error, reason}
+  #     x -> {:error, inspect(x)}
+  #   end
+  # end
 
   defp convert_to_results(parts, winner) do
     parts
