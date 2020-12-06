@@ -168,7 +168,8 @@ defmodule MetrTest do
     player_1 = Metr.read_player(player_1_id)
     assert 0 == Enum.count(player_1.results)
 
-    assert {:error, "Game not an actual game id not found"} == Metr.delete_game("not an actual game id")
+    assert {:error, "Game not an actual game id not found"} ==
+             Metr.delete_game("not an actual game id")
 
     results = Metr.list_results()
 
