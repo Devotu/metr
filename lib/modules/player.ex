@@ -47,25 +47,6 @@ defmodule Metr.Modules.Player do
         %Event{
           id: _event_id,
           tags: [:game, :created, _orepp] = tags,
-          data: %{id: game_id, player_ids: player_ids}
-        } = event,
-        repp
-      ) do
-    # for each participant
-    # call update
-    Enum.reduce(player_ids, [], fn id, acc ->
-      acc ++
-        [
-          Base.update(id, @name, tags, %{id: game_id, player_id: id}, event)
-          |> Base.out_to_event(@name, [:altered, repp])
-        ]
-    end)
-  end
-
-  def feed(
-        %Event{
-          id: _event_id,
-          tags: [:game, :created, _orepp] = tags,
           data: %{result_ids: result_ids}
         } = event,
         repp
