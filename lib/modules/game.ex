@@ -29,7 +29,9 @@ defmodule Metr.Modules.Game do
 
         match_id = find_match_id(data)
 
-        case GenServer.start(Metr.Modules.Game, {id, result_ids, match_id, event}, name: process_name) do
+        case GenServer.start(Metr.Modules.Game, {id, result_ids, match_id, event},
+               name: process_name
+             ) do
           {:ok, _pid} ->
             match_id = Map.get(data, :match, nil)
 
@@ -169,7 +171,9 @@ defmodule Metr.Modules.Game do
     # Get state
     current_state = Map.merge(%Game{}, Data.recall_state(__ENV__.module, id))
 
-    case GenServer.start(Metr.Modules.Game, current_state, name: Data.genserver_id(__ENV__.module, id)) do
+    case GenServer.start(Metr.Modules.Game, current_state,
+           name: Data.genserver_id(__ENV__.module, id)
+         ) do
       {:ok, _pid} -> {:ok, id}
       {:error, reason} -> {:error, reason}
       x -> {:error, inspect(x)}

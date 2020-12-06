@@ -21,7 +21,9 @@ defmodule Metr.Modules.Player do
     id = Id.hrid(name)
 
     # Start genserver
-    GenServer.start(Metr.Modules.Player, {id, data, event}, name: Data.genserver_id(__ENV__.module, id))
+    GenServer.start(Metr.Modules.Player, {id, data, event},
+      name: Data.genserver_id(__ENV__.module, id)
+    )
 
     # Return
     [Event.new([:player, :created, repp], %{id: id})]
@@ -35,7 +37,10 @@ defmodule Metr.Modules.Player do
         } = event,
         repp
       ) do
-    [(Base.update(id, @name, tags, %{id: deck_id, player_id: id}, event) |> Base.out_to_event(@name, [:altered, repp]))]
+    [
+      Base.update(id, @name, tags, %{id: deck_id, player_id: id}, event)
+      |> Base.out_to_event(@name, [:altered, repp])
+    ]
   end
 
   def feed(
@@ -49,7 +54,11 @@ defmodule Metr.Modules.Player do
     # for each participant
     # call update
     Enum.reduce(player_ids, [], fn id, acc ->
-      acc ++ [(Base.update(id, @name, tags, %{id: game_id, player_id: id}, event) |> Base.out_to_event(@name, [:altered, repp]))]
+      acc ++
+        [
+          Base.update(id, @name, tags, %{id: game_id, player_id: id}, event)
+          |> Base.out_to_event(@name, [:altered, repp])
+        ]
     end)
   end
 
@@ -72,7 +81,11 @@ defmodule Metr.Modules.Player do
       player_result_ids,
       [],
       fn {id, result_id}, acc ->
-        acc ++ [(Base.update(id, @name, tags, %{id: result_id, player_id: id}, event) |> Base.out_to_event(@name, [:altered, repp]))]
+        acc ++
+          [
+            Base.update(id, @name, tags, %{id: result_id, player_id: id}, event)
+            |> Base.out_to_event(@name, [:altered, repp])
+          ]
       end
     )
   end
@@ -94,7 +107,11 @@ defmodule Metr.Modules.Player do
 
     # call update
     Enum.reduce(player_result_ids, [], fn {id, result_id}, acc ->
-      acc ++ [(Base.update(id, @name, tags, %{id: result_id, player_id: id}, event) |> Base.out_to_event(@name, [:altered, repp]))]
+      acc ++
+        [
+          Base.update(id, @name, tags, %{id: result_id, player_id: id}, event)
+          |> Base.out_to_event(@name, [:altered, repp])
+        ]
     end)
   end
 
@@ -110,7 +127,11 @@ defmodule Metr.Modules.Player do
     # call update
     Enum.reduce(player_ids, [], fn id, acc ->
       # acc ++ Base.update(id, @name, tags, %{id: match_id, player_id: id}, event)
-      acc ++ [(Base.update(id, @name, tags, %{id: match_id, player_id: id}, event) |> Base.out_to_event(@name, [:altered, repp]))]
+      acc ++
+        [
+          Base.update(id, @name, tags, %{id: match_id, player_id: id}, event)
+          |> Base.out_to_event(@name, [:altered, repp])
+        ]
     end)
   end
 
@@ -143,7 +164,6 @@ defmodule Metr.Modules.Player do
   def exist?(id) do
     Base.exist?(id, @name)
   end
-
 
   ## gen
   @impl true

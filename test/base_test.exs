@@ -31,11 +31,16 @@ defmodule BaseTest do
   end
 
   test "update" do
-    assert {:error, "Player not_yet_created not found"} == Base.update("not_yet_created", "Player", [], %{}, %Event{})
+    assert {:error, "Player not_yet_created not found"} ==
+             Base.update("not_yet_created", "Player", [], %{}, %Event{})
+
     [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "David Base"}), nil)
     player_id = resulting_event.data.id
     event = Event.new([:deck, :created, nil], %{id: "deck_id", player_id: player_id})
-    assert "Deck deck_id added to player #{player_id}" == Base.update(player_id, "Player", event.tags, event.data, event)
+
+    assert "Deck deck_id added to player #{player_id}" ==
+             Base.update(player_id, "Player", event.tags, event.data, event)
+
     Data.wipe_test("Player", player_id)
   end
 

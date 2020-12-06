@@ -1,5 +1,4 @@
 defmodule Metr.Modules.Base do
-
   alias Metr.Data
   alias Metr.Event
 
@@ -9,14 +8,11 @@ defmodule Metr.Modules.Base do
   alias Metr.Modules.Player
   alias Metr.Modules.Result
 
-
-
   def exist?(id, module_name) do
     {:ok, id, module_name}
     |> validate_module()
     |> module_has_state()
   end
-
 
   def read(id, module_name) do
     {:ok, id, module_name}
@@ -26,9 +22,9 @@ defmodule Metr.Modules.Base do
     |> recall()
   end
 
-
   def ready(id, module_name) do
-    result = {:ok, id, module_name}
+    result =
+      {:ok, id, module_name}
       |> validate_module()
       |> verified_id()
       |> ready_process()
@@ -39,7 +35,6 @@ defmodule Metr.Modules.Base do
     end
   end
 
-
   def update(id, module_name, tags, data, event) do
     {:ok, id, module_name}
     |> validate_module()
@@ -47,8 +42,6 @@ defmodule Metr.Modules.Base do
     |> ready_process()
     |> alter(tags, data, event)
   end
-
-
 
   def out_to_event(msg, module_name, tags) when is_bitstring(module_name) do
     Event.new([select_module_atom(module_name)] ++ tags, %{out: msg})
@@ -76,10 +69,8 @@ defmodule Metr.Modules.Base do
     end
   end
 
-
-
-
   defp validate_module({:error, e}), do: {:error, e}
+
   defp validate_module({:ok, id, module_name}) when is_bitstring(module_name) do
     case module_name do
       "Player" -> {:ok, id, module_name}
@@ -92,11 +83,13 @@ defmodule Metr.Modules.Base do
   end
 
   defp module_has_state({:error, e}), do: {:error, e}
+
   defp module_has_state({:ok, id, module}) when is_bitstring(id) and is_bitstring(module) do
     Data.state_exists?(module, id)
   end
 
   defp verified_id({:error, e}), do: {:error, e}
+
   defp verified_id({:ok, id, module}) when is_bitstring(id) and is_bitstring(module) do
     case module_has_state({:ok, id, module}) do
       true -> {:ok, id, module}
@@ -104,17 +97,17 @@ defmodule Metr.Modules.Base do
     end
   end
 
-
   defp recall({:error, e}), do: {:error, e}
+
   defp recall({:ok, id, module}) do
     GenServer.call(Data.genserver_id(module, id), %{tags: [:read, :player]})
   end
 
   defp ready_process({:error, e}), do: {:error, e}
+
   defp ready_process({:ok, id, module}) do
     # Is running?
-    case {GenServer.whereis(Data.genserver_id(module, id)),
-          Data.state_exists?(module, id)} do
+    case {GenServer.whereis(Data.genserver_id(module, id)), Data.state_exists?(module, id)} do
       {nil, true} ->
         start_process({:ok, id, module})
 
@@ -137,8 +130,8 @@ defmodule Metr.Modules.Base do
     end
   end
 
-
   defp alter({:error, e}, _tags, _data, _event), do: {:error, e}
+
   defp alter({:ok, id, module}, tags, data, event) do
     # Call update
     GenServer.call(Data.genserver_id(module, id), %{tags: tags, data: data, event: event})
