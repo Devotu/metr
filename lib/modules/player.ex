@@ -1,7 +1,6 @@
 defmodule Metr.Modules.Player do
   defstruct id: "", name: "", decks: [], results: [], matches: [], time: 0
 
-  @name "Player"
 
   use GenServer
 
@@ -13,6 +12,8 @@ defmodule Metr.Modules.Player do
   alias Metr.Modules.Result
   alias Metr.Util
   alias Metr.Time
+
+  @name __ENV__.module |> Base.module_to_name()
 
   def feed(
         %Event{id: _event_id, tags: [:create, :player], data: %{name: name} = data} = event,
@@ -138,12 +139,17 @@ defmodule Metr.Modules.Player do
     []
   end
 
+  ##Module
   def read(id) do
     Base.read(id, @name)
   end
 
   def exist?(id) do
     Base.exist?(id, @name)
+  end
+
+  def module_name() do
+    @name
   end
 
   ## gen

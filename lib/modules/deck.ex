@@ -36,6 +36,7 @@ defmodule Metr.Modules.Deck do
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
+  alias Metr.Modules.Base
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
   alias Metr.Modules.Player
@@ -43,6 +44,8 @@ defmodule Metr.Modules.Deck do
   alias Metr.Modules.Result
   alias Metr.Util
   alias Metr.Time
+
+  @name __ENV__.module |> Base.module_to_name()
 
   ## feed
   def feed(%Event{id: _event_id, tags: [:create, :deck], data: data} = event, repp) do
@@ -176,18 +179,17 @@ defmodule Metr.Modules.Deck do
     []
   end
 
+  ##Module
   def read(id) do
-    id
-    |> verify_id()
-    |> ready_process()
-    |> recall()
+    Base.read(id, @name)
   end
 
   def exist?(id) do
-    case verify_id(id) do
-      {:ok, _id} -> true
-      _ -> false
-    end
+    Base.exist?(id, @name)
+  end
+
+  def module_name() do
+    @name
   end
 
   ## private

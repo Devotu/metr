@@ -108,7 +108,7 @@ defmodule Metr.Modules.Base do
   defp recall({:error, e}), do: {:error, e}
 
   defp recall({:ok, id, module}) do
-    GenServer.call(Data.genserver_id(module, id), %{tags: [:read, :player]})
+    GenServer.call(Data.genserver_id(module, id), %{tags: [:read, select_module_atom(module)]})
   end
 
   defp ready_process({:error, e}), do: {:error, e}
