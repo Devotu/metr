@@ -112,9 +112,13 @@ defmodule Metr.Modules.Match do
           tags: [:game, :created, _orepp],
           data: %{id: _game_id, match_id: id}
         } = event,
-        _repp
+        repp
       ) do
-    update(id, event.tags, event.data, event)
+    # update(id, event.tags, event.data, event)
+    [
+      Base.update(id, @name, event.tags, event.data, event)
+      |> Base.out_to_event(@name, [:altered, repp])
+    ]
   end
 
   def feed(_event, _orepp) do
@@ -181,19 +185,19 @@ defmodule Metr.Modules.Match do
     end
   end
 
-  defp update(id, tags, data, event) do
-    ready_process(id)
-    # Call update
-    msg =
-      GenServer.call(Data.genserver_id(__ENV__.module, id), %{
-        tags: tags,
-        data: data,
-        event: event
-      })
+  # defp update(id, tags, data, event) do
+  #   ready_process(id)
+  #   # Call update
+  #   msg =
+  #     GenServer.call(Data.genserver_id(__ENV__.module, id), %{
+  #       tags: tags,
+  #       data: data,
+  #       event: event
+  #     })
 
-    # Return
-    [Event.new([:match, :altered], %{out: msg})]
-  end
+  #   # Return
+  #   [Event.new([:match, :altered], %{out: msg})]
+  # end
 
   defp close(id, tags, data, event, repp) do
     ready_process(id)
