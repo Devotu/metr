@@ -126,58 +126,22 @@ defmodule Metr.Modules.Deck do
     [Event.new([:deck, :log, :read, repp], %{out: events})]
   end
 
-  # def feed(
-  #       %Event{
-  #         id: _event_id,
-  #         tags: [:match, :created, _orepp] = tags,
-  #         data: %{id: match_id, deck_ids: deck_ids}
-  #       } = event,
-  #       repp
-  #     ) do
-  #   for each participant
-  #   call update
-  #   Enum.reduce(deck_ids, [], fn id, acc ->
-  #     acc ++
-  #       [
-  #         Base.update(id, @name, tags, %{id: match_id, deck_id: id}, event)
-  #         |> Base.out_to_event(@name, [:altered, repp])
-  #       ]
-  #   end)
-  # end
-
-  # def feed(
-  #       %Event{
-  #         id: _event_id,
-  #         tags: [:game, :deleted, _orepp] = tags,
-  #         data: %{results: result_ids}
-  #       } = event,
-  #       _repp
-  #     ) do
-  #   # for each deck find connections to this game
-  #   deck_result_ids =
-  #     Data.list_ids(__ENV__.module)
-  #     |> Enum.map(fn id -> read(id) end)
-  #     |> Enum.filter(fn d -> Util.has_member?(d.results, result_ids) end)
-  #     |> Enum.map(fn d -> {d.id, Util.find_first_common_member(d.results, result_ids)} end)
-
-  #   # call update
-  #   Enum.reduce(deck_result_ids, [], fn {id, result_id}, acc ->
-  #     acc ++ update(id, tags, %{id: id, result_id: result_id}, event)
-  #   end)
-  # end
-
   def feed(
         %Event{
           id: _event_id,
           tags: [:match, :created, _orepp] = tags,
           data: %{id: match_id, deck_ids: deck_ids}
         } = event,
-        _repp
+        repp
       ) do
     # for each participant
     # call update
     Enum.reduce(deck_ids, [], fn id, acc ->
-      acc ++ update(id, tags, %{id: match_id, deck_id: id}, event)
+      acc ++
+        [
+          Base.update(id, @name, tags, %{id: match_id, deck_id: id}, event)
+          |> Base.out_to_event(@name, [:altered, repp])
+        ]
     end)
   end
 
