@@ -6,9 +6,12 @@ defmodule Metr.Modules.Game do
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
+  alias Metr.Modules.Base
   alias Metr.Modules.Game
-  alias Metr.Time
   alias Metr.Modules.Result
+  alias Metr.Time
+
+  @name __ENV__.module |> Base.module_to_name()
 
   ## feed
   def feed(%Event{id: _event_id, tags: [:create, :game], data: data} = event, repp) do
@@ -122,31 +125,32 @@ defmodule Metr.Modules.Game do
     []
   end
 
+  ## Module
   def read(id) do
-    id
-    |> verify_id()
-    |> ready_process()
-    |> recall()
+    Base.read(id, @name)
   end
 
   def exist?(id) do
-    id
-    |> verify_id()
+    Base.exist?(id, @name)
+  end
+
+  def module_name() do
+    @name
   end
 
   ## private
-  defp verify_id(id) do
-    case Data.state_exists?(__ENV__.module, id) do
-      true -> {:ok, id}
-      false -> {:error, "game not found"}
-    end
-  end
+  # defp verify_id(id) do
+  #   case Data.state_exists?(__ENV__.module, id) do
+  #     true -> {:ok, id}
+  #     false -> {:error, "game not found"}
+  #   end
+  # end
 
-  defp recall({:error, reason}), do: {:error, reason}
+  # defp recall({:error, reason}), do: {:error, reason}
 
-  defp recall({:ok, id}) do
-    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :game]})
-  end
+  # defp recall({:ok, id}) do
+  #   GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :game]})
+  # end
 
   defp ready_process({:error, reason}), do: {:error, reason}
 
