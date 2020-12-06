@@ -83,7 +83,7 @@ defmodule Metr.Modules.Match do
 
   def feed(%Event{id: _event_id, tags: [:list, :match], data: %{ids: ids}}, repp)
       when is_list(ids) do
-    matches = Enum.map(ids, &recall/1)
+    matches = Enum.map(ids, &read/1)
     [Event.new([:matches, repp], %{matches: matches})]
   end
 
@@ -143,11 +143,11 @@ defmodule Metr.Modules.Match do
   #   end
   # end
 
-  defp recall({:error, reason}), do: {:error, reason}
+  # defp recall({:error, reason}), do: {:error, reason}
 
-  defp recall({:ok, id}) do
-    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :match]})
-  end
+  # defp recall({:ok, id}) do
+  #   GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :match]})
+  # end
 
   defp ready_process({:error, reason}), do: {:error, reason}
 
