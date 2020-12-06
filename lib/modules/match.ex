@@ -71,10 +71,9 @@ defmodule Metr.Modules.Match do
     end
   end
 
-  def feed(%Event{id: _event_id, tags: [:read, :match] = tags, data: %{match_id: id}}, repp) do
-    ready_process(id)
-    msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
-    [Event.new([:match, :read, repp], %{out: msg})]
+  def feed(%Event{id: _event_id, tags: [:read, :match], data: %{match_id: id}}, repp) do
+    match = read(id)
+    [Event.new([:match, :read, repp], %{out: match})]
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :log, :match], data: %{match_id: id}}, repp) do
