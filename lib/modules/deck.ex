@@ -180,7 +180,10 @@ defmodule Metr.Modules.Deck do
         repp
       ) do
     # call update
-    update(id, tags, %{id: id, change: change}, event, repp)
+    [
+      Base.update(id, @name, tags, %{id: id, change: change}, event)
+      |> Base.out_to_event(@name, [:altered, repp])
+    ]
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :format]}, repp) do
