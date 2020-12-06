@@ -207,68 +207,6 @@ defmodule Metr.Modules.Deck do
     @name
   end
 
-  ## private
-  defp verify_id(id) do
-    case Data.state_exists?(__ENV__.module, id) do
-      true -> {:ok, id}
-      false -> {:error, "deck not found"}
-    end
-  end
-
-  # defp recall({:error, reason}), do: {:error, reason}
-
-  # defp recall({:ok, id}) do
-  #   GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :deck]})
-  # end
-
-  defp ready_process({:error, reason}), do: {:error, reason}
-
-  defp ready_process({:ok, id}) do
-    # Is running?
-    case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)),
-          Data.state_exists?(__ENV__.module, id)} do
-      {nil, true} ->
-        start_process(id)
-
-      {nil, false} ->
-        {:error, :no_such_id}
-
-      _ ->
-        {:ok, id}
-    end
-  end
-
-  defp ready_process(id), do: ready_process({:ok, id})
-
-  defp start_process(id) do
-    # Get state
-    current_state = Map.merge(%Deck{}, Data.recall_state(__ENV__.module, id))
-
-    case GenServer.start(Metr.Modules.Deck, current_state,
-           name: Data.genserver_id(__ENV__.module, id)
-         ) do
-      {:ok, _pid} -> {:ok, id}
-      {:error, reason} -> {:error, reason}
-      x -> {:error, inspect(x)}
-    end
-  end
-
-  defp update(id, tags, data, event, repp \\ nil) do
-    response =
-      id
-      |> verify_id()
-      |> ready_process()
-      |> alter(tags, data, event)
-
-    case response do
-      {:error, reason} ->
-        [Event.new([:deck, :error, repp], %{cause: reason})]
-
-      msg ->
-        [Event.new([:deck, :altered, repp], %{out: msg})]
-    end
-  end
-
   defp verify_creation_data(%{name: name, player_id: player_id} = data) do
     {:ok}
     |> verify_name(name)
@@ -323,13 +261,6 @@ defmodule Metr.Modules.Deck do
       true -> {:ok}
       false -> {:error, "excess params given"}
     end
-  end
-
-  defp alter({:error, reason}, _tags, _data, _event), do: {:error, reason}
-
-  defp alter({:ok, id}, tags, data, event) do
-    # Call update
-    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
   end
 
   defp build_state(id, %{name: name} = data) do
