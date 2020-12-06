@@ -194,7 +194,7 @@ defmodule Metr.Modules.Deck do
     []
   end
 
-  ## Module
+  ## module
   def read(id) do
     Base.read(id, @name)
   end

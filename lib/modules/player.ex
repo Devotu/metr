@@ -137,7 +137,7 @@ defmodule Metr.Modules.Player do
     []
   end
 
-  ## Module
+  ## module
   def read(id) do
     Base.read(id, @name)
   end

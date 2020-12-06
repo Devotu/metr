@@ -119,7 +119,7 @@ defmodule Metr.Modules.Game do
     []
   end
 
-  ## Module
+  ## module
   def read(id) do
     Base.read(id, @name)
   end

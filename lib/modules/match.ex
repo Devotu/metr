@@ -114,7 +114,6 @@ defmodule Metr.Modules.Match do
         } = event,
         repp
       ) do
-    # update(id, event.tags, event.data, event)
     [
       Base.update(id, @name, event.tags, event.data, event)
       |> Base.out_to_event(@name, [:altered, repp])
@@ -126,7 +125,7 @@ defmodule Metr.Modules.Match do
   end
 
 
-  ## Module
+  ## module
   def read(id) do
     Base.read(id, @name)
   end
@@ -140,65 +139,6 @@ defmodule Metr.Modules.Match do
   end
 
   ## private
-  # defp verify_id(id) do
-  #   case Data.state_exists?(__ENV__.module, id) do
-  #     true -> {:ok, id}
-  #     false -> {:error, "match not found"}
-  #   end
-  # end
-
-  # defp recall({:error, reason}), do: {:error, reason}
-
-  # defp recall({:ok, id}) do
-  #   GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :match]})
-  # end
-
-  # defp ready_process({:error, reason}), do: {:error, reason}
-
-  # defp ready_process({:ok, id}) do
-  #   # Is running?
-  #   case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)),
-  #         Data.state_exists?(__ENV__.module, id)} do
-  #     {nil, true} ->
-  #       start_process(id)
-
-  #     {nil, false} ->
-  #       {:error, :no_such_id}
-
-  #     _ ->
-  #       {:ok, id}
-  #   end
-  # end
-
-  # defp ready_process(id), do: ready_process({:ok, id})
-
-  # defp start_process(id) do
-  #   # Get state
-  #   current_state = Map.merge(%Match{}, Data.recall_state(__ENV__.module, id))
-
-  #   case GenServer.start(Metr.Modules.Match, current_state,
-  #          name: Data.genserver_id(__ENV__.module, id)
-  #        ) do
-  #     {:ok, _pid} -> {:ok, id}
-  #     {:error, reason} -> {:error, reason}
-  #     x -> {:error, inspect(x)}
-  #   end
-  # end
-
-  # defp update(id, tags, data, event) do
-  #   ready_process(id)
-  #   # Call update
-  #   msg =
-  #     GenServer.call(Data.genserver_id(__ENV__.module, id), %{
-  #       tags: tags,
-  #       data: data,
-  #       event: event
-  #     })
-
-  #   # Return
-  #   [Event.new([:match, :altered], %{out: msg})]
-  # end
-
   defp close(id, tags, data, event, repp) do
     Base.ready(id, @name)
 
