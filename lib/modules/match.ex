@@ -13,14 +13,17 @@ defmodule Metr.Modules.Match do
   use GenServer
 
   alias Metr.Data
-  alias Metr.Modules.Deck
   alias Metr.Event
-  alias Metr.Modules.Game
   alias Metr.Id
+  alias Metr.Modules.Base
+  alias Metr.Modules.Deck
+  alias Metr.Modules.Game
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
   alias Metr.Time
+
+  @name __ENV__.module |> Base.module_to_name()
 
   ## feed
   def feed(%Event{id: _event_id, tags: [:create, :match], data: data} = event, repp) do
@@ -119,26 +122,27 @@ defmodule Metr.Modules.Match do
     []
   end
 
-  # private
+
+  ## Module
   def read(id) do
-    id
-    |> verify_id()
-    |> ready_process()
-    |> recall()
+    Base.read(id, @name)
   end
 
   def exist?(id) do
-    id
-    |> verify_id()
+    Base.exist?(id, @name)
+  end
+
+  def module_name() do
+    @name
   end
 
   ## private
-  defp verify_id(id) do
-    case Data.state_exists?(__ENV__.module, id) do
-      true -> {:ok, id}
-      false -> {:error, "match not found"}
-    end
-  end
+  # defp verify_id(id) do
+  #   case Data.state_exists?(__ENV__.module, id) do
+  #     true -> {:ok, id}
+  #     false -> {:error, "match not found"}
+  #   end
+  # end
 
   defp recall({:error, reason}), do: {:error, reason}
 
