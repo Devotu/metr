@@ -1,7 +1,6 @@
 defmodule Metr.Modules.Player do
   defstruct id: "", name: "", decks: [], results: [], matches: [], time: 0
 
-
   use GenServer
 
   alias Metr.Modules.Base
@@ -108,7 +107,6 @@ defmodule Metr.Modules.Player do
     # for each participant
     # call update
     Enum.reduce(player_ids, [], fn id, acc ->
-      # acc ++ Base.update(id, @name, tags, %{id: match_id, player_id: id}, event)
       acc ++
         [
           Base.update(id, @name, tags, %{id: match_id, player_id: id}, event)
@@ -139,7 +137,7 @@ defmodule Metr.Modules.Player do
     []
   end
 
-  ##Module
+  ## Module
   def read(id) do
     Base.read(id, @name)
   end
