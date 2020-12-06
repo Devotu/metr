@@ -50,4 +50,8 @@ defmodule BaseTest do
     assert [:player, :altered, nil] == e.tags
     assert %{out: expected_output} == e.data
   end
+
+  test "module_to_name" do
+    assert Player.module_name() == "Player"
+  end
 end

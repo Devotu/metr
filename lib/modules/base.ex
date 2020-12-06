@@ -47,6 +47,14 @@ defmodule Metr.Modules.Base do
     Event.new([select_module_atom(module_name)] ++ tags, %{out: msg})
   end
 
+  def module_to_name(module_name) do
+    module_name
+    |> Kernel.inspect()
+    |> String.split(".")
+    |> List.last()
+    |> String.replace("\"", "")
+  end
+
   defp select_module_atom(module_name) when is_bitstring(module_name) do
     case module_name do
       "Player" -> :player
