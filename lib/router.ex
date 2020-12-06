@@ -1,13 +1,13 @@
 defmodule Metr.Router do
   alias Metr.Event
-  alias Metr.CLI
+  alias Metr.Modules.CLI
   alias Metr.Data
-  alias Metr.Deck
-  alias Metr.Game
-  alias Metr.Log
-  alias Metr.Match
-  alias Metr.Player
-  alias Metr.Result
+  alias Metr.Modules.Deck
+  alias Metr.Modules.Game
+  alias Metr.Modules.Log
+  alias Metr.Modules.Match
+  alias Metr.Modules.Player
+  alias Metr.Modules.Result
 
   def input(events, response_pid) when is_list(events) and is_pid(response_pid) do
     Enum.each(events, fn e -> input(e, response_pid) end)

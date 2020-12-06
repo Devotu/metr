@@ -1,4 +1,4 @@
-defmodule Metr.CLI do
+defmodule Metr.Modules.CLI do
   use GenServer
 
   alias Metr.HRC
@@ -66,7 +66,7 @@ defmodule Metr.CLI do
   end
 
   def feed(%Event{} = event, _orepp) do
-    {:ok, pid} = GenServer.start(Metr.CLI, :ok)
+    {:ok, pid} = GenServer.start(Metr.Modules.CLI, :ok)
     GenServer.call(pid, event)
     []
   end

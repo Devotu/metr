@@ -1,7 +1,7 @@
 defmodule CliTest do
   use ExUnit.Case
 
-  import Metr.CLI, only: [parse: 1, process: 1]
+  import Metr.Modules.CLI, only: [parse: 1, process: 1]
 
   alias Metr.Id
   alias Metr.Data

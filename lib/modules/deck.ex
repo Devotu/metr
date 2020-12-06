@@ -1,4 +1,4 @@
-defmodule Metr.Deck do
+defmodule Metr.Modules.Deck do
   defstruct id: "",
             name: "",
             format: "",
@@ -36,13 +36,16 @@ defmodule Metr.Deck do
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
-  alias Metr.Deck
-  alias Metr.Game
-  alias Metr.Player
+  alias Metr.Modules.Base
+  alias Metr.Modules.Deck
+  alias Metr.Modules.Game
+  alias Metr.Modules.Player
   alias Metr.Rank
-  alias Metr.Result
+  alias Metr.Modules.Result
   alias Metr.Util
   alias Metr.Time
+
+  @name __ENV__.module |> Base.module_to_name()
 
   ## feed
   def feed(%Event{id: _event_id, tags: [:create, :deck], data: data} = event, repp) do
@@ -55,7 +58,7 @@ defmodule Metr.Deck do
         id = Id.hrid(data.name)
         process_name = Data.genserver_id(__ENV__.module, id)
         # Start genserver
-        case GenServer.start(Metr.Deck, {id, data, event}, name: process_name) do
+        case GenServer.start(Metr.Modules.Deck, {id, data, event}, name: process_name) do
           {:ok, _pid} ->
             [Event.new([:deck, :created, repp], %{id: id, player_id: data.player_id})]
 
@@ -71,7 +74,7 @@ defmodule Metr.Deck do
           tags: [:game, :created, _orepp] = tags,
           data: %{result_ids: result_ids}
         } = event,
-        _repp
+        repp
       ) do
     deck_result_ids =
       result_ids
@@ -83,8 +86,12 @@ defmodule Metr.Deck do
     Enum.reduce(
       deck_result_ids,
       [],
-      fn {deck_id, result_id}, acc ->
-        acc ++ update(deck_id, tags, %{id: result_id, deck_id: deck_id}, event)
+      fn {id, result_id}, acc ->
+        acc ++
+          [
+            Base.update(id, @name, tags, %{id: result_id, deck_id: id}, event)
+            |> Base.out_to_event(@name, [:altered, repp])
+          ]
       end
     )
   end
@@ -95,7 +102,7 @@ defmodule Metr.Deck do
           tags: [:game, :deleted, _orepp] = tags,
           data: %{results: result_ids}
         } = event,
-        _repp
+        repp
       ) do
     # for each deck find connections to this game
     deck_result_ids =
@@ -106,7 +113,11 @@ defmodule Metr.Deck do
 
     # call update
     Enum.reduce(deck_result_ids, [], fn {id, result_id}, acc ->
-      acc ++ update(id, tags, %{id: id, result_id: result_id}, event)
+      acc ++
+        [
+          Base.update(id, @name, tags, %{id: result_id, deck_id: id}, event)
+          |> Base.out_to_event(@name, [:altered, repp])
+        ]
     end)
   end
 
@@ -121,12 +132,16 @@ defmodule Metr.Deck do
           tags: [:match, :created, _orepp] = tags,
           data: %{id: match_id, deck_ids: deck_ids}
         } = event,
-        _repp
+        repp
       ) do
     # for each participant
     # call update
     Enum.reduce(deck_ids, [], fn id, acc ->
-      acc ++ update(id, tags, %{id: match_id, deck_id: id}, event)
+      acc ++
+        [
+          Base.update(id, @name, tags, %{id: match_id, deck_id: id}, event)
+          |> Base.out_to_event(@name, [:altered, repp])
+        ]
     end)
   end
 
@@ -165,7 +180,10 @@ defmodule Metr.Deck do
         repp
       ) do
     # call update
-    update(id, tags, %{id: id, change: change}, event, repp)
+    [
+      Base.update(id, @name, tags, %{id: id, change: change}, event)
+      |> Base.out_to_event(@name, [:altered, repp])
+    ]
   end
 
   def feed(%Event{id: _event_id, tags: [:list, :format]}, repp) do
@@ -176,78 +194,17 @@ defmodule Metr.Deck do
     []
   end
 
+  ## module
   def read(id) do
-    id
-    |> verify_id()
-    |> ready_process()
-    |> recall()
+    Base.read(id, @name)
   end
 
   def exist?(id) do
-    case verify_id(id) do
-      {:ok, _id} -> true
-      _ -> false
-    end
+    Base.exist?(id, @name)
   end
 
-  ## private
-  defp verify_id(id) do
-    case Data.state_exists?(__ENV__.module, id) do
-      true -> {:ok, id}
-      false -> {:error, "deck not found"}
-    end
-  end
-
-  defp recall({:error, reason}), do: {:error, reason}
-
-  defp recall({:ok, id}) do
-    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :deck]})
-  end
-
-  defp ready_process({:error, reason}), do: {:error, reason}
-
-  defp ready_process({:ok, id}) do
-    # Is running?
-    case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)),
-          Data.state_exists?(__ENV__.module, id)} do
-      {nil, true} ->
-        start_process(id)
-
-      {nil, false} ->
-        {:error, :no_such_id}
-
-      _ ->
-        {:ok, id}
-    end
-  end
-
-  defp ready_process(id), do: ready_process({:ok, id})
-
-  defp start_process(id) do
-    # Get state
-    current_state = Map.merge(%Deck{}, Data.recall_state(__ENV__.module, id))
-
-    case GenServer.start(Metr.Deck, current_state, name: Data.genserver_id(__ENV__.module, id)) do
-      {:ok, _pid} -> {:ok, id}
-      {:error, reason} -> {:error, reason}
-      x -> {:error, inspect(x)}
-    end
-  end
-
-  defp update(id, tags, data, event, repp \\ nil) do
-    response =
-      id
-      |> verify_id()
-      |> ready_process()
-      |> alter(tags, data, event)
-
-    case response do
-      {:error, reason} ->
-        [Event.new([:deck, :error, repp], %{cause: reason})]
-
-      msg ->
-        [Event.new([:deck, :altered, repp], %{out: msg})]
-    end
+  def module_name() do
+    @name
   end
 
   defp verify_creation_data(%{name: name, player_id: player_id} = data) do
@@ -304,13 +261,6 @@ defmodule Metr.Deck do
       true -> {:ok}
       false -> {:error, "excess params given"}
     end
-  end
-
-  defp alter({:error, reason}, _tags, _data, _event), do: {:error, reason}
-
-  defp alter({:ok, id}, tags, data, event) do
-    # Call update
-    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags, data: data, event: event})
   end
 
   defp build_state(id, %{name: name} = data) do
@@ -446,7 +396,7 @@ defmodule Metr.Deck do
 
   @impl true
   def handle_call(
-        %{tags: [:game, :deleted, _orepp], data: %{id: id, result_id: result_id}, event: event},
+        %{tags: [:game, :deleted, _orepp], data: %{deck_id: id, id: result_id}, event: event},
         _from,
         state
       ) do

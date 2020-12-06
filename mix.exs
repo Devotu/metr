@@ -7,7 +7,7 @@ defmodule Metr.MixProject do
       version: "0.8.3",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
-      escript: [main_module: Metr.CLI],
+      escript: [main_module: Metr.Modules.CLI],
       deps: deps()
     ]
   end

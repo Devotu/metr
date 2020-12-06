@@ -1,4 +1,4 @@
-defmodule Metr.Game do
+defmodule Metr.Modules.Game do
   defstruct id: "", time: 0, results: [], match: nil
 
   use GenServer
@@ -6,9 +6,12 @@ defmodule Metr.Game do
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
-  alias Metr.Game
+  alias Metr.Modules.Base
+  alias Metr.Modules.Game
+  alias Metr.Modules.Result
   alias Metr.Time
-  alias Metr.Result
+
+  @name __ENV__.module |> Base.module_to_name()
 
   ## feed
   def feed(%Event{id: _event_id, tags: [:create, :game], data: data} = event, repp) do
@@ -29,7 +32,9 @@ defmodule Metr.Game do
 
         match_id = find_match_id(data)
 
-        case GenServer.start(Metr.Game, {id, result_ids, match_id, event}, name: process_name) do
+        case GenServer.start(Metr.Modules.Game, {id, result_ids, match_id, event},
+               name: process_name
+             ) do
           {:ok, _pid} ->
             match_id = Map.get(data, :match, nil)
 
@@ -51,15 +56,9 @@ defmodule Metr.Game do
     end
   end
 
-  def feed(%Event{id: _event_id, tags: [:read, :game] = tags, data: %{game_id: id}}, repp) do
-    case ready_process(id) do
-      {:ok, id} ->
-        msg = GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: tags})
-        [Event.new([:game, :read, repp], %{out: msg})]
-
-      x ->
-        [Event.new([:game, :error, repp], %{out: Kernel.inspect(x)})]
-    end
+  def feed(%Event{id: _event_id, tags: [:read, :game], data: %{game_id: id}}, repp) do
+    game = read(id)
+    [Event.new([:game, :read, repp], %{out: game})]
   end
 
   def feed(%Event{id: _event_id, tags: [:read, :log, :game], data: %{game_id: id}}, repp) do
@@ -120,62 +119,20 @@ defmodule Metr.Game do
     []
   end
 
+  ## module
   def read(id) do
-    id
-    |> verify_id()
-    |> ready_process()
-    |> recall()
+    Base.read(id, @name)
   end
 
   def exist?(id) do
-    id
-    |> verify_id()
+    Base.exist?(id, @name)
+  end
+
+  def module_name() do
+    @name
   end
 
   ## private
-  defp verify_id(id) do
-    case Data.state_exists?(__ENV__.module, id) do
-      true -> {:ok, id}
-      false -> {:error, "game not found"}
-    end
-  end
-
-  defp recall({:error, reason}), do: {:error, reason}
-
-  defp recall({:ok, id}) do
-    GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :game]})
-  end
-
-  defp ready_process({:error, reason}), do: {:error, reason}
-
-  defp ready_process({:ok, id}) do
-    # Is running?
-    case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)),
-          Data.state_exists?(__ENV__.module, id)} do
-      {nil, true} ->
-        start_process(id)
-
-      {nil, false} ->
-        {:error, :no_such_id}
-
-      _ ->
-        {:ok, id}
-    end
-  end
-
-  defp ready_process(id), do: ready_process({:ok, id})
-
-  defp start_process(id) do
-    # Get state
-    current_state = Map.merge(%Game{}, Data.recall_state(__ENV__.module, id))
-
-    case GenServer.start(Metr.Game, current_state, name: Data.genserver_id(__ENV__.module, id)) do
-      {:ok, _pid} -> {:ok, id}
-      {:error, reason} -> {:error, reason}
-      x -> {:error, inspect(x)}
-    end
-  end
-
   defp convert_to_results(parts, winner) do
     parts
     |> Enum.map(fn p -> fill_power(p) end)

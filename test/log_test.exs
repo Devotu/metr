@@ -1,8 +1,8 @@
 defmodule LogTest do
   use ExUnit.Case
 
-  alias Metr.Log
-  alias Metr.CLI
+  alias Metr.Modules.Log
+  alias Metr.Modules.CLI
   alias Metr.Event
 
   test "input read log" do

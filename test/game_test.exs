@@ -2,14 +2,14 @@ defmodule GameTest do
   use ExUnit.Case
 
   alias Metr.Data
-  alias Metr.Deck
+  alias Metr.Modules.Deck
   alias Metr.Event
-  alias Metr.Game
+  alias Metr.Modules.Game
   alias Metr.HRC
   alias Metr.Id
-  alias Metr.Match
-  alias Metr.Player
-  alias Metr.Result
+  alias Metr.Modules.Match
+  alias Metr.Modules.Player
+  alias Metr.Modules.Result
 
   test "create game" do
     hcr =

@@ -2,11 +2,11 @@ defmodule DeckTest do
   use ExUnit.Case
 
   alias Metr.Data
-  alias Metr.Deck
+  alias Metr.Modules.Deck
   alias Metr.Event
-  alias Metr.Game
+  alias Metr.Modules.Game
   alias Metr.Id
-  alias Metr.Player
+  alias Metr.Modules.Player
 
   test "basic feed" do
     assert [] == Deck.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)

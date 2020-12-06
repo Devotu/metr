@@ -3,10 +3,10 @@ defmodule PlayerTest do
 
   alias Metr.Data
   alias Metr.Event
-  alias Metr.Deck
-  alias Metr.Game
+  alias Metr.Modules.Deck
+  alias Metr.Modules.Game
   alias Metr.Id
-  alias Metr.Player
+  alias Metr.Modules.Player
 
   test "basic feed" do
     assert [] == Player.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)

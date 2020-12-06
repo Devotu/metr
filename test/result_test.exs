@@ -4,9 +4,9 @@ defmodule ResultTest do
   alias Metr.Id
   alias Metr.Event
   alias Metr.Data
-  alias Metr.Deck
-  alias Metr.Player
-  alias Metr.Result
+  alias Metr.Modules.Deck
+  alias Metr.Modules.Player
+  alias Metr.Modules.Result
 
   test "valid created" do
     name = "Adam Result"
