@@ -153,37 +153,37 @@ defmodule Metr.Modules.Match do
   #   GenServer.call(Data.genserver_id(__ENV__.module, id), %{tags: [:read, :match]})
   # end
 
-  defp ready_process({:error, reason}), do: {:error, reason}
+  # defp ready_process({:error, reason}), do: {:error, reason}
 
-  defp ready_process({:ok, id}) do
-    # Is running?
-    case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)),
-          Data.state_exists?(__ENV__.module, id)} do
-      {nil, true} ->
-        start_process(id)
+  # defp ready_process({:ok, id}) do
+  #   # Is running?
+  #   case {GenServer.whereis(Data.genserver_id(__ENV__.module, id)),
+  #         Data.state_exists?(__ENV__.module, id)} do
+  #     {nil, true} ->
+  #       start_process(id)
 
-      {nil, false} ->
-        {:error, :no_such_id}
+  #     {nil, false} ->
+  #       {:error, :no_such_id}
 
-      _ ->
-        {:ok, id}
-    end
-  end
+  #     _ ->
+  #       {:ok, id}
+  #   end
+  # end
 
-  defp ready_process(id), do: ready_process({:ok, id})
+  # defp ready_process(id), do: ready_process({:ok, id})
 
-  defp start_process(id) do
-    # Get state
-    current_state = Map.merge(%Match{}, Data.recall_state(__ENV__.module, id))
+  # defp start_process(id) do
+  #   # Get state
+  #   current_state = Map.merge(%Match{}, Data.recall_state(__ENV__.module, id))
 
-    case GenServer.start(Metr.Modules.Match, current_state,
-           name: Data.genserver_id(__ENV__.module, id)
-         ) do
-      {:ok, _pid} -> {:ok, id}
-      {:error, reason} -> {:error, reason}
-      x -> {:error, inspect(x)}
-    end
-  end
+  #   case GenServer.start(Metr.Modules.Match, current_state,
+  #          name: Data.genserver_id(__ENV__.module, id)
+  #        ) do
+  #     {:ok, _pid} -> {:ok, id}
+  #     {:error, reason} -> {:error, reason}
+  #     x -> {:error, inspect(x)}
+  #   end
+  # end
 
   # defp update(id, tags, data, event) do
   #   ready_process(id)
@@ -200,7 +200,7 @@ defmodule Metr.Modules.Match do
   # end
 
   defp close(id, tags, data, event, repp) do
-    ready_process(id)
+    Base.ready(id, @name)
 
     msg =
       GenServer.call(Data.genserver_id(__ENV__.module, id), %{
