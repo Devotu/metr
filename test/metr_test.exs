@@ -13,6 +13,7 @@ defmodule MetrTest do
 
   test "list players" do
     assert is_list(Metr.list_players())
+    assert is_list(Metr.list_states("Player"))
   end
 
   test "create deck" do

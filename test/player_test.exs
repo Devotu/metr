@@ -102,4 +102,30 @@ defmodule PlayerTest do
     Data.wipe_test("Player", ["adam_list", "bertil_list", "ceasar_list"])
     Data.wipe_test("Deck", ["alpha_list", "beta_list"])
   end
+
+  test "recall player" do
+    expected_player = %Metr.Modules.Player{
+      decks: [],
+      id: "david_player",
+      matches: [],
+      name: "David Player",
+      results: [],
+      time: 0
+    }
+
+    [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "David Player"}), nil)
+    player_id = resulting_event.data.id
+    gen_id = Data.genserver_id("Player", player_id)
+    assert :ok == GenServer.stop(gen_id)
+    assert nil == GenServer.whereis(gen_id)
+
+    read_player = Player.read(player_id)
+
+    assert read_player.id == expected_player.id
+    assert read_player.name == expected_player.name
+    assert read_player.results == expected_player.results
+    assert read_player.matches |> Enum.count() == 0
+
+    Data.wipe_test("Player", player_id)
+  end
 end

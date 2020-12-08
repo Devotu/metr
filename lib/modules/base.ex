@@ -55,6 +55,17 @@ defmodule Metr.Modules.Base do
     |> String.replace("\"", "")
   end
 
+  defp select_module(module_name) when is_bitstring(module_name) do
+    case module_name do
+      "Player" -> Player
+      "Deck" -> Deck
+      "Game" -> Game
+      "Match" -> Match
+      "Result" -> Result
+      _ -> {:error, "#{module_name} is not a valid module selecting module"}
+    end
+  end
+
   defp select_module_atom(module_name) when is_bitstring(module_name) do
     case module_name do
       "Player" -> :player
@@ -62,18 +73,18 @@ defmodule Metr.Modules.Base do
       "Game" -> :game
       "Match" -> :match
       "Result" -> :result
-      _ -> {:error, "#{module_name} is not a valid module"}
+      _ -> {:error, "#{module_name} is not a valid module name selecting atom"}
     end
   end
 
-  defp select_module(module_name) when is_bitstring(module_name) do
+  defp select_module_struct(module_name) when is_bitstring(module_name) do
     case module_name do
       "Player" -> %Player{}
       "Deck" -> %Deck{}
       "Game" -> %Game{}
       "Match" -> %Match{}
       "Result" -> %Result{}
-      _ -> {:error, "#{module_name} is not a valid module"}
+      _ -> {:error, "#{module_name} is not a valid module selecting struct"}
     end
   end
 
@@ -129,10 +140,9 @@ defmodule Metr.Modules.Base do
 
   defp start_process({:ok, id, module}) do
     # Get state
-    current_state = Map.merge(select_module(module), Data.recall_state(module, id))
-
-    case GenServer.start(Metr.Modules.Player, current_state, name: Data.genserver_id(module, id)) do
-      {:ok, _pid} -> {:ok, id}
+    current_state = Map.merge(select_module_struct(module), Data.recall_state(module, id))
+    case GenServer.start(select_module(module), current_state, name: Data.genserver_id(module, id)) do
+      {:ok, _pid} -> {:ok, id, module}
       {:error, reason} -> {:error, reason}
       x -> {:error, inspect(x)}
     end

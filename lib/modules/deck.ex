@@ -268,6 +268,7 @@ defmodule Metr.Modules.Deck do
     |> apply_colors(data)
     |> apply_format(data)
     |> apply_rank(data)
+    |> stamp_deck()
   end
 
   defp apply_colors({:error, _error} = e, _data), do: {e}
@@ -334,6 +335,11 @@ defmodule Metr.Modules.Deck do
     end
   end
 
+  defp stamp_deck({:error, _error} = e), do: e
+  defp stamp_deck(data) when is_map(data) do
+    Map.take(data, Map.keys(%Deck{}))
+  end
+
   defp find_original_rank(%Event{data: %{rank: rank}}), do: Rank.uniform_rank(rank)
   defp find_original_rank(_), do: nil
 
@@ -356,7 +362,7 @@ defmodule Metr.Modules.Deck do
       {:error, error} ->
         {:stop, error}
 
-      state ->
+      %Deck{} = state ->
         :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
         {:ok, state}
     end
