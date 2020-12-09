@@ -13,7 +13,8 @@ defmodule Metr.Modules.Deck do
             matches: [],
             rank: nil,
             price: nil,
-            time: 0
+            time: 0,
+            active: true
 
   @formats [
     "block",
@@ -140,6 +141,17 @@ defmodule Metr.Modules.Deck do
           |> Base.out_to_event(@name, [:altered, repp])
         ]
     end)
+  end
+
+  def feed(
+        %Event{
+          tags: [:toggle, :deck, :active] = tags,
+          data: %{deck_id: deck_id} = data
+        } = event,
+        repp
+      ) do
+      Base.update(deck_id, @name, tags, data, event)
+      |> Base.out_to_event(@name, [:altered, repp])
   end
 
   def feed(%Event{tags: [:read, :deck], data: %{deck_id: id}}, repp) do
@@ -427,5 +439,16 @@ defmodule Metr.Modules.Deck do
     new_state = Map.update!(state, :rank, fn rank -> Rank.apply_change(rank, change) end)
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:reply, "Deck #{id} rank altered to #{Kernel.inspect(new_state.rank)}", new_state}
+  end
+
+  @impl true
+  def handle_call(
+        %{tags: [:toggle, :deck, :active], data: %{deck_id: id}, event: event},
+        _from,
+        state
+      ) do
+    new_state = Map.update!(state, :active, fn active -> not active end)
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:reply, "Deck #{id} active altered to #{Kernel.inspect(new_state.active)}", new_state}
   end
 end
