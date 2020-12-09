@@ -342,4 +342,30 @@ defmodule DeckTest do
     Data.wipe_test("Deck", resulting_event.data.id)
     Data.wipe_test("Player", player_id)
   end
+
+  test "toggle deck active" do
+    player_name = "Helge Deck"
+    player_id = Id.hrid(player_name)
+    Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
+    deck_name = "Hotel Deck"
+
+    [resulting_event] =
+      Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
+
+    deck_id = resulting_event.data.id
+    created_deck = Deck.read(deck_id)
+    assert true == created_deck.active
+
+    Deck.feed(Event.new([:toggle, :deck, :active], %{deck_id: deck_id}), nil)
+    toggled_deck = Deck.read(deck_id)
+    assert false == toggled_deck.active
+
+    Deck.feed(Event.new([:toggle, :deck, :active], %{deck_id: deck_id}), nil)
+    reverted_deck = Deck.read(deck_id)
+    assert true == reverted_deck.active
+
+
+    Data.wipe_test("Deck", deck_id)
+    Data.wipe_test("Player", player_id)
+  end
 end
