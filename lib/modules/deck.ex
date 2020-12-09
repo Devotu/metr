@@ -48,7 +48,7 @@ defmodule Metr.Modules.Deck do
   @name __ENV__.module |> Base.module_to_name()
 
   ## feed
-  def feed(%Event{id: _event_id, tags: [:create, :deck], data: data} = event, repp) do
+  def feed(%Event{tags: [:create, :deck], data: data} = event, repp) do
     case verify_creation_data(data) do
       {:error, reason} ->
         # Return
@@ -70,7 +70,6 @@ defmodule Metr.Modules.Deck do
 
   def feed(
         %Event{
-          id: _event_id,
           tags: [:game, :created, _orepp] = tags,
           data: %{result_ids: result_ids}
         } = event,
@@ -98,7 +97,6 @@ defmodule Metr.Modules.Deck do
 
   def feed(
         %Event{
-          id: _event_id,
           tags: [:game, :deleted, _orepp] = tags,
           data: %{results: result_ids}
         } = event,
@@ -121,14 +119,13 @@ defmodule Metr.Modules.Deck do
     end)
   end
 
-  def feed(%Event{id: _event_id, tags: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
+  def feed(%Event{tags: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
     events = Data.read_log_by_id("Deck", id)
     [Event.new([:deck, :log, :read, repp], %{out: events})]
   end
 
   def feed(
         %Event{
-          id: _event_id,
           tags: [:match, :created, _orepp] = tags,
           data: %{id: match_id, deck_ids: deck_ids}
         } = event,
@@ -145,12 +142,12 @@ defmodule Metr.Modules.Deck do
     end)
   end
 
-  def feed(%Event{id: _event_id, tags: [:read, :deck], data: %{deck_id: id}}, repp) do
+  def feed(%Event{tags: [:read, :deck], data: %{deck_id: id}}, repp) do
     deck = read(id)
     [Event.new([:deck, :read, repp], %{out: deck})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :deck]}, repp) do
+  def feed(%Event{tags: [:list, :deck]}, repp) do
     decks =
       Data.list_ids(__ENV__.module)
       |> Enum.map(fn id -> read(id) end)
@@ -158,7 +155,7 @@ defmodule Metr.Modules.Deck do
     [Event.new([:decks, repp], %{decks: decks})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :game], data: %{deck_id: id}}, repp) do
+  def feed(%Event{tags: [:list, :game], data: %{deck_id: id}}, repp) do
     deck = read(id)
 
     games =
@@ -169,13 +166,13 @@ defmodule Metr.Modules.Deck do
     [{Event.new([:games, repp], %{games: games}), repp}]
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :result], data: %{deck_id: id}}, repp) do
+  def feed(%Event{tags: [:list, :result], data: %{deck_id: id}}, repp) do
     deck = read(id)
     [{Event.new([:list, :result], %{ids: deck.results}), repp}]
   end
 
   def feed(
-        %Event{id: _event_id, tags: [:alter, :rank] = tags, data: %{deck_id: id, change: change}} =
+        %Event{tags: [:alter, :rank] = tags, data: %{deck_id: id, change: change}} =
           event,
         repp
       ) do
@@ -186,7 +183,7 @@ defmodule Metr.Modules.Deck do
     ]
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :format]}, repp) do
+  def feed(%Event{tags: [:list, :format]}, repp) do
     [Event.new([:formats, repp], %{formats: @formats})]
   end
 
