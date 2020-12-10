@@ -153,6 +153,8 @@ defmodule BaseTest do
     Data.wipe_state("Player", [player_id]) #To verify it is not the same state read
     assert {:error, "Player #{player_id} not found"} == Player.read(player_id)
 
+    :timer.sleep(1000)
+
     assert :ok == Base.rerun(player_id, "Player")
 
     recreated_player = Base.read(player_id, "Player")
