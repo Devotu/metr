@@ -21,12 +21,15 @@ defmodule Metr.Modules.Player do
     id = Id.hrid(name)
 
     # Start genserver
-    GenServer.start(Metr.Modules.Player, {id, data, event},
+    case GenServer.start(Metr.Modules.Player, {id, data, event},
       name: Data.genserver_id(__ENV__.module, id)
-    )
+    ) do
+      {:ok, _pid} -> # Return
+        [Event.new([:player, :created, repp], %{id: id})]
 
-    # Return
-    [Event.new([:player, :created, repp], %{id: id})]
+      x ->
+        [Event.new([:player, :error, repp], %{msg: Kernel.inspect(x)})]
+    end
   end
 
   def feed(

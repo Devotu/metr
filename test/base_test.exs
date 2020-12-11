@@ -145,14 +145,32 @@ defmodule BaseTest do
 
 
   test "rerun" do
-    %Metr.Modules.Player{
-      decks: [],
-      id: "erik_base",
-      matches: [],
-      name: "Erik Base",
-      results: [],
-      time: 1607375096
-    }
+    player_name = "Fredrik Base"
+    deck_name = "Foxtrot Base"
+    {player_id, deck_id, match_id, game_id} = init_simple_states(player_name, deck_name)
+
+    original_player = Base.read(player_id, "Player")
+    Data.wipe_state("Player", [player_id]) #To verify it is not the same state read
+    assert {:error, "Player #{player_id} not found"} == Player.read(player_id)
+
+    assert :ok == Base.rerun(player_id, "Player")
+
+    recreated_player = Base.read(player_id, "Player")
+    assert recreated_player == original_player
+
+    game = Game.read(game_id)
+
+    Data.wipe_test("Player", [player_id])
+    Data.wipe_test("Deck", [deck_id])
+    Data.wipe_test("Game", [game_id])
+    Data.wipe_test("Result", game.results)
+    Data.wipe_test("Match", match_id)
+  end
+
+  test "rerun fail" do
+    player_id = "fail_rerun_base"
+    Base.rerun(player_id, "Player")
+    assert {:error, "Player #{player_id} not found"} == Base.rerun(player_id, "Player")
   end
 
 
