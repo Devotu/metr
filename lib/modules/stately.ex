@@ -1,4 +1,7 @@
 defmodule Metr.Modules.Stately do
+
+  use GenServer
+
   alias Metr.Data
   alias Metr.Event
   alias Metr.Util
@@ -9,6 +12,46 @@ defmodule Metr.Modules.Stately do
   alias Metr.Modules.Player
   alias Metr.Modules.Result
 
+  ## feed
+  def feed(
+    %Event{id: _event_id, tags: [:rerun, module_atom], data: %{id: id}},
+    repp) do
+    module_name = select_module_name(module_atom)
+    [
+      rerun(id, module_name)
+      |> out_to_event(module_name, [:reran, repp])
+    ]
+  end
+
+  def feed(_event, _orepp) do
+    []
+  end
+
+  ## gen
+  ## currently only existing states
+  @impl true
+  def init({id, module_name}) do
+    validation_result = {:ok, id, module_name}
+    |> validate_module()
+    |> verified_id()
+
+    case validation_result do
+      {:ok, id, module_name} ->
+        state = Data.recall_state(module_name, id)
+        {:ok, state}
+      {:error, e} ->
+        {:stop, e}
+    end
+
+  end
+
+  @impl true
+  def handle_call(%{tags: [:read, :player]}, _from, state) do
+    {:reply, state, state}
+  end
+
+
+  ## public
   def exist?(id, module_name) do
     {:ok, id, module_name}
     |> validate_module()
@@ -84,6 +127,7 @@ defmodule Metr.Modules.Stately do
   end
 
 
+  ## private {:ok, id, module_name} / {:error, e}
   defp rerun_from_log({:error, e}), do: {:error, e}
   defp rerun_from_log({:ok, id, module_name}) do
     {:ok, id, module_name}
@@ -137,7 +181,18 @@ defmodule Metr.Modules.Stately do
       "Game" -> Game
       "Match" -> Match
       "Result" -> Result
-      _ -> {:error, "#{module_name} is not a valid module selecting module"}
+      _ -> {:error, "#{module_name} is not a valid name selecting module"}
+    end
+  end
+
+  defp select_module_name(module_atom) when is_atom(module_atom) do
+    case module_atom do
+      :player -> "Player"
+      :deck -> "Deck"
+      :game -> "Game"
+      :match -> "Match"
+      :result -> "Result"
+      _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting module"}
     end
   end
 
