@@ -6,12 +6,12 @@ defmodule Metr.Modules.Game do
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
-  alias Metr.Modules.Base
+  alias Metr.Modules.Stately
   alias Metr.Modules.Game
   alias Metr.Modules.Result
   alias Metr.Time
 
-  @name __ENV__.module |> Base.module_to_name()
+  @name __ENV__.module |> Stately.module_to_name()
 
   ## feed
   def feed(%Event{id: _event_id, tags: [:create, :game], data: data} = event, repp) do
@@ -121,11 +121,11 @@ defmodule Metr.Modules.Game do
 
   ## module
   def read(id) do
-    Base.read(id, @name)
+    Stately.read(id, @name)
   end
 
   def exist?(id) do
-    Base.exist?(id, @name)
+    Stately.exist?(id, @name)
   end
 
   def module_name() do

@@ -1,4 +1,4 @@
-defmodule Metr.Modules.Base do
+defmodule Metr.Modules.Stately do
   alias Metr.Data
   alias Metr.Event
   alias Metr.Util

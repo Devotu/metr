@@ -37,7 +37,7 @@ defmodule Metr.Modules.Deck do
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
-  alias Metr.Modules.Base
+  alias Metr.Modules.Stately
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
   alias Metr.Modules.Player
@@ -46,7 +46,7 @@ defmodule Metr.Modules.Deck do
   alias Metr.Util
   alias Metr.Time
 
-  @name __ENV__.module |> Base.module_to_name()
+  @name __ENV__.module |> Stately.module_to_name()
 
   ## feed
   def feed(%Event{tags: [:create, :deck], data: data} = event, repp) do
@@ -89,8 +89,8 @@ defmodule Metr.Modules.Deck do
       fn {id, result_id}, acc ->
         acc ++
           [
-            Base.update(id, @name, tags, %{id: result_id, deck_id: id}, event)
-            |> Base.out_to_event(@name, [:altered, repp])
+            Stately.update(id, @name, tags, %{id: result_id, deck_id: id}, event)
+            |> Stately.out_to_event(@name, [:altered, repp])
           ]
       end
     )
@@ -114,8 +114,8 @@ defmodule Metr.Modules.Deck do
     Enum.reduce(deck_result_ids, [], fn {id, result_id}, acc ->
       acc ++
         [
-          Base.update(id, @name, tags, %{id: result_id, deck_id: id}, event)
-          |> Base.out_to_event(@name, [:altered, repp])
+          Stately.update(id, @name, tags, %{id: result_id, deck_id: id}, event)
+          |> Stately.out_to_event(@name, [:altered, repp])
         ]
     end)
   end
@@ -137,8 +137,8 @@ defmodule Metr.Modules.Deck do
     Enum.reduce(deck_ids, [], fn id, acc ->
       acc ++
         [
-          Base.update(id, @name, tags, %{id: match_id, deck_id: id}, event)
-          |> Base.out_to_event(@name, [:altered, repp])
+          Stately.update(id, @name, tags, %{id: match_id, deck_id: id}, event)
+          |> Stately.out_to_event(@name, [:altered, repp])
         ]
     end)
   end
@@ -150,8 +150,8 @@ defmodule Metr.Modules.Deck do
         } = event,
         repp
       ) do
-      Base.update(deck_id, @name, tags, data, event)
-      |> Base.out_to_event(@name, [:altered, repp])
+      Stately.update(deck_id, @name, tags, data, event)
+      |> Stately.out_to_event(@name, [:altered, repp])
   end
 
   def feed(%Event{tags: [:read, :deck], data: %{deck_id: id}}, repp) do
@@ -190,8 +190,8 @@ defmodule Metr.Modules.Deck do
       ) do
     # call update
     [
-      Base.update(id, @name, tags, %{id: id, change: change}, event)
-      |> Base.out_to_event(@name, [:altered, repp])
+      Stately.update(id, @name, tags, %{id: id, change: change}, event)
+      |> Stately.out_to_event(@name, [:altered, repp])
     ]
   end
 
@@ -205,11 +205,11 @@ defmodule Metr.Modules.Deck do
 
   ## module
   def read(id) do
-    Base.read(id, @name)
+    Stately.read(id, @name)
   end
 
   def exist?(id) do
-    Base.exist?(id, @name)
+    Stately.exist?(id, @name)
   end
 
   def module_name() do
