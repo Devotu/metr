@@ -15,7 +15,7 @@ defmodule Metr.Modules.Match do
   alias Metr.Data
   alias Metr.Event
   alias Metr.Id
-  alias Metr.Modules.Base
+  alias Metr.Modules.Stately
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
   alias Metr.Modules.Match
@@ -23,7 +23,7 @@ defmodule Metr.Modules.Match do
   alias Metr.Modules.Result
   alias Metr.Time
 
-  @name __ENV__.module |> Base.module_to_name()
+  @name __ENV__.module |> Stately.module_to_name()
 
   ## feed
   def feed(%Event{id: _event_id, tags: [:create, :match], data: data} = event, repp) do
@@ -115,8 +115,8 @@ defmodule Metr.Modules.Match do
         repp
       ) do
     [
-      Base.update(id, @name, event.tags, event.data, event)
-      |> Base.out_to_event(@name, [:altered, repp])
+      Stately.update(id, @name, event.tags, event.data, event)
+      |> Stately.out_to_event(@name, [:altered, repp])
     ]
   end
 
@@ -127,11 +127,11 @@ defmodule Metr.Modules.Match do
 
   ## module
   def read(id) do
-    Base.read(id, @name)
+    Stately.read(id, @name)
   end
 
   def exist?(id) do
-    Base.exist?(id, @name)
+    Stately.exist?(id, @name)
   end
 
   def module_name() do
@@ -140,7 +140,7 @@ defmodule Metr.Modules.Match do
 
   ## private
   defp close(id, tags, data, event, repp) do
-    Base.ready(id, @name)
+    Stately.ready(id, @name)
 
     msg =
       GenServer.call(Data.genserver_id(__ENV__.module, id), %{

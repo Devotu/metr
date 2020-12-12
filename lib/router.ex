@@ -8,6 +8,7 @@ defmodule Metr.Router do
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.Stately
 
   def input(events, response_pid) when is_list(events) and is_pid(response_pid) do
     Enum.each(events, fn e -> input(e, response_pid) end)
@@ -38,14 +39,15 @@ defmodule Metr.Router do
     # IO.inspect(event, label: "routing")
     [
       # Module.feed(event),
+      # CLI.feed(event, response_pid),
       Player.feed(event, response_pid),
       Deck.feed(event, response_pid),
       Game.feed(event, response_pid),
       Log.feed(event, response_pid),
-      # CLI.feed(event, response_pid),
       Match.feed(event, response_pid),
       Metr.feed(event, response_pid),
-      Result.feed(event, response_pid)
+      Result.feed(event, response_pid),
+      Stately.feed(event, response_pid)
     ]
     |> Enum.filter(fn e -> Enum.count(e) > 0 end)
     |> Enum.each(fn e -> route(e) end)

@@ -3,7 +3,7 @@ defmodule Metr.Modules.Player do
 
   use GenServer
 
-  alias Metr.Modules.Base
+  alias Metr.Modules.Stately
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
@@ -12,7 +12,7 @@ defmodule Metr.Modules.Player do
   alias Metr.Util
   alias Metr.Time
 
-  @name __ENV__.module |> Base.module_to_name()
+  @name __ENV__.module |> Stately.module_to_name()
 
   def feed(
         %Event{id: _event_id, tags: [:create, :player], data: %{name: name} = data} = event,
@@ -41,8 +41,8 @@ defmodule Metr.Modules.Player do
         repp
       ) do
     [
-      Base.update(id, @name, tags, %{id: deck_id, player_id: id}, event)
-      |> Base.out_to_event(@name, [:altered, repp])
+      Stately.update(id, @name, tags, %{id: deck_id, player_id: id}, event)
+      |> Stately.out_to_event(@name, [:altered, repp])
     ]
   end
 
@@ -67,8 +67,8 @@ defmodule Metr.Modules.Player do
       fn {id, result_id}, acc ->
         acc ++
           [
-            Base.update(id, @name, tags, %{id: result_id, player_id: id}, event)
-            |> Base.out_to_event(@name, [:altered, repp])
+            Stately.update(id, @name, tags, %{id: result_id, player_id: id}, event)
+            |> Stately.out_to_event(@name, [:altered, repp])
           ]
       end
     )
@@ -93,8 +93,8 @@ defmodule Metr.Modules.Player do
     Enum.reduce(player_result_ids, [], fn {id, result_id}, acc ->
       acc ++
         [
-          Base.update(id, @name, tags, %{id: result_id, player_id: id}, event)
-          |> Base.out_to_event(@name, [:altered, repp])
+          Stately.update(id, @name, tags, %{id: result_id, player_id: id}, event)
+          |> Stately.out_to_event(@name, [:altered, repp])
         ]
     end)
   end
@@ -112,8 +112,8 @@ defmodule Metr.Modules.Player do
     Enum.reduce(player_ids, [], fn id, acc ->
       acc ++
         [
-          Base.update(id, @name, tags, %{id: match_id, player_id: id}, event)
-          |> Base.out_to_event(@name, [:altered, repp])
+          Stately.update(id, @name, tags, %{id: match_id, player_id: id}, event)
+          |> Stately.out_to_event(@name, [:altered, repp])
         ]
     end)
   end
@@ -142,11 +142,11 @@ defmodule Metr.Modules.Player do
 
   ## module
   def read(id) do
-    Base.read(id, @name)
+    Stately.read(id, @name)
   end
 
   def exist?(id) do
-    Base.exist?(id, @name)
+    Stately.exist?(id, @name)
   end
 
   def module_name() do
