@@ -491,8 +491,8 @@ defmodule MetrTest do
   end
 
   test "rerun log of x" do
-    player_name = "Tore Stately"
-    deck_name = "Tango Stately"
+    player_name = "Tore Metr"
+    deck_name = "Tango Metr"
     {player_id, deck_id, match_id, game_id} = TestHelper.init_single_states(player_name, deck_name)
 
     original_deck = Stately.read(deck_id, "Deck")
@@ -515,5 +515,31 @@ defmodule MetrTest do
     Data.wipe_test("Result", game.results)
     Data.wipe_test("Match", match_id)
 
+  end
+
+
+  test "add tag t to x" do
+    player_name = "Urban Metr"
+    deck_name = "Uniform Metr"
+    {player_id, deck_id, match_id, game_id} = TestHelper.init_single_states(player_name, deck_name)
+
+    tag_name = "failed"
+    original_deck = Stately.read(deck_id, "Deck")
+    assert [] == original_deck.tags
+    assert :ok == Metr.add_tag(tag_name, "Deck", deck_id)
+    tagged_deck = Stately.read(deck_id, "Deck")
+    assert [tag_name] == original_deck.tags
+
+    test_tag = Metr.read_state("Tag", tag_name)
+    assert [deck_id] == test_tag.tagged
+
+    assert [test_tag] == Metr.list_states("Tag")
+
+    game = Game.read(game_id)
+    Data.wipe_test("Player", [player_id])
+    Data.wipe_test("Deck", [deck_id])
+    Data.wipe_test("Game", [game_id])
+    Data.wipe_test("Result", game.results)
+    Data.wipe_test("Match", match_id)
   end
 end
