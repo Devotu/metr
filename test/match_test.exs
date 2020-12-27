@@ -16,7 +16,7 @@ defmodule MatchTest do
     [player_created_event] =
       Player.feed(Event.new([:create, :player], %{name: "Adam Match"}), nil)
 
-    player_id = player_created_event.data.id
+    player_id = player_created_event.data.out
 
     [deck_created_event] =
       Deck.feed(Event.new([:create, :deck], %{name: "Alpha Match", player_id: player_id}), nil)
@@ -57,7 +57,7 @@ defmodule MatchTest do
     [player_created_event] =
       Player.feed(Event.new([:create, :player], %{name: "Bertil Match"}), nil)
 
-    player_id = player_created_event.data.id
+    player_id = player_created_event.data.out
 
     [deck_1_created_event] =
       Deck.feed(Event.new([:create, :deck], %{name: "Bravo Match", player_id: player_id}), nil)
@@ -94,7 +94,7 @@ defmodule MatchTest do
     [player_created_event] =
       Player.feed(Event.new([:create, :player], %{name: "David Match"}), nil)
 
-    player_id = player_created_event.data.id
+    player_id = player_created_event.data.out
 
     [deck_created_event] =
       Deck.feed(Event.new([:create, :deck], %{name: "Delta Match", player_id: player_id}), nil)

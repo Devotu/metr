@@ -15,9 +15,10 @@ defmodule PlayerTest do
   test "create player" do
     [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "Testy"}), nil)
     assert [:player, :created, nil] == resulting_event.tags
-    log_entries = Data.read_log_by_id("Player", resulting_event.data.id)
+    log_entries = Data.read_log_by_id("Player", "testy")
+    log_entries = Data.read_log_by_id("Player", resulting_event.data.out)
     assert 1 = Enum.count(log_entries)
-    Data.wipe_test("Player", resulting_event.data.id)
+    Data.wipe_test("Player", resulting_event.data.out)
   end
 
   test "deck created" do
@@ -37,7 +38,7 @@ defmodule PlayerTest do
     assert [:player, :altered, nil] == resulting_event.tags
     assert resulting_feedback_should_be == resulting_event.data.out
     # Cleanup
-    Data.wipe_test("Player", player_created_event.data.id)
+    Data.wipe_test("Player", player_created_event.data.out)
   end
 
   test "game created" do
@@ -114,7 +115,7 @@ defmodule PlayerTest do
     }
 
     [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "David Player"}), nil)
-    player_id = resulting_event.data.id
+    player_id = resulting_event.data.out
     gen_id = Data.genserver_id("Player", player_id)
     assert :ok == GenServer.stop(gen_id)
     assert nil == GenServer.whereis(gen_id)

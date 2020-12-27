@@ -12,6 +12,8 @@ defmodule Metr.Modules.Stately do
   alias Metr.Modules.Player
   alias Metr.Modules.Result
 
+  @valid_name_length
+
   ## feed
   def feed(
     %Event{id: _event_id, tags: [:rerun, module_atom], data: %{id: id}},
@@ -108,6 +110,7 @@ defmodule Metr.Modules.Stately do
     |> alter(tags, data, event)
   end
 
+  def out_to_event({:ok, msg}, module_name, tags), do: out_to_event(msg, module_name, tags)
   def out_to_event(msg, module_name, tags) when is_bitstring(module_name) do
     Event.new([select_module_atom(module_name)] ++ tags, %{out: msg})
   end
@@ -127,7 +130,64 @@ defmodule Metr.Modules.Stately do
   end
 
 
+  def is_accepted_name({:error, e}, _name), do: {:error, e}
+  def is_accepted_name(:ok, name), do: is_accepted_name(name)
+  def is_accepted_name(""), do: {:error, "name cannot be empty"}
+  def is_accepted_name(name) when is_bitstring(name) do
+    case String.length(name) < @valid_name_length do
+      true -> :ok
+      false -> {:error, "name to long"}
+    end
+  end
+  def is_accepted_name(name) when is_nil(name), do: {:error, "name cannot be nil"}
+  def is_accepted_name(_name), do: {:error, "name must be string"}
+
+
+  def create(module_name, %{id: id} = state, %Event{} = event) when is_bitstring(module_name) and is_struct(state) do
+    creation_result = {:ok, id, module_name}
+    |> validate_module()
+    |> verify_unique()
+    |> store_state(state, event)
+    |> start_new(state)
+
+    case creation_result do
+      {:ok, _id, _module_name} ->
+        {:ok, id}
+      {:error, e} ->
+        {:error, e}
+    end
+  end
+  def create(module_name, _state) when is_bitstring(module_name), do: {:error, "state must be struct"}
+
+
   ## private {:ok, id, module_name} / {:error, e}
+  defp verify_unique({:error, e}), do: {:error, e}
+  defp verify_unique({:ok, id, module_name}) do
+    case exist?(id, module_name) do
+      false -> {:ok, id, module_name}
+      true -> {:error, "name already in use"}
+    end
+  end
+
+  defp store_state({:error, e}), do: {:error, e}
+  defp store_state({:ok, id, module_name}, state, %Event{} = event) do
+    case Data.save_state_with_log(module_name, id, state, event) do
+      :ok -> {:ok, id, module_name}
+      _ -> {:error, "could not save state"}
+    end
+  end
+
+  defp start_new({:error, e}), do: {:error, e}
+  defp start_new({:ok, id, module_name}, state) do
+    process_name = Data.genserver_id(module_name, id)
+    case GenServer.start(select_module(module_name), state, name: process_name) do
+      {:ok, _pid} ->
+        {:ok, id, module_name}
+      {:error, e} ->
+        {:error, e}
+    end
+  end
+
   defp rerun_from_log({:error, e}), do: {:error, e}
   defp rerun_from_log({:ok, id, module_name}) do
     {:ok, id, module_name}

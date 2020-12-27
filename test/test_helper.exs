@@ -10,7 +10,7 @@ defmodule TestHelper do
   def init_single_states(player_name, deck_name) do
 
     [player_return] = Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
-    player_id = player_return.data.id
+    player_id = player_return.data.out
 
     [deck_return] = Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
     deck_id = deck_return.data.id

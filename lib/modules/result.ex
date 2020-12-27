@@ -6,7 +6,8 @@ defmodule Metr.Modules.Result do
             deck_id: "",
             place: nil,
             power: nil,
-            fun: nil
+            fun: nil,
+            tags: []
 
   alias Metr.Data
   alias Metr.Id

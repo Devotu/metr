@@ -8,7 +8,8 @@ defmodule Metr.Modules.Match do
             ranking: false,
             status: nil,
             winner: nil,
-            time: 0
+            time: 0,
+            tags: []
 
   use GenServer
 

@@ -1,5 +1,5 @@
 defmodule Metr.Modules.Player do
-  defstruct id: "", name: "", decks: [], results: [], matches: [], time: 0
+  defstruct id: "", name: "", decks: [], results: [], matches: [], time: 0, tags: []
 
   use GenServer
 
@@ -18,17 +18,19 @@ defmodule Metr.Modules.Player do
         %Event{id: _event_id, tags: [:create, :player], data: %{name: name} = data} = event,
         repp
       ) do
-    id = Id.hrid(name)
 
-    # Start genserver
-    case GenServer.start(Metr.Modules.Player, {id, data, event},
-      name: Data.genserver_id(__ENV__.module, id)
-    ) do
-      {:ok, _pid} -> # Return
-        [Event.new([:player, :created, repp], %{id: id})]
+    validation = :ok
+        |> Stately.is_accepted_name(name)
 
-      x ->
-        [Event.new([:player, :error, repp], %{msg: Kernel.inspect(x)})]
+    case validation do
+      :ok ->
+        id = Id.hrid(name)
+        state = %Player{id: id, name: name, time: Time.timestamp()}
+        Stately.create("Player", state, event)
+        |> Stately.out_to_event(@name, [:created, repp])
+        |> List.wrap()
+      {:error, e} ->
+        [Event.new([:player, :error, repp], %{msg: e})]
     end
   end
 
@@ -92,10 +94,9 @@ defmodule Metr.Modules.Player do
     # call update
     Enum.reduce(player_result_ids, [], fn {id, result_id}, acc ->
       acc ++
-        [
-          Stately.update(id, @name, tags, %{id: result_id, player_id: id}, event)
-          |> Stately.out_to_event(@name, [:altered, repp])
-        ]
+      Stately.update(id, @name, tags, %{id: result_id, player_id: id}, event)
+      |> Stately.out_to_event(@name, [:altered, repp])
+      |> List.wrap()
     end)
   end
 
@@ -155,12 +156,6 @@ defmodule Metr.Modules.Player do
 
   ## gen
   @impl true
-  def init({id, data, event}) do
-    state = %Player{id: id, name: data.name, time: Time.timestamp()}
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-    {:ok, state}
-  end
-
   def init(%Player{} = state) do
     {:ok, state}
   end
