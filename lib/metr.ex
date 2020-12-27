@@ -227,6 +227,13 @@ defmodule Metr do
   end
 
 
+  def add_tag(tag, type_name, id) when is_bitstring(tag) and is_bitstring(type_name) and is_bitstring(id) do
+    type = type_from_string(type_name)
+    Event.new([:tag, type], %{id: id, tag: tag})
+    |> run()
+  end
+
+
   ## private
   defp list(type) when is_atom(type) do
     # Start listener

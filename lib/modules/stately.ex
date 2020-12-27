@@ -11,6 +11,7 @@ defmodule Metr.Modules.Stately do
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.Tag
 
   @valid_name_length
 
@@ -54,6 +55,12 @@ defmodule Metr.Modules.Stately do
 
 
   ## public
+  def exist?(id, module_atom) when is_atom(module_atom) do
+    {:ok, id, select_module_name(module_atom)}
+    |> validate_module()
+    |> module_has_state()
+  end
+
   def exist?(id, module_name) do
     {:ok, id, module_name}
     |> validate_module()
@@ -241,6 +248,7 @@ defmodule Metr.Modules.Stately do
       "Game" -> Game
       "Match" -> Match
       "Result" -> Result
+      "Tag" -> Tag
       _ -> {:error, "#{module_name} is not a valid name selecting module"}
     end
   end
@@ -252,6 +260,7 @@ defmodule Metr.Modules.Stately do
       :game -> "Game"
       :match -> "Match"
       :result -> "Result"
+      :tag -> "Tag"
       _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting module"}
     end
   end
@@ -263,6 +272,7 @@ defmodule Metr.Modules.Stately do
       "Game" -> :game
       "Match" -> :match
       "Result" -> :result
+      "Tag" -> :tag
       _ -> {:error, "#{module_name} is not a valid module name selecting atom"}
     end
   end
@@ -274,6 +284,7 @@ defmodule Metr.Modules.Stately do
       "Game" -> %Game{}
       "Match" -> %Match{}
       "Result" -> %Result{}
+      "Tag" -> %Tag{}
       _ -> {:error, "#{module_name} is not a valid module selecting struct"}
     end
   end
@@ -287,6 +298,7 @@ defmodule Metr.Modules.Stately do
       "Game" -> {:ok, id, module_name}
       "Match" -> {:ok, id, module_name}
       "Result" -> {:ok, id, module_name}
+      "Tag" -> {:ok, id, module_name}
       _ -> {:error, "#{module_name} is not a valid module name"}
     end
   end
