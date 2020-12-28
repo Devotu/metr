@@ -26,6 +26,12 @@ defmodule Metr.Modules.Stately do
     ]
   end
 
+  def feed(%Event{id: _event_id, tags: [module_atom, :tagged], data: %{id: _id, tag: _tag}} = event, repp) do
+    update(event.data.id, select_module_name(module_atom), [:tagged], event.data, event)
+    |> out_to_event(select_module_name(module_atom), [module_atom, :tagged])
+    |> List.wrap()
+  end
+
   def feed(_event, _orepp) do
     []
   end
@@ -166,6 +172,17 @@ defmodule Metr.Modules.Stately do
   end
   def create(module_name, _state) when is_bitstring(module_name), do: {:error, "state must be struct"}
 
+  def select_module_name(module_atom) when is_atom(module_atom) do
+    case module_atom do
+      :player -> "Player"
+      :deck -> "Deck"
+      :game -> "Game"
+      :match -> "Match"
+      :result -> "Result"
+      :tag -> "Tag"
+      _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting module"}
+    end
+  end
 
   ## private {:ok, id, module_name} / {:error, e}
   defp verify_unique({:error, e}), do: {:error, e}
@@ -250,18 +267,6 @@ defmodule Metr.Modules.Stately do
       "Result" -> Result
       "Tag" -> Tag
       _ -> {:error, "#{module_name} is not a valid name selecting module"}
-    end
-  end
-
-  defp select_module_name(module_atom) when is_atom(module_atom) do
-    case module_atom do
-      :player -> "Player"
-      :deck -> "Deck"
-      :game -> "Game"
-      :match -> "Match"
-      :result -> "Result"
-      :tag -> "Tag"
-      _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting module"}
     end
   end
 

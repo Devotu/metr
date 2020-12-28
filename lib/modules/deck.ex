@@ -452,4 +452,15 @@ defmodule Metr.Modules.Deck do
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:reply, "Deck #{id} active altered to #{Kernel.inspect(new_state.active)}", new_state}
   end
+
+  @impl true
+  def handle_call(
+        %{tags: [:tagged], data: %{id: id, tag: tag}, event: event},
+        _from,
+        state
+      ) do
+    new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:reply, "Deck #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+  end
 end

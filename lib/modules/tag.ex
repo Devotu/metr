@@ -19,22 +19,21 @@ defmodule Metr.Modules.Tag do
         repp
       ) do
 
-        #check if duplicate
-        #check if exist
-        # yes -> update
-        # no  -> create
+      target_module_name = Stately.select_module_name(module_atom)
 
-
-        validation = :ok
-        |> is_valid_tag(tag)
-        |> is_valid_target(module_atom, module_id)
+      validation = :ok
+      |> is_valid_tag(tag)
+      |> is_valid_target(target_module_name, module_id)
+      |> is_not_duplicate(target_module_name, module_id, tag)
 
     case validation do
       :ok ->
         state = %Tag{id: Id.hrid(tag), name: tag, tagged: [module_id]}
+        propagating_event = Event.new([module_atom, :tagged], %{id: module_id, tag: tag})
         Stately.create(@name, state, event)
         |> Stately.out_to_event(@name, [:created, repp])
         |> List.wrap()
+        |> Enum.concat([propagating_event])
       {:error, e} ->
         [Event.new([:player, :error, repp], %{msg: e})]
     end
@@ -58,18 +57,21 @@ defmodule Metr.Modules.Tag do
   def is_valid_tag(_tag), do: {:error, "tag must be string"}
 
   defp is_valid_target({:error, e}), do: {:error, e}
-  defp is_valid_target(:ok, module_atom, module_id) when is_atom(module_atom) and is_bitstring(module_id) do
-    case Stately.exist?(module_id, module_atom) do
+  defp is_valid_target(:ok, module_name, module_id) do
+    case Stately.exist?(module_id, module_name) do
       true -> :ok
       false -> {:error, "tag target not found"}
     end
   end
 
-
-
-
-
-
+  defp is_not_duplicate({:error, e}), do: {:error, e}
+  defp is_not_duplicate(:ok, module_name, module_id, tag) do
+    target = Stately.read(module_id, module_name)
+    case Enum.member?(target.tags, tag) do
+      true -> {:error, "duplicate tag found"}
+      false -> :ok
+    end
+  end
 
   def feed(
         %Event{
@@ -84,6 +86,16 @@ defmodule Metr.Modules.Tag do
       |> Stately.out_to_event(@name, [:altered, repp])
     ]
   end
+
+
+
+
+
+
+
+
+
+
 
   def feed(
         %Event{
