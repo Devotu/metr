@@ -61,12 +61,6 @@ defmodule Metr.Modules.Stately do
     ]
   end
 
-  def feed(%Event{id: _event_id, keys: [module_atom, :tagged], data: %{id: _id, tag: _tag}} = event, repp) do
-    update(event.data.id, select_module_name(module_atom), [:tagged], event.data, event)
-    |> out_to_event(select_module_name(module_atom), [module_atom, :tagged])
-    |> List.wrap()
-  end
-
   def feed(event, _orepp) do
     []
   end

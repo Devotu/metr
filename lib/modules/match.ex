@@ -9,7 +9,7 @@ defmodule Metr.Modules.Match do
             status: nil,
             winner: nil,
             time: 0,
-            keys: []
+            tags: []
 
   use GenServer
 
@@ -308,5 +308,16 @@ defmodule Metr.Modules.Match do
     :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     # Reply
     {:reply, "Game #{game_id} added to match #{id}", new_state}
+  end
+
+  @impl true
+  def handle_call(
+        %{keys: [:tagged], data: %{id: id, tag: tag}, event: event},
+        _from,
+        state
+      ) do
+    new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:reply, "#{@name} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end

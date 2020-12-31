@@ -7,7 +7,7 @@ defmodule Metr.Modules.Result do
             place: nil,
             power: nil,
             fun: nil,
-            keys: []
+            tags: []
 
   use GenServer
 
@@ -95,5 +95,16 @@ defmodule Metr.Modules.Result do
   @impl true
   def handle_call(%{keys: [:read, :result]}, _from, state) do
     {:reply, state, state}
+  end
+
+  @impl true
+  def handle_call(
+        %{keys: [:tagged], data: %{id: id, tag: tag}, event: event},
+        _from,
+        state
+      ) do
+    new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:reply, "#{@name} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end

@@ -522,20 +522,39 @@ defmodule MetrTest do
     player_name = "Urban Metr"
     deck_name = "Uniform Metr"
     {player_id, deck_id, match_id, game_id} = TestHelper.init_single_states(player_name, deck_name)
+    game = Game.read(game_id)
 
     tag_name = "test"
     original_deck = Stately.read(deck_id, "Deck")
-    assert [] == original_deck.keys
+    assert [] == original_deck.tags
     assert tag_name == Metr.add_tag(tag_name, "Deck", deck_id)
+
     tagged_deck = Stately.read(deck_id, "Deck")
-    assert [tag_name] == tagged_deck.keys
+    assert [tag_name] == tagged_deck.tags
+
+    assert is_struct(Metr.add_tag(tag_name, "Player", player_id))
+    tagged_player = Stately.read(player_id, "Player")
+    assert [tag_name] == tagged_player.tags
+
+    assert is_struct(Metr.add_tag(tag_name, "Match", match_id))
+    tagged_match = Stately.read(match_id, "Match")
+    assert [tag_name] == tagged_match.tags
+
+    assert is_struct(Metr.add_tag(tag_name, "Game", game_id))
+    tagged_game = Stately.read(game_id, "Game")
+    assert [tag_name] == tagged_game.tags
+
+    result_id_1 = game.results |> List.first()
+    assert is_struct(Metr.add_tag(tag_name, "Result", result_id_1))
+    tagged_result = Stately.read(result_id_1, "Result")
+    assert [tag_name] == tagged_result.tags
+
 
     test_tag = Metr.read_state("Tag", tag_name)
     assert [deck_id] == test_tag.tagged
 
     assert [test_tag] == Metr.list_states("Tag")
 
-    game = Game.read(game_id)
     Data.wipe_test("Player", [player_id])
     Data.wipe_test("Deck", [deck_id])
     Data.wipe_test("Game", [game_id])

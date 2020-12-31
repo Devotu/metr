@@ -15,7 +15,7 @@ defmodule Metr.Modules.Deck do
             price: nil,
             time: 0,
             active: true,
-            keys: []
+            tags: []
 
   @formats [
     "block",
@@ -459,8 +459,8 @@ defmodule Metr.Modules.Deck do
         _from,
         state
       ) do
-    new_state = Map.update!(state, :keys, &(&1 ++ [tag]))
+    new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-    {:reply, "Deck #{id} keys altered to #{Kernel.inspect(new_state.keys)}", new_state}
+    {:reply, "Deck #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end
