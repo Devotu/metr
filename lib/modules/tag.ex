@@ -8,14 +8,12 @@ defmodule Metr.Modules.Tag do
   alias Metr.Id
   alias Metr.Data
   alias Metr.Modules.Tag
-  alias Metr.Modules.Result
-  alias Metr.Util
 
   @name __ENV__.module |> Stately.module_to_name()
   @valid_tag_length 20
 
   def feed(
-        %Event{id: _event_id, tags: [:tag, module_atom], data: %{id: module_id, tag: tag} = data} = event,
+        %Event{id: _event_id, keys: [:tag, module_atom], data: %{id: module_id, tag: tag} = data} = event,
         repp
       ) do
 
@@ -67,7 +65,7 @@ defmodule Metr.Modules.Tag do
   defp is_not_duplicate({:error, e}), do: {:error, e}
   defp is_not_duplicate(:ok, module_name, module_id, tag) do
     target = Stately.read(module_id, module_name)
-    case Enum.member?(target.tags, tag) do
+    case Enum.member?(target.keys, tag) do
       true -> {:error, "duplicate tag found"}
       false -> :ok
     end
@@ -76,120 +74,17 @@ defmodule Metr.Modules.Tag do
   def feed(
         %Event{
           id: _event_id,
-          tags: [:deck, :created, _orepp] = tags,
+          keys: [:deck, :created, _orepp] = keys,
           data: %{id: deck_id, tag_id: id}
         } = event,
         repp
       ) do
     [
-      Stately.update(id, @name, tags, %{id: deck_id, tag_id: id}, event)
+      Stately.update(id, @name, keys, %{id: deck_id, tag_id: id}, event)
       |> Stately.out_to_event(@name, [:altered, repp])
     ]
   end
 
-
-
-
-
-
-
-
-
-
-
-  def feed(
-        %Event{
-          id: _event_id,
-          tags: [:game, :created, _orepp] = tags,
-          data: %{result_ids: result_ids}
-        } = event,
-        repp
-      ) do
-    tag_result_ids =
-      result_ids
-      |> Enum.map(fn result_id -> Result.read(result_id) end)
-      |> Enum.map(fn r -> {r.tag_id, r.id} end)
-
-    # for each participant
-    # call update
-    Enum.reduce(
-      tag_result_ids,
-      [],
-      fn {id, result_id}, acc ->
-        acc ++
-          [
-            Stately.update(id, @name, tags, %{id: result_id, tag_id: id}, event)
-            |> Stately.out_to_event(@name, [:altered, repp])
-          ]
-      end
-    )
-  end
-
-  def feed(
-        %Event{
-          id: _event_id,
-          tags: [:game, :deleted, _orepp] = tags,
-          data: %{results: result_ids}
-        } = event,
-        repp
-      ) do
-    # for each tag find connections to this game
-    tag_result_ids =
-      Data.list_ids(__ENV__.module)
-      |> Enum.map(fn id -> read(id) end)
-      |> Enum.filter(fn p -> Util.has_member?(p.results, result_ids) end)
-      |> Enum.map(fn p -> {p.id, Util.find_first_common_member(p.results, result_ids)} end)
-
-    # call update
-    Enum.reduce(tag_result_ids, [], fn {id, result_id}, acc ->
-      acc ++
-        [
-          Stately.update(id, @name, tags, %{id: result_id, tag_id: id}, event)
-          |> Stately.out_to_event(@name, [:altered, repp])
-        ]
-    end)
-  end
-
-  def feed(
-        %Event{
-          id: _event_id,
-          tags: [:match, :created, _orepp] = tags,
-          data: %{id: match_id, tag_ids: tag_ids}
-        } = event,
-        repp
-      ) do
-    # for each participant
-    # call update
-    Enum.reduce(tag_ids, [], fn id, acc ->
-      acc ++
-        [
-          Stately.update(id, @name, tags, %{id: match_id, tag_id: id}, event)
-          |> Stately.out_to_event(@name, [:altered, repp])
-        ]
-    end)
-  end
-
-  def feed(%Event{id: _event_id, tags: [:read, :tag], data: %{tag_id: id}}, repp) do
-    tag = read(id)
-    [Event.new([:tag, :read, repp], %{out: tag})]
-  end
-
-  def feed(%Event{id: _event_id, tags: [:read, :log, :tag], data: %{tag_id: id}}, repp) do
-    events = Data.read_log_by_id("Tag", id)
-    [Event.new([:tag, :log, :read, repp], %{out: events})]
-  end
-
-  def feed(%Event{id: _event_id, tags: [:list, :tag]}, repp) do
-    tags =
-      Data.list_ids(__ENV__.module)
-      |> Enum.map(fn id -> read(id) end)
-
-    [Event.new([:tags, repp], %{tags: tags})]
-  end
-
-  def feed(_event, _orepp) do
-    []
-  end
 
   ## module
   def read(id) do
@@ -211,7 +106,7 @@ defmodule Metr.Modules.Tag do
 
   @impl true
   def handle_call(
-        %{tags: [:deck, :created, _orepp], data: %{id: deck_id, tag_id: id}, event: event},
+        %{keys: [:deck, :created, _orepp], data: %{id: deck_id, tag_id: id}, event: event},
         _from,
         state
       ) do
@@ -222,7 +117,7 @@ defmodule Metr.Modules.Tag do
 
   @impl true
   def handle_call(
-        %{tags: [:game, :created, _orepp], data: %{id: result_id, tag_id: id}, event: event},
+        %{keys: [:game, :created, _orepp], data: %{id: result_id, tag_id: id}, event: event},
         _from,
         state
       ) do
@@ -233,7 +128,7 @@ defmodule Metr.Modules.Tag do
 
   @impl true
   def handle_call(
-        %{tags: [:match, :created, _orepp], data: %{id: match_id, tag_id: id}, event: event},
+        %{keys: [:match, :created, _orepp], data: %{id: match_id, tag_id: id}, event: event},
         _from,
         state
       ) do
@@ -244,7 +139,7 @@ defmodule Metr.Modules.Tag do
 
   @impl true
   def handle_call(
-        %{tags: [:game, :deleted, _orepp], data: %{id: result_id, tag_id: id}, event: event},
+        %{keys: [:game, :deleted, _orepp], data: %{id: result_id, tag_id: id}, event: event},
         _from,
         state
       ) do
@@ -254,7 +149,7 @@ defmodule Metr.Modules.Tag do
   end
 
   @impl true
-  def handle_call(%{tags: [:read, :tag]}, _from, state) do
+  def handle_call(%{keys: [:read, :tag]}, _from, state) do
     {:reply, state, state}
   end
 end

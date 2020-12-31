@@ -13,7 +13,7 @@ defmodule MetrTest do
   @id_length 14
 
   test "list players" do
-    assert is_list(Metr.list_players())
+    # assert is_list(Metr.list_players())
     assert is_list(Metr.list_states("Player"))
   end
 
@@ -525,10 +525,10 @@ defmodule MetrTest do
 
     tag_name = "test"
     original_deck = Stately.read(deck_id, "Deck")
-    assert [] == original_deck.tags
+    assert [] == original_deck.keys
     assert tag_name == Metr.add_tag(tag_name, "Deck", deck_id)
     tagged_deck = Stately.read(deck_id, "Deck")
-    assert [tag_name] == tagged_deck.tags
+    assert [tag_name] == tagged_deck.keys
 
     test_tag = Metr.read_state("Tag", tag_name)
     assert [deck_id] == test_tag.tagged
@@ -541,5 +541,6 @@ defmodule MetrTest do
     Data.wipe_test("Game", [game_id])
     Data.wipe_test("Result", game.results)
     Data.wipe_test("Match", match_id)
+    Data.wipe_test("Tag", tag_name)
   end
 end

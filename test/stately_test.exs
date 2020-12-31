@@ -44,7 +44,7 @@ defmodule StatelyTest do
     event = Event.new([:deck, :created, nil], %{id: "deck_id", player_id: player_id})
 
     assert "Deck deck_id added to player #{player_id}" ==
-             Stately.update(player_id, "Player", event.tags, event.data, event)
+             Stately.update(player_id, "Player", event.keys, event.data, event)
 
     Data.wipe_test("Player", player_id)
   end
@@ -52,7 +52,7 @@ defmodule StatelyTest do
   test "to_event" do
     expected_output = "Expected output"
     e = Stately.out_to_event(expected_output, "Player", [:altered, nil])
-    assert [:player, :altered, nil] == e.tags
+    assert [:player, :altered, nil] == e.keys
     assert %{out: expected_output} == e.data
   end
 
@@ -170,6 +170,6 @@ defmodule StatelyTest do
   test "rerun fail" do
     player_id = "fail_rerun_base"
     Stately.rerun(player_id, "Player")
-    assert {:error, "Player #{player_id} not found"} == Stately.rerun(player_id, "Player")
+    assert {:error, "Log of Player #{player_id} not found"} == Stately.rerun(player_id, "Player")
   end
 end

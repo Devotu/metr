@@ -15,7 +15,7 @@ defmodule Metr.Modules.Deck do
             price: nil,
             time: 0,
             active: true,
-            tags: []
+            keys: []
 
   @formats [
     "block",
@@ -50,7 +50,7 @@ defmodule Metr.Modules.Deck do
   @name __ENV__.module |> Stately.module_to_name()
 
   ## feed
-  def feed(%Event{tags: [:create, :deck], data: data} = event, repp) do
+  def feed(%Event{keys: [:create, :deck], data: data} = event, repp) do
     case verify_creation_data(data) do
       {:error, reason} ->
         # Return
@@ -72,7 +72,7 @@ defmodule Metr.Modules.Deck do
 
   def feed(
         %Event{
-          tags: [:game, :created, _orepp] = tags,
+          keys: [:game, :created, _orepp] = keys,
           data: %{result_ids: result_ids}
         } = event,
         repp
@@ -90,7 +90,7 @@ defmodule Metr.Modules.Deck do
       fn {id, result_id}, acc ->
         acc ++
           [
-            Stately.update(id, @name, tags, %{id: result_id, deck_id: id}, event)
+            Stately.update(id, @name, keys, %{id: result_id, deck_id: id}, event)
             |> Stately.out_to_event(@name, [:altered, repp])
           ]
       end
@@ -99,7 +99,7 @@ defmodule Metr.Modules.Deck do
 
   def feed(
         %Event{
-          tags: [:game, :deleted, _orepp] = tags,
+          keys: [:game, :deleted, _orepp] = keys,
           data: %{results: result_ids}
         } = event,
         repp
@@ -115,20 +115,20 @@ defmodule Metr.Modules.Deck do
     Enum.reduce(deck_result_ids, [], fn {id, result_id}, acc ->
       acc ++
         [
-          Stately.update(id, @name, tags, %{id: result_id, deck_id: id}, event)
+          Stately.update(id, @name, keys, %{id: result_id, deck_id: id}, event)
           |> Stately.out_to_event(@name, [:altered, repp])
         ]
     end)
   end
 
-  def feed(%Event{tags: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
+  def feed(%Event{keys: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
     events = Data.read_log_by_id("Deck", id)
     [Event.new([:deck, :log, :read, repp], %{out: events})]
   end
 
   def feed(
         %Event{
-          tags: [:match, :created, _orepp] = tags,
+          keys: [:match, :created, _orepp] = keys,
           data: %{id: match_id, deck_ids: deck_ids}
         } = event,
         repp
@@ -138,7 +138,7 @@ defmodule Metr.Modules.Deck do
     Enum.reduce(deck_ids, [], fn id, acc ->
       acc ++
         [
-          Stately.update(id, @name, tags, %{id: match_id, deck_id: id}, event)
+          Stately.update(id, @name, keys, %{id: match_id, deck_id: id}, event)
           |> Stately.out_to_event(@name, [:altered, repp])
         ]
     end)
@@ -146,29 +146,29 @@ defmodule Metr.Modules.Deck do
 
   def feed(
         %Event{
-          tags: [:toggle, :deck, :active] = tags,
+          keys: [:toggle, :deck, :active] = keys,
           data: %{deck_id: deck_id} = data
         } = event,
         repp
       ) do
-      Stately.update(deck_id, @name, tags, data, event)
+      Stately.update(deck_id, @name, keys, data, event)
       |> Stately.out_to_event(@name, [:altered, repp])
   end
 
-  def feed(%Event{tags: [:read, :deck], data: %{deck_id: id}}, repp) do
+  def feed(%Event{keys: [:read, :deck], data: %{deck_id: id}}, repp) do
     deck = read(id)
     [Event.new([:deck, :read, repp], %{out: deck})]
   end
 
-  def feed(%Event{tags: [:list, :deck]}, repp) do
-    decks =
-      Data.list_ids(__ENV__.module)
-      |> Enum.map(fn id -> read(id) end)
+  # def feed(%Event{keys: [:list, :deck]}, repp) do
+  #   decks =
+  #     Data.list_ids(__ENV__.module)
+  #     |> Enum.map(fn id -> read(id) end)
 
-    [Event.new([:decks, repp], %{decks: decks})]
-  end
+  #   [Event.new([:decks, repp], %{decks: decks})]
+  # end
 
-  def feed(%Event{tags: [:list, :game], data: %{deck_id: id}}, repp) do
+  def feed(%Event{keys: [:list, :game], data: %{deck_id: id}}, repp) do
     deck = read(id)
 
     games =
@@ -179,28 +179,28 @@ defmodule Metr.Modules.Deck do
     [{Event.new([:games, repp], %{games: games}), repp}]
   end
 
-  def feed(%Event{tags: [:list, :result], data: %{deck_id: id}}, repp) do
+  def feed(%Event{keys: [:list, :result], data: %{deck_id: id}}, repp) do
     deck = read(id)
     [{Event.new([:list, :result], %{ids: deck.results}), repp}]
   end
 
   def feed(
-        %Event{tags: [:alter, :rank] = tags, data: %{deck_id: id, change: change}} =
+        %Event{keys: [:alter, :rank] = keys, data: %{deck_id: id, change: change}} =
           event,
         repp
       ) do
     # call update
     [
-      Stately.update(id, @name, tags, %{id: id, change: change}, event)
+      Stately.update(id, @name, keys, %{id: id, change: change}, event)
       |> Stately.out_to_event(@name, [:altered, repp])
     ]
   end
 
-  def feed(%Event{tags: [:list, :format]}, repp) do
+  def feed(%Event{keys: [:list, :format]}, repp) do
     [Event.new([:formats, repp], %{formats: @formats})]
   end
 
-  def feed(_event, _orepp) do
+  def feed(event, _orepp) do
     []
   end
 
@@ -383,14 +383,14 @@ defmodule Metr.Modules.Deck do
   end
 
   @impl true
-  def handle_call(%{tags: [:read, :deck]}, _from, state) do
+  def handle_call(%{keys: [:read, :deck]}, _from, state) do
     # Reply
     {:reply, state, state}
   end
 
   @impl true
   def handle_call(
-        %{tags: [:game, :created, _orepp], data: %{id: result_id, deck_id: id}, event: event},
+        %{keys: [:game, :created, _orepp], data: %{id: result_id, deck_id: id}, event: event},
         _from,
         state
       ) do
@@ -401,7 +401,7 @@ defmodule Metr.Modules.Deck do
 
   @impl true
   def handle_call(
-        %{tags: [:match, :created, _orepp], data: %{id: match_id, deck_id: id}, event: event},
+        %{keys: [:match, :created, _orepp], data: %{id: match_id, deck_id: id}, event: event},
         _from,
         state
       ) do
@@ -412,13 +412,13 @@ defmodule Metr.Modules.Deck do
 
   @impl true
   def handle_call(
-        %{tags: [:game, :deleted, _orepp], data: %{deck_id: id, id: result_id}, event: event},
+        %{keys: [:game, :deleted, _orepp], data: %{deck_id: id, id: result_id}, event: event},
         _from,
         state
       ) do
     original_rank =
       Data.read_log_by_id("Deck", id)
-      |> Enum.filter(fn e -> e.tags == [:create, :deck] end)
+      |> Enum.filter(fn e -> e.keys == [:create, :deck] end)
       |> List.first()
       |> find_original_rank()
 
@@ -433,7 +433,7 @@ defmodule Metr.Modules.Deck do
 
   @impl true
   def handle_call(
-        %{tags: [:alter, :rank], data: %{id: id, change: change}, event: event},
+        %{keys: [:alter, :rank], data: %{id: id, change: change}, event: event},
         _from,
         state
       ) do
@@ -444,7 +444,7 @@ defmodule Metr.Modules.Deck do
 
   @impl true
   def handle_call(
-        %{tags: [:toggle, :deck, :active], data: %{deck_id: id}, event: event},
+        %{keys: [:toggle, :deck, :active], data: %{deck_id: id}, event: event},
         _from,
         state
       ) do
@@ -455,12 +455,12 @@ defmodule Metr.Modules.Deck do
 
   @impl true
   def handle_call(
-        %{tags: [:tagged], data: %{id: id, tag: tag}, event: event},
+        %{keys: [:tagged], data: %{id: id, tag: tag}, event: event},
         _from,
         state
       ) do
-    new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
+    new_state = Map.update!(state, :keys, &(&1 ++ [tag]))
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-    {:reply, "Deck #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+    {:reply, "Deck #{id} keys altered to #{Kernel.inspect(new_state.keys)}", new_state}
   end
 end

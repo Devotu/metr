@@ -7,6 +7,7 @@ defmodule PlayerTest do
   alias Metr.Modules.Game
   alias Metr.Id
   alias Metr.Modules.Player
+  alias Metr.Modules.Stately
 
   test "basic feed" do
     assert [] == Player.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
@@ -14,8 +15,7 @@ defmodule PlayerTest do
 
   test "create player" do
     [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "Testy"}), nil)
-    assert [:player, :created, nil] == resulting_event.tags
-    log_entries = Data.read_log_by_id("Player", "testy")
+    assert [:player, :created, nil] == resulting_event.keys
     log_entries = Data.read_log_by_id("Player", resulting_event.data.out)
     assert 1 = Enum.count(log_entries)
     Data.wipe_test("Player", resulting_event.data.out)
@@ -35,7 +35,7 @@ defmodule PlayerTest do
 
     # Assert
     resulting_feedback_should_be = "Deck #{deck_id} added to player #{player_id}"
-    assert [:player, :altered, nil] == resulting_event.tags
+    assert [:player, :altered, nil] == resulting_event.keys
     assert resulting_feedback_should_be == resulting_event.data.out
     # Cleanup
     Data.wipe_test("Player", player_created_event.data.out)
@@ -76,7 +76,7 @@ defmodule PlayerTest do
 
     # Assert
     assert 2 == Enum.count(resulting_events)
-    assert [:player, :altered, nil] == first_resulting_event.tags
+    assert [:player, :altered, nil] == first_resulting_event.keys
 
     assert "Result #{first_result_id} added to player #{player_1_id}" ==
              first_resulting_event.data.out
@@ -96,8 +96,8 @@ defmodule PlayerTest do
     Deck.feed(Event.new([:create, :deck], %{name: "Alpha List", player_id: "adam_list"}), nil)
     Deck.feed(Event.new([:create, :deck], %{name: "Beta List", player_id: "bertil_list"}), nil)
     fake_pid = "#123"
-    [resulting_event] = Player.feed(Event.new([:list, :player]), fake_pid)
-    assert [:players, fake_pid] == resulting_event.tags
+    [resulting_event] = Stately.feed(Event.new([:list, :player]), fake_pid)
+    assert [:players, fake_pid] == resulting_event.keys
     # any actual data will break proper comparison
     assert 3 <= Enum.count(resulting_event.data.players)
     Data.wipe_test("Player", ["adam_list", "bertil_list", "ceasar_list"])

@@ -1,6 +1,7 @@
 defmodule Metr do
   alias Metr.Event
   alias Metr.Router
+  alias Metr.Modules.Stately
 
   @default_game %{
     fun_1: nil,
@@ -21,19 +22,20 @@ defmodule Metr do
     list(:deck)
   end
 
+
+  def list_games(limit) when is_number(limit) do
+    constraints = Map.put(%{}, :limit, limit)
+    list(:game, constraints)
+  end
+
   def list_games(type, id) when is_atom(type) do
-    constraints = Map.put(%{}, type_id(type), id)
+    constraints = Map.put(%{}, Stately.module_id(type), id)
     list(:game, constraints)
   end
 
   def list_games(game_ids) when is_list(game_ids) do
     game_ids
     |> Enum.map(fn gid -> read_game(gid) end)
-  end
-
-  def list_games(limit) when is_number(limit) do
-    constraints = Map.put(%{}, :limit, limit)
-    list(:game, constraints)
   end
 
   def list_games() do
@@ -61,13 +63,13 @@ defmodule Metr do
   end
 
   def list_states(state_type, by_type, id) when is_atom(state_type) and is_atom(by_type) do
-    constraints = Map.put(%{}, type_id(by_type), id)
+    constraints = Map.put(%{}, Stately.module_id(by_type), id)
     list(state_type, constraints)
   end
 
   def list_states(type) when is_bitstring(type) do
     type
-    |> type_from_string()
+    |> Stately.select_module_atom()
     |> list()
   end
 
@@ -106,7 +108,7 @@ defmodule Metr do
 
   def read_state(type, id) when is_bitstring(type) and is_bitstring(id) do
     type
-    |> type_from_string()
+    |> Stately.select_module_atom()
     |> read(id)
   end
 
@@ -221,14 +223,14 @@ defmodule Metr do
 
 
   def rerun(type_name, id) when is_bitstring(type_name) and is_bitstring(id) do
-    type = type_from_string(type_name)
+    type = Stately.select_module_atom(type_name)
     Event.new([:rerun, type], %{id: id})
     |> run()
   end
 
 
   def add_tag(tag, type_name, id) when is_bitstring(tag) and is_bitstring(type_name) and is_bitstring(id) do
-    type = type_from_string(type_name)
+    type = Stately.select_module_atom(type_name)
     Event.new([:tag, type], %{id: id, tag: tag})
     |> run()
   end
@@ -275,7 +277,7 @@ defmodule Metr do
     # Start listener
     listening_task = Task.async(&listen/0)
 
-    data = Map.put(%{}, type_id(type), id)
+    data = Map.put(%{}, Stately.module_id(type), id)
 
     # Fire ze missiles
     Event.new([:read, type], data)
@@ -289,7 +291,7 @@ defmodule Metr do
     # Start listener
     listening_task = Task.async(&listen/0)
 
-    data = Map.put(%{}, type_id(type), id)
+    data = Map.put(%{}, Stately.module_id(type), id)
 
     # Fire ze missiles
     Event.new([:read, :log, type], data)
@@ -333,26 +335,6 @@ defmodule Metr do
     end
   end
 
-  defp type_id(type) when is_atom(type) do
-    case type do
-      :player -> :player_id
-      :deck -> :deck_id
-      :game -> :game_id
-      :match -> :match_id
-      :result -> :result_id
-    end
-  end
-
-  def type_from_string(type) when is_bitstring(type) do
-    case String.downcase(type) do
-      "player" -> :player
-      "deck" -> :deck
-      "game" -> :game
-      "match" -> :match
-      "result" -> :result
-    end
-  end
-
   defp parse_balance(0, 0), do: {0, 0}
   defp parse_balance(1, 1), do: {1, -1}
   defp parse_balance(1, 2), do: {2, -2}
@@ -364,45 +346,45 @@ defmodule Metr do
 
   ## feed
   # by type
-  def feed(%Event{tags: [type, response_pid]} = event, _orepp)
+  def feed(%Event{keys: [type, response_pid]} = event, _orepp)
       when is_atom(type) and is_pid(response_pid) do
     send(response_pid, event.data[type])
     []
   end
 
   # by id
-  def feed(%Event{tags: [type, _status, response_pid], data: %{out: out}}, _orepp)
+  def feed(%Event{keys: [type, _status, response_pid], data: %{out: out}}, _orepp)
       when is_atom(type) and is_pid(response_pid) do
     send(response_pid, out)
     []
   end
 
-  def feed(%Event{tags: [type, :log, _status, response_pid], data: %{out: out}}, _orepp)
+  def feed(%Event{keys: [type, :log, _status, response_pid], data: %{out: out}}, _orepp)
       when is_atom(type) and is_pid(response_pid) do
     send(response_pid, out)
     []
   end
 
-  def feed(%Event{tags: [type, :error, response_pid], data: %{msg: msg}}, _orepp)
+  def feed(%Event{keys: [type, :error, response_pid], data: %{msg: msg}}, _orepp)
       when is_atom(type) and is_pid(response_pid) do
     send(response_pid, {:error, msg})
     []
   end
 
-  def feed(%Event{tags: [type, :error, response_pid], data: %{cause: cause}}, _orepp)
+  def feed(%Event{keys: [type, :error, response_pid], data: %{cause: cause}}, _orepp)
       when is_atom(type) and is_pid(response_pid) do
     send(response_pid, {:error, cause})
     []
   end
 
-  def feed(%Event{tags: [type, _status, response_pid]} = event, _orepp)
+  def feed(%Event{keys: [type, _status, response_pid]} = event, _orepp)
       when is_atom(type) and is_pid(response_pid) do
     send(response_pid, event.data.id)
     []
   end
 
   # by id failure
-  def feed(%Event{tags: [type, :not, _status, response_pid]}, _orepp)
+  def feed(%Event{keys: [type, :not, _status, response_pid]}, _orepp)
       when is_atom(type) and is_pid(response_pid) do
     send(response_pid, :error)
     []

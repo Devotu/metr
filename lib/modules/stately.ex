@@ -16,8 +16,43 @@ defmodule Metr.Modules.Stately do
   @valid_name_length
 
   ## feed
+  def feed(%Event{keys: [:read, module_atom], data: %{id: id}}, repp) do
+    module_name = select_module_name(module_atom)
+    state = read(id, module_name)
+    [Event.new([module_atom, :read, repp], %{out: state})]
+  end
+
+  def feed(%Event{keys: [:read, :log]}, _repp), do: []
+  def feed(%Event{keys: [:read, module_atom], data: data} = event, repp) when is_map(data) do
+    module_name = select_module_name(module_atom)
+    id_name = module_id(module_atom)
+    id = Map.get(data, id_name, {:error, "key not found"})
+
+    case id do
+      {:error, e} ->
+        out_to_event(e, module_name, [module_atom, :error, repp])
+      _ ->
+        state = read(id, module_name)
+        [Event.new([module_atom, :read, repp], %{out: state})]
+    end
+  end
+
+  def feed(%Event{keys: [:list, :format]}, _repp), do: []
+  def feed(%Event{keys: [:list, module_atom], data: data}, repp) when %{} == data do
+    module_name = select_module_name(module_atom)
+    module_plurals = module_plural(module_atom)
+    states =
+      Data.list_ids(module_name)
+      |> Enum.map(fn id -> read(id, module_name) end)
+
+    data = Map.put(%{}, module_plurals, states)
+
+    [Event.new([module_plurals, repp], data)]
+  end
+
+
   def feed(
-    %Event{id: _event_id, tags: [:rerun, module_atom], data: %{id: id}},
+    %Event{id: _event_id, keys: [:rerun, module_atom], data: %{id: id}},
     repp) do
     module_name = select_module_name(module_atom)
     [
@@ -26,13 +61,13 @@ defmodule Metr.Modules.Stately do
     ]
   end
 
-  def feed(%Event{id: _event_id, tags: [module_atom, :tagged], data: %{id: _id, tag: _tag}} = event, repp) do
+  def feed(%Event{id: _event_id, keys: [module_atom, :tagged], data: %{id: _id, tag: _tag}} = event, repp) do
     update(event.data.id, select_module_name(module_atom), [:tagged], event.data, event)
     |> out_to_event(select_module_name(module_atom), [module_atom, :tagged])
     |> List.wrap()
   end
 
-  def feed(_event, _orepp) do
+  def feed(event, _orepp) do
     []
   end
 
@@ -55,7 +90,7 @@ defmodule Metr.Modules.Stately do
   end
 
   @impl true
-  def handle_call(%{tags: [:read, :player]}, _from, state) do
+  def handle_call(%{keys: [:read, :player]}, _from, state) do
     {:reply, state, state}
   end
 
@@ -115,17 +150,17 @@ defmodule Metr.Modules.Stately do
     end
   end
 
-  def update(id, module_name, tags, data, event) do
+  def update(id, module_name, keys, data, event) do
     {:ok, id, module_name}
     |> validate_module()
     |> verified_id()
     |> ready_process()
-    |> alter(tags, data, event)
+    |> alter(keys, data, event)
   end
 
-  def out_to_event({:ok, msg}, module_name, tags), do: out_to_event(msg, module_name, tags)
-  def out_to_event(msg, module_name, tags) when is_bitstring(module_name) do
-    Event.new([select_module_atom(module_name)] ++ tags, %{out: msg})
+  def out_to_event({:ok, msg}, module_name, keys), do: out_to_event(msg, module_name, keys)
+  def out_to_event(msg, module_name, keys) when is_bitstring(module_name) do
+    Event.new([select_module_atom(module_name)] ++ keys, %{out: msg})
   end
 
   def module_to_name(module_name) do
@@ -184,6 +219,48 @@ defmodule Metr.Modules.Stately do
     end
   end
 
+  def module_id(module_atom) when is_atom(module_atom) do
+    case module_atom do
+      :player -> :player_id
+      :deck -> :deck_id
+      :game -> :game_id
+      :match -> :match_id
+      :result -> :result_id
+      :tag -> :tag_id
+      _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting id name"}
+    end
+  end
+
+  def module_plural(module_atom) when is_atom(module_atom) do
+    case module_atom do
+      :player -> :players
+      :deck -> :decks
+      :game -> :games
+      :match -> :matches
+      :result -> :results
+      :tag -> :tags
+      _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting plural form"}
+    end
+  end
+
+  def module_id(module_name) when is_bitstring(module_name) do
+    module_name
+    |> select_module_atom()
+    |> module_id()
+  end
+
+  def select_module_atom(module_name) when is_bitstring(module_name) do
+    case String.downcase(module_name) do
+      "player" -> :player
+      "deck" -> :deck
+      "game" -> :game
+      "match" -> :match
+      "result" -> :result
+      "tag" -> :tag
+      _ -> {:error, "#{module_name} is not a valid module name selecting atom"}
+    end
+  end
+
   ## private {:ok, id, module_name} / {:error, e}
   defp verify_unique({:error, e}), do: {:error, e}
   defp verify_unique({:ok, id, module_name}) do
@@ -236,7 +313,7 @@ defmodule Metr.Modules.Stately do
 
     case Data.read_log_by_id(module_name, id) do
       {:error, :not_found} ->
-        {:error, "#{module_name} #{id} not found"}
+        {:error, "Log of #{module_name} #{id} not found"}
       log ->
         log
         |> Util.uniq()
@@ -248,7 +325,7 @@ defmodule Metr.Modules.Stately do
   defp conclude_rerun(feedback_events) do
     feedback_events
     |> List.flatten()
-    |> Enum.filter(fn e -> Enum.member?(e.tags, :error) end)
+    |> Enum.filter(fn e -> Enum.member?(e.keys, :error) end)
   end
 
   defp select_rerun_return({:error, e}), do: {:error, e}
@@ -259,37 +336,25 @@ defmodule Metr.Modules.Stately do
   defp return_result({:ok, _id, _module_name}), do: :ok
 
   defp select_module(module_name) when is_bitstring(module_name) do
-    case module_name do
-      "Player" -> Player
-      "Deck" -> Deck
-      "Game" -> Game
-      "Match" -> Match
-      "Result" -> Result
-      "Tag" -> Tag
+    case String.downcase(module_name) do
+      "player" -> Player
+      "deck" -> Deck
+      "game" -> Game
+      "match" -> Match
+      "result" -> Result
+      "tag" -> Tag
       _ -> {:error, "#{module_name} is not a valid name selecting module"}
     end
   end
 
-  defp select_module_atom(module_name) when is_bitstring(module_name) do
-    case module_name do
-      "Player" -> :player
-      "Deck" -> :deck
-      "Game" -> :game
-      "Match" -> :match
-      "Result" -> :result
-      "Tag" -> :tag
-      _ -> {:error, "#{module_name} is not a valid module name selecting atom"}
-    end
-  end
-
   defp select_module_struct(module_name) when is_bitstring(module_name) do
-    case module_name do
-      "Player" -> %Player{}
-      "Deck" -> %Deck{}
-      "Game" -> %Game{}
-      "Match" -> %Match{}
-      "Result" -> %Result{}
-      "Tag" -> %Tag{}
+    case String.downcase(module_name) do
+      "player" -> %Player{}
+      "deck" -> %Deck{}
+      "game" -> %Game{}
+      "match" -> %Match{}
+      "result" -> %Result{}
+      "tag" -> %Tag{}
       _ -> {:error, "#{module_name} is not a valid module selecting struct"}
     end
   end
@@ -326,7 +391,7 @@ defmodule Metr.Modules.Stately do
   defp recall({:error, e}), do: {:error, e}
 
   defp recall({:ok, id, module_name}) do
-    GenServer.call(Data.genserver_id(module_name, id), %{tags: [:read, select_module_atom(module_name)]})
+    GenServer.call(Data.genserver_id(module_name, id), %{keys: [:read, select_module_atom(module_name)]})
   end
 
   defp ready_process({:error, e}), do: {:error, e}
@@ -355,10 +420,10 @@ defmodule Metr.Modules.Stately do
     end
   end
 
-  defp alter({:error, e}, _tags, _data, _event), do: {:error, e}
+  defp alter({:error, e}, _keys, _data, _event), do: {:error, e}
 
-  defp alter({:ok, id, module_name}, tags, data, event) do
+  defp alter({:ok, id, module_name}, keys, data, event) do
     # Call update
-    GenServer.call(Data.genserver_id(module_name, id), %{tags: tags, data: data, event: event})
+    GenServer.call(Data.genserver_id(module_name, id), %{keys: keys, data: data, event: event})
   end
 end

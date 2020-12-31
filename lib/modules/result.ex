@@ -7,7 +7,9 @@ defmodule Metr.Modules.Result do
             place: nil,
             power: nil,
             fun: nil,
-            tags: []
+            keys: []
+
+  use GenServer
 
   alias Metr.Data
   alias Metr.Id
@@ -47,21 +49,13 @@ defmodule Metr.Modules.Result do
       valid_time(r.time)
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :result], data: %{ids: ids}}, repp)
+  def feed(%Event{id: _event_id, keys: [:list, :result], data: %{ids: ids}}, repp)
       when is_list(ids) do
     results = Enum.map(ids, &read/1)
     [Event.new([:results, repp], %{results: results})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :result]}, repp) do
-    results =
-      Data.list_ids(__ENV__.module)
-      |> Enum.map(&read/1)
-
-    [Event.new([:results, repp], %{results: results})]
-  end
-
-  def feed(%Event{id: _event_id, tags: [:read, :result], data: %{result_id: id}}, repp) do
+  def feed(%Event{id: _event_id, keys: [:read, :result], data: %{result_id: id}}, repp) do
     result = read(id)
     [Event.new([:result, :read, repp], %{out: result})]
   end
@@ -90,4 +84,16 @@ defmodule Metr.Modules.Result do
   defp valid_time(0), do: false
   defp valid_time(x) when is_number(x), do: true
   defp valid_time(_), do: false
+
+
+  ## gen
+  @impl true
+  def init(%Result{} = state) do
+    {:ok, state}
+  end
+
+  @impl true
+  def handle_call(%{keys: [:read, :result]}, _from, state) do
+    {:reply, state, state}
+  end
 end
