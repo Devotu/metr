@@ -13,7 +13,7 @@ defmodule Metr.Modules.Tag do
   @valid_tag_length 20
 
   def feed(
-        %Event{id: _event_id, keys: [:tag, module_atom], data: %{id: module_id, tag: tag} = data} = event,
+        %Event{id: _event_id, keys: [:tag, module_atom], data: %{id: module_id, tag: tag}} = event,
         repp
       ) do
 
@@ -43,7 +43,7 @@ defmodule Metr.Modules.Tag do
     end
   end
 
-  def feed(%Event{id: _event_id, keys: [module_atom, :tagged], data: %{id: _id, tag: _tag}} = event, repp) do
+  def feed(%Event{id: _event_id, keys: [module_atom, :tagged], data: %{id: _id, tag: _tag}} = event, _repp) do
     Stately.update(event.data.id, Stately.select_module_name(module_atom), [:tagged], event.data, event)
     |> Stately.out_to_event(Stately.select_module_name(module_atom), [module_atom, :tagged])
     |> List.wrap()
@@ -83,21 +83,6 @@ defmodule Metr.Modules.Tag do
     end
   end
 
-  # def feed(
-  #       %Event{
-  #         id: _event_id,
-  #         keys: [:deck, :created, _orepp] = keys,
-  #         data: %{id: deck_id, tag_id: id}
-  #       } = event,
-  #       repp
-  #     ) do
-  #   [
-  #     Stately.update(id, @name, keys, %{id: deck_id, tag_id: id}, event)
-  #     |> Stately.out_to_event(@name, [:altered, repp])
-  #   ]
-  # end
-
-
   ## module
   def read(id) do
     Stately.read(id, @name)
@@ -112,53 +97,10 @@ defmodule Metr.Modules.Tag do
   end
 
   ## gen
+  @impl true
   def init(%Tag{} = state) do
     {:ok, state}
   end
-
-  # @impl true
-  # def handle_call(
-  #       %{keys: [:deck, :created, _orepp], data: %{id: deck_id, tag_id: id}, event: event},
-  #       _from,
-  #       state
-  #     ) do
-  #   new_state = Map.update!(state, :decks, &(&1 ++ [deck_id]))
-  #   :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
-  #   {:reply, "Deck #{deck_id} added to tag #{id}", new_state}
-  # end
-
-  # @impl true
-  # def handle_call(
-  #       %{keys: [:game, :created, _orepp], data: %{id: result_id, tag_id: id}, event: event},
-  #       _from,
-  #       state
-  #     ) do
-  #   new_state = Map.update!(state, :results, &(&1 ++ [result_id]))
-  #   :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
-  #   {:reply, "Result #{result_id} added to tag #{id}", new_state}
-  # end
-
-  # @impl true
-  # def handle_call(
-  #       %{keys: [:match, :created, _orepp], data: %{id: match_id, tag_id: id}, event: event},
-  #       _from,
-  #       state
-  #     ) do
-  #   new_state = Map.update!(state, :matches, &(&1 ++ [match_id]))
-  #   :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
-  #   {:reply, "Match #{match_id} added to tag #{id}", new_state}
-  # end
-
-  # @impl true
-  # def handle_call(
-  #       %{keys: [:game, :deleted, _orepp], data: %{id: result_id, tag_id: id}, event: event},
-  #       _from,
-  #       state
-  #     ) do
-  #   new_state = Map.update!(state, :results, fn results -> List.delete(results, result_id) end)
-  #   :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
-  #   {:reply, "Game #{result_id} removed from tag #{id}", new_state}
-  # end
 
   @impl true
   def handle_call(%{keys: [:read, :tag]}, _from, state) do

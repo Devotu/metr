@@ -71,9 +71,6 @@ defmodule Metr.Modules.CLI do
     []
   end
 
-  # recieve event
-  # opt
-  # write output
   @impl true
   def handle_call(%Event{} = event, _, _) do
     IO.puts("=> " <> format_event_display(event))

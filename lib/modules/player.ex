@@ -15,7 +15,7 @@ defmodule Metr.Modules.Player do
   @name __ENV__.module |> Stately.module_to_name()
 
   def feed(
-        %Event{id: _event_id, keys: [:create, :player], data: %{name: name} = data} = event,
+        %Event{id: _event_id, keys: [:create, :player], data: %{name: name}} = event,
         repp
       ) do
 
@@ -129,7 +129,7 @@ defmodule Metr.Modules.Player do
     [Event.new([:player, :log, :read, repp], %{out: events})]
   end
 
-  def feed(event, _orepp) do
+  def feed(_event, _orepp) do
     []
   end
 

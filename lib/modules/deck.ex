@@ -160,14 +160,6 @@ defmodule Metr.Modules.Deck do
     [Event.new([:deck, :read, repp], %{out: deck})]
   end
 
-  # def feed(%Event{keys: [:list, :deck]}, repp) do
-  #   decks =
-  #     Data.list_ids(__ENV__.module)
-  #     |> Enum.map(fn id -> read(id) end)
-
-  #   [Event.new([:decks, repp], %{decks: decks})]
-  # end
-
   def feed(%Event{keys: [:list, :game], data: %{deck_id: id}}, repp) do
     deck = read(id)
 
@@ -200,7 +192,7 @@ defmodule Metr.Modules.Deck do
     [Event.new([:formats, repp], %{formats: @formats})]
   end
 
-  def feed(event, _orepp) do
+  def feed(_event, _orepp) do
     []
   end
 
