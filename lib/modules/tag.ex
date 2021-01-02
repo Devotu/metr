@@ -6,7 +6,7 @@ defmodule Metr.Modules.Tag do
   alias Metr.Modules.Stately
   alias Metr.Event
   alias Metr.Id
-  alias Metr.Data
+  alias Metr.Time
   alias Metr.Modules.Tag
 
   @name __ENV__.module |> Stately.module_to_name()
@@ -26,7 +26,7 @@ defmodule Metr.Modules.Tag do
 
     case {validation, exist?(tag)} do
       {:ok, false} ->
-        state = %Tag{id: Id.hrid(tag), name: tag, tagged: [module_id]}
+        state = %Tag{id: Id.hrid(tag), name: tag, tagged: [{module_id, Time.timestamp()}]}
         propagating_event = Event.new([module_atom, :tagged], %{id: module_id, tag: tag})
         Stately.create(@name, state, event)
         |> Stately.out_to_event(@name, [:created, repp])
@@ -167,7 +167,7 @@ defmodule Metr.Modules.Tag do
 
   @impl true
   def handle_call(%{keys: [:tagged], data: %{id: id}}, _from, state) do
-    new_state = Map.update!(state, :tagged, &(&1 ++ [id]))
+    new_state = Map.update!(state, :tagged, &(&1 ++ [{id, Time.timestamp()}]))
     {:reply, state, new_state}
   end
 end
