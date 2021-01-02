@@ -39,7 +39,7 @@ defmodule Metr.Modules.Tag do
         |> List.wrap()
         |> Enum.concat([propagating_event])
       {{:error, e}, _} ->
-        [Event.new([:player, :error, repp], %{msg: e})]
+        [Event.new([module_atom, :error, repp], %{msg: e})]
     end
   end
 
@@ -168,6 +168,6 @@ defmodule Metr.Modules.Tag do
   @impl true
   def handle_call(%{keys: [:tagged], data: %{id: id}}, _from, state) do
     new_state = Map.update!(state, :tagged, &(&1 ++ [id]))
-    {:reply, state, state}
+    {:reply, state, new_state}
   end
 end

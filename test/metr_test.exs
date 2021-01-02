@@ -551,7 +551,7 @@ defmodule MetrTest do
 
 
     test_tag = Metr.read_state("Tag", tag_name)
-    assert [deck_id] == test_tag.tagged
+    assert [deck_id, player_id, match_id, game_id, result_id_1] == test_tag.tagged
 
     assert [test_tag] == Metr.list_states("Tag")
 
