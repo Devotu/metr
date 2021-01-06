@@ -78,7 +78,7 @@ defmodule Metr.Modules.Tag do
   defp is_not_duplicate(:ok, module_name, module_id, tag) do
     target = Stately.read(module_id, module_name)
     case Enum.member?(target.tags, tag) do
-      true -> {:error, "duplicate tag found"}
+      true -> {:error, "duplicate tag #{tag} found on #{module_name} #{module_id}"}
       false -> :ok
     end
   end

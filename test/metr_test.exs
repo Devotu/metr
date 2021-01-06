@@ -507,14 +507,7 @@ defmodule MetrTest do
     recreated_deck = Stately.read(deck_id, "Deck")
     assert recreated_deck == original_deck
 
-    game = Game.read(game_id)
-
-    Data.wipe_test("Player", [player_id])
-    Data.wipe_test("Deck", [deck_id])
-    Data.wipe_test("Game", [game_id])
-    Data.wipe_test("Result", game.results)
-    Data.wipe_test("Match", match_id)
-
+    TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
   end
 
 
@@ -565,11 +558,7 @@ defmodule MetrTest do
 
     assert [test_tag] == Metr.list_states("Tag")
 
-    Data.wipe_test("Player", [player_id])
-    Data.wipe_test("Deck", [deck_id])
-    Data.wipe_test("Game", [game_id])
-    Data.wipe_test("Result", game.results)
-    Data.wipe_test("Match", match_id)
+    TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
     Data.wipe_test("Tag", tag_name)
   end
 end
