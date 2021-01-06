@@ -2,15 +2,17 @@ ExUnit.start()
 
 defmodule TestHelper do
 
+  alias Metr.Data
   alias Metr.Event
   alias Metr.Modules.Deck
+  alias Metr.Modules.Game
   alias Metr.Modules.Match
   alias Metr.Modules.Player
 
   def init_single_states(player_name, deck_name) do
 
     [player_return] = Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
-    player_id = player_return.data.id
+    player_id = player_return.data.out
 
     [deck_return] = Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
     deck_id = deck_return.data.id
@@ -39,5 +41,16 @@ defmodule TestHelper do
     game_id = Metr.create_game(game_input)
 
     {player_id, deck_id, match_id, game_id}
+  end
+
+  def cleanup_single_states({player_id, deck_id, match_id, game_id}) do
+    game = Game.read(game_id)
+
+    Data.wipe_test("Player", [player_id])
+    Data.wipe_test("Deck", [deck_id])
+    Data.wipe_test("Game", [game_id])
+    Data.wipe_test("Result", game.results)
+    Data.wipe_test("Match", match_id)
+
   end
 end

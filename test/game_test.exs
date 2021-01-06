@@ -40,7 +40,7 @@ defmodule GameTest do
              ]
 
     [resulting_event] = Game.feed(Event.new(hcr), nil)
-    assert [:game, :created, nil] == resulting_event.tags
+    assert [:game, :created, nil] == resulting_event.keys
     assert is_bitstring(resulting_event.id)
     Data.wipe_test("Game", resulting_event.data.id)
     Data.wipe_test("Result", resulting_event.data.result_ids)
@@ -225,7 +225,7 @@ defmodule GameTest do
 
     assert 4 == Enum.count(Metr.list_states(:game, :deck, deck_2_id))
 
-    results = Metr.list_results()
+    results = Metr.list_states("Result")
 
     Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])

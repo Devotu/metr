@@ -1,5 +1,5 @@
 defmodule Metr.Event do
-  defstruct id: "", tags: [], data: %{}, time: 0
+  defstruct id: "", keys: [], data: %{}, time: 0
 
   alias Metr.Id
   alias Metr.Event
@@ -7,7 +7,7 @@ defmodule Metr.Event do
   alias Metr.Time
 
   def new(%HRC{} = hrc) do
-    {tags, data, _hrc} =
+    {keys, data, _hrc} =
       {[], [], hrc}
       |> add_action()
       |> add_subject()
@@ -16,16 +16,16 @@ defmodule Metr.Event do
 
     merged_data = merge_data(data)
     merged_data = Map.put(merged_data, :rank, false)
-    new(tags, merged_data)
+    new(keys, merged_data)
   end
 
-  def new(tags, data \\ %{}) when is_list(tags) do
-    %Event{id: Id.guid(), tags: tags, data: data, time: Time.timestamp()}
+  def new(keys, data \\ %{}) when is_list(keys) do
+    %Event{id: Id.guid(), keys: keys, data: data, time: Time.timestamp()}
   end
 
   def only_errors(events) when is_list(events) do
     Enum.filter(events, fn e ->
-      Enum.any?(e.tags, fn t ->
+      Enum.any?(e.keys, fn t ->
         t == :error
       end)
     end)
@@ -33,31 +33,31 @@ defmodule Metr.Event do
 
   def add_repp(event, repp) do
     event
-    |> Map.put(:tags, event.tags ++ [repp])
+    |> Map.put(:keys, event.keys ++ [repp])
   end
 
-  defp add_action({tags, data, %HRC{action: nil} = hrc}), do: {tags, data, hrc}
+  defp add_action({keys, data, %HRC{action: nil} = hrc}), do: {keys, data, hrc}
 
-  defp add_action({tags, data, hrc}) do
-    {tags ++ [hrc.action], data, hrc}
+  defp add_action({keys, data, hrc}) do
+    {keys ++ [hrc.action], data, hrc}
   end
 
-  defp add_subject({tags, data, %HRC{subject: nil} = hrc}), do: {tags, data, hrc}
+  defp add_subject({keys, data, %HRC{subject: nil} = hrc}), do: {keys, data, hrc}
 
-  defp add_subject({tags, data, hrc}) do
-    {tags ++ [hrc.subject], data, hrc}
+  defp add_subject({keys, data, hrc}) do
+    {keys ++ [hrc.subject], data, hrc}
   end
 
-  defp add_details({tags, data, %HRC{details: nil} = hrc}), do: {tags, data, hrc}
+  defp add_details({keys, data, %HRC{details: nil} = hrc}), do: {keys, data, hrc}
 
-  defp add_details({tags, data, hrc}) do
-    {tags, data ++ [hrc.details], hrc}
+  defp add_details({keys, data, hrc}) do
+    {keys, data ++ [hrc.details], hrc}
   end
 
-  defp add_parts({tags, data, %HRC{parts: nil} = hrc}), do: {tags, data, hrc}
+  defp add_parts({keys, data, %HRC{parts: nil} = hrc}), do: {keys, data, hrc}
 
-  defp add_parts({tags, data, hrc}) do
-    {tags, data ++ [hrc.parts], hrc}
+  defp add_parts({keys, data, hrc}) do
+    {keys, data ++ [hrc.parts], hrc}
   end
 
   defp merge_data([details, parts]) when is_map(details) do

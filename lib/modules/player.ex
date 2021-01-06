@@ -1,5 +1,5 @@
 defmodule Metr.Modules.Player do
-  defstruct id: "", name: "", decks: [], results: [], matches: [], time: 0
+  defstruct id: "", name: "", decks: [], results: [], matches: [], time: 0, tags: []
 
   use GenServer
 
@@ -15,33 +15,35 @@ defmodule Metr.Modules.Player do
   @name __ENV__.module |> Stately.module_to_name()
 
   def feed(
-        %Event{id: _event_id, tags: [:create, :player], data: %{name: name} = data} = event,
+        %Event{id: _event_id, keys: [:create, :player], data: %{name: name}} = event,
         repp
       ) do
-    id = Id.hrid(name)
 
-    # Start genserver
-    case GenServer.start(Metr.Modules.Player, {id, data, event},
-      name: Data.genserver_id(__ENV__.module, id)
-    ) do
-      {:ok, _pid} -> # Return
-        [Event.new([:player, :created, repp], %{id: id})]
+    validation = :ok
+        |> Stately.is_accepted_name(name)
 
-      x ->
-        [Event.new([:player, :error, repp], %{msg: Kernel.inspect(x)})]
+    case validation do
+      :ok ->
+        id = Id.hrid(name)
+        state = %Player{id: id, name: name, time: Time.timestamp()}
+        Stately.create("Player", state, event)
+        |> Stately.out_to_event(@name, [:created, repp])
+        |> List.wrap()
+      {:error, e} ->
+        [Event.new([:player, :error, repp], %{msg: e})]
     end
   end
 
   def feed(
         %Event{
           id: _event_id,
-          tags: [:deck, :created, _orepp] = tags,
+          keys: [:deck, :created, _orepp] = keys,
           data: %{id: deck_id, player_id: id}
         } = event,
         repp
       ) do
     [
-      Stately.update(id, @name, tags, %{id: deck_id, player_id: id}, event)
+      Stately.update(id, @name, keys, %{id: deck_id, player_id: id}, event)
       |> Stately.out_to_event(@name, [:altered, repp])
     ]
   end
@@ -49,7 +51,7 @@ defmodule Metr.Modules.Player do
   def feed(
         %Event{
           id: _event_id,
-          tags: [:game, :created, _orepp] = tags,
+          keys: [:game, :created, _orepp] = keys,
           data: %{result_ids: result_ids}
         } = event,
         repp
@@ -67,7 +69,7 @@ defmodule Metr.Modules.Player do
       fn {id, result_id}, acc ->
         acc ++
           [
-            Stately.update(id, @name, tags, %{id: result_id, player_id: id}, event)
+            Stately.update(id, @name, keys, %{id: result_id, player_id: id}, event)
             |> Stately.out_to_event(@name, [:altered, repp])
           ]
       end
@@ -77,7 +79,7 @@ defmodule Metr.Modules.Player do
   def feed(
         %Event{
           id: _event_id,
-          tags: [:game, :deleted, _orepp] = tags,
+          keys: [:game, :deleted, _orepp] = keys,
           data: %{results: result_ids}
         } = event,
         repp
@@ -92,17 +94,16 @@ defmodule Metr.Modules.Player do
     # call update
     Enum.reduce(player_result_ids, [], fn {id, result_id}, acc ->
       acc ++
-        [
-          Stately.update(id, @name, tags, %{id: result_id, player_id: id}, event)
-          |> Stately.out_to_event(@name, [:altered, repp])
-        ]
+      Stately.update(id, @name, keys, %{id: result_id, player_id: id}, event)
+      |> Stately.out_to_event(@name, [:altered, repp])
+      |> List.wrap()
     end)
   end
 
   def feed(
         %Event{
           id: _event_id,
-          tags: [:match, :created, _orepp] = tags,
+          keys: [:match, :created, _orepp] = keys,
           data: %{id: match_id, player_ids: player_ids}
         } = event,
         repp
@@ -112,28 +113,20 @@ defmodule Metr.Modules.Player do
     Enum.reduce(player_ids, [], fn id, acc ->
       acc ++
         [
-          Stately.update(id, @name, tags, %{id: match_id, player_id: id}, event)
+          Stately.update(id, @name, keys, %{id: match_id, player_id: id}, event)
           |> Stately.out_to_event(@name, [:altered, repp])
         ]
     end)
   end
 
-  def feed(%Event{id: _event_id, tags: [:read, :player], data: %{player_id: id}}, repp) do
+  def feed(%Event{id: _event_id, keys: [:read, :player], data: %{player_id: id}}, repp) do
     player = read(id)
     [Event.new([:player, :read, repp], %{out: player})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:read, :log, :player], data: %{player_id: id}}, repp) do
+  def feed(%Event{id: _event_id, keys: [:read, :log, :player], data: %{player_id: id}}, repp) do
     events = Data.read_log_by_id("Player", id)
     [Event.new([:player, :log, :read, repp], %{out: events})]
-  end
-
-  def feed(%Event{id: _event_id, tags: [:list, :player]}, repp) do
-    players =
-      Data.list_ids(__ENV__.module)
-      |> Enum.map(fn id -> read(id) end)
-
-    [Event.new([:players, repp], %{players: players})]
   end
 
   def feed(_event, _orepp) do
@@ -155,19 +148,13 @@ defmodule Metr.Modules.Player do
 
   ## gen
   @impl true
-  def init({id, data, event}) do
-    state = %Player{id: id, name: data.name, time: Time.timestamp()}
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-    {:ok, state}
-  end
-
   def init(%Player{} = state) do
     {:ok, state}
   end
 
   @impl true
   def handle_call(
-        %{tags: [:deck, :created, _orepp], data: %{id: deck_id, player_id: id}, event: event},
+        %{keys: [:deck, :created, _orepp], data: %{id: deck_id, player_id: id}, event: event},
         _from,
         state
       ) do
@@ -178,7 +165,7 @@ defmodule Metr.Modules.Player do
 
   @impl true
   def handle_call(
-        %{tags: [:game, :created, _orepp], data: %{id: result_id, player_id: id}, event: event},
+        %{keys: [:game, :created, _orepp], data: %{id: result_id, player_id: id}, event: event},
         _from,
         state
       ) do
@@ -189,7 +176,7 @@ defmodule Metr.Modules.Player do
 
   @impl true
   def handle_call(
-        %{tags: [:match, :created, _orepp], data: %{id: match_id, player_id: id}, event: event},
+        %{keys: [:match, :created, _orepp], data: %{id: match_id, player_id: id}, event: event},
         _from,
         state
       ) do
@@ -200,7 +187,7 @@ defmodule Metr.Modules.Player do
 
   @impl true
   def handle_call(
-        %{tags: [:game, :deleted, _orepp], data: %{id: result_id, player_id: id}, event: event},
+        %{keys: [:game, :deleted, _orepp], data: %{id: result_id, player_id: id}, event: event},
         _from,
         state
       ) do
@@ -210,7 +197,18 @@ defmodule Metr.Modules.Player do
   end
 
   @impl true
-  def handle_call(%{tags: [:read, :player]}, _from, state) do
+  def handle_call(%{keys: [:read, :player]}, _from, state) do
     {:reply, state, state}
+  end
+
+  @impl true
+  def handle_call(
+        %{keys: [:tagged], data: %{id: id, tag: tag}, event: event},
+        _from,
+        state
+      ) do
+    new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:reply, "#{@name} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end

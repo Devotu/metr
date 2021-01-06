@@ -14,14 +14,14 @@ defmodule StatelyTest do
   test "exists" do
     assert false == Stately.exist?("not yet created", "Player")
     [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "Adam Stately"}), nil)
-    player_id = resulting_event.data.id
+    player_id = resulting_event.data.out
     assert true == Stately.exist?(player_id, "Player")
     Data.wipe_test("Player", player_id)
   end
 
   test "read state" do
     [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "Bertil Stately"}), nil)
-    player_id = resulting_event.data.id
+    player_id = resulting_event.data.out
     player = Stately.read(player_id, "Player")
     assert player_id == player.id
     Data.wipe_test("Player", player_id)
@@ -30,7 +30,7 @@ defmodule StatelyTest do
   test "ready" do
     assert {:error, "Player not_yet_created not found"} == Stately.ready("not_yet_created", "Player")
     [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "Ceasar Stately"}), nil)
-    player_id = resulting_event.data.id
+    player_id = resulting_event.data.out
     assert {:ok} == Stately.ready(player_id, "Player")
     Data.wipe_test("Player", player_id)
   end
@@ -40,11 +40,11 @@ defmodule StatelyTest do
              Stately.update("not_yet_created", "Player", [], %{}, %Event{})
 
     [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "David Stately"}), nil)
-    player_id = resulting_event.data.id
+    player_id = resulting_event.data.out
     event = Event.new([:deck, :created, nil], %{id: "deck_id", player_id: player_id})
 
     assert "Deck deck_id added to player #{player_id}" ==
-             Stately.update(player_id, "Player", event.tags, event.data, event)
+             Stately.update(player_id, "Player", event.keys, event.data, event)
 
     Data.wipe_test("Player", player_id)
   end
@@ -52,7 +52,7 @@ defmodule StatelyTest do
   test "to_event" do
     expected_output = "Expected output"
     e = Stately.out_to_event(expected_output, "Player", [:altered, nil])
-    assert [:player, :altered, nil] == e.tags
+    assert [:player, :altered, nil] == e.keys
     assert %{out: expected_output} == e.data
   end
 
@@ -62,7 +62,7 @@ defmodule StatelyTest do
 
   test "recall player" do
     [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "Erik Player"}), nil)
-    player_id = resulting_event.data.id
+    player_id = resulting_event.data.out
     assert :ok == Data.genserver_id("Player", player_id) |> GenServer.stop()
     player = Player.read(player_id)
 
@@ -170,6 +170,6 @@ defmodule StatelyTest do
   test "rerun fail" do
     player_id = "fail_rerun_base"
     Stately.rerun(player_id, "Player")
-    assert {:error, "Player #{player_id} not found"} == Stately.rerun(player_id, "Player")
+    assert {:error, "Log of Player #{player_id} not found"} == Stately.rerun(player_id, "Player")
   end
 end

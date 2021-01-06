@@ -6,7 +6,10 @@ defmodule Metr.Modules.Result do
             deck_id: "",
             place: nil,
             power: nil,
-            fun: nil
+            fun: nil,
+            tags: []
+
+  use GenServer
 
   alias Metr.Data
   alias Metr.Id
@@ -46,21 +49,13 @@ defmodule Metr.Modules.Result do
       valid_time(r.time)
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :result], data: %{ids: ids}}, repp)
+  def feed(%Event{id: _event_id, keys: [:list, :result], data: %{ids: ids}}, repp)
       when is_list(ids) do
     results = Enum.map(ids, &read/1)
     [Event.new([:results, repp], %{results: results})]
   end
 
-  def feed(%Event{id: _event_id, tags: [:list, :result]}, repp) do
-    results =
-      Data.list_ids(__ENV__.module)
-      |> Enum.map(&read/1)
-
-    [Event.new([:results, repp], %{results: results})]
-  end
-
-  def feed(%Event{id: _event_id, tags: [:read, :result], data: %{result_id: id}}, repp) do
+  def feed(%Event{id: _event_id, keys: [:read, :result], data: %{result_id: id}}, repp) do
     result = read(id)
     [Event.new([:result, :read, repp], %{out: result})]
   end
@@ -89,4 +84,27 @@ defmodule Metr.Modules.Result do
   defp valid_time(0), do: false
   defp valid_time(x) when is_number(x), do: true
   defp valid_time(_), do: false
+
+
+  ## gen
+  @impl true
+  def init(%Result{} = state) do
+    {:ok, state}
+  end
+
+  @impl true
+  def handle_call(%{keys: [:read, :result]}, _from, state) do
+    {:reply, state, state}
+  end
+
+  @impl true
+  def handle_call(
+        %{keys: [:tagged], data: %{id: id, tag: tag}, event: event},
+        _from,
+        state
+      ) do
+    new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:reply, "#{@name} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+  end
 end

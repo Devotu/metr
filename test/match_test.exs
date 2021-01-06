@@ -6,6 +6,7 @@ defmodule MatchTest do
   alias Metr.Modules.Match
   alias Metr.Event
   alias Metr.Modules.Player
+  alias Metr.Modules.Stately
   alias Metr.Router
 
   test "basic feed" do
@@ -16,7 +17,7 @@ defmodule MatchTest do
     [player_created_event] =
       Player.feed(Event.new([:create, :player], %{name: "Adam Match"}), nil)
 
-    player_id = player_created_event.data.id
+    player_id = player_created_event.data.out
 
     [deck_created_event] =
       Deck.feed(Event.new([:create, :deck], %{name: "Alpha Match", player_id: player_id}), nil)
@@ -37,7 +38,7 @@ defmodule MatchTest do
     deck = read_deck_event.data.out
     assert 2 == Enum.count(deck.matches)
 
-    [read_player_event] = Player.feed(Event.new([:read, :player], %{player_id: player_id}), nil)
+    [read_player_event] = Stately.feed(Event.new([:read, :player], %{player_id: player_id}), nil)
     player = read_player_event.data.out
     assert 2 == Enum.count(player.matches)
 
@@ -57,7 +58,7 @@ defmodule MatchTest do
     [player_created_event] =
       Player.feed(Event.new([:create, :player], %{name: "Bertil Match"}), nil)
 
-    player_id = player_created_event.data.id
+    player_id = player_created_event.data.out
 
     [deck_1_created_event] =
       Deck.feed(Event.new([:create, :deck], %{name: "Bravo Match", player_id: player_id}), nil)
@@ -84,7 +85,7 @@ defmodule MatchTest do
         nil
       )
 
-    assert [:match, :create, :fail] == resulting_event.tags
+    assert [:match, :create, :fail] == resulting_event.keys
     assert "ranks does not match" == resulting_event.data.cause
     Data.wipe_test("Player", player_id)
     Data.wipe_test("Deck", [deck_id_1, deck_id_2])
@@ -94,7 +95,7 @@ defmodule MatchTest do
     [player_created_event] =
       Player.feed(Event.new([:create, :player], %{name: "David Match"}), nil)
 
-    player_id = player_created_event.data.id
+    player_id = player_created_event.data.out
 
     [deck_created_event] =
       Deck.feed(Event.new([:create, :deck], %{name: "Delta Match", player_id: player_id}), nil)
@@ -134,7 +135,7 @@ defmodule MatchTest do
       nil
     )
 
-    [match_list_event] = Match.feed(Event.new([:list, :match], %{}), nil)
+    [match_list_event] = Stately.feed(Event.new([:list, :match], %{}), nil)
     matches = match_list_event.data.matches
     assert 3 = Enum.count(matches)
 

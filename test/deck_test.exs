@@ -25,7 +25,7 @@ defmodule DeckTest do
         nil
       )
 
-    assert [:deck, :created, nil] == resulting_event.tags
+    assert [:deck, :created, nil] == resulting_event.keys
     Data.wipe_test("Deck", resulting_event.data.id)
     Data.wipe_test("Player", resulting_event.data.player_id)
   end
@@ -37,15 +37,15 @@ defmodule DeckTest do
     [resulting_event] =
       Deck.feed(Event.new([:create, :deck], %{name: name, player_id: player_id}), "repp")
 
-    assert [:deck, :error, "repp"] == resulting_event.tags
+    assert [:deck, :error, "repp"] == resulting_event.keys
     assert "player faily not found" == resulting_event.data.cause
 
     [resulting_event] = Deck.feed(Event.new([:create, :deck], %{name: name}), nil)
-    assert [:deck, :error, nil] == resulting_event.tags
+    assert [:deck, :error, nil] == resulting_event.keys
     assert "missing player_id parameter" == resulting_event.data.cause
 
     [resulting_event] = Deck.feed(Event.new([:create, :deck], %{player_id: player_id}), nil)
-    assert [:deck, :error, nil] == resulting_event.tags
+    assert [:deck, :error, nil] == resulting_event.keys
     assert "missing name parameter" == resulting_event.data.cause
 
     [resulting_event] =
@@ -54,7 +54,7 @@ defmodule DeckTest do
         "repp"
       )
 
-    assert [:deck, :error, "repp"] == resulting_event.tags
+    assert [:deck, :error, "repp"] == resulting_event.keys
     assert "player faily not found" == resulting_event.data.cause
   end
 
@@ -73,7 +73,7 @@ defmodule DeckTest do
         nil
       )
 
-    assert [:deck, :created, nil] == create_event.tags
+    assert [:deck, :created, nil] == create_event.keys
     deck_id = create_event.data.id
     [read_event] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_id}), nil)
     deck = read_event.data.out
@@ -95,7 +95,7 @@ defmodule DeckTest do
         nil
       )
 
-    assert [:deck, :created, nil] == create_event.tags
+    assert [:deck, :created, nil] == create_event.keys
     deck_id = create_event.data.id
     [read_event] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_id}), nil)
     deck = read_event.data.out
@@ -124,7 +124,7 @@ defmodule DeckTest do
         nil
       )
 
-    assert [:deck, :not, :created, nil] == create_event.tags
+    assert [:deck, :not, :created, nil] == create_event.keys
     assert [:invalid_format] == create_event.data.errors
     Data.wipe_test("Player", "david_deck")
   end
@@ -169,7 +169,7 @@ defmodule DeckTest do
 
     # Assert
     assert 2 == Enum.count(resulting_events)
-    assert [:deck, :altered, nil] == first_resulting_event.tags
+    assert [:deck, :altered, nil] == first_resulting_event.keys
 
     assert "Result #{first_result_id} added to deck #{deck_1_id}" ==
              first_resulting_event.data.out
@@ -309,7 +309,7 @@ defmodule DeckTest do
         "repp"
       )
 
-    assert [:deck, :error, "repp"] == resulting_event.tags
+    assert [:deck, :error, "repp"] == resulting_event.keys
     assert "excess params given" == resulting_event.data.cause
     Data.wipe_test("Player", player_id)
   end
@@ -323,7 +323,7 @@ defmodule DeckTest do
     [resulting_event] =
       Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
 
-    assert [:deck, :created, nil] == resulting_event.tags
+    assert [:deck, :created, nil] == resulting_event.keys
 
     deck = Deck.read(resulting_event.data.id)
     assert "" == deck.format
