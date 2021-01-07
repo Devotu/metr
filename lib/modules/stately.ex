@@ -1,5 +1,4 @@
 defmodule Metr.Modules.Stately do
-
   use GenServer
 
   alias Metr.Data
@@ -23,6 +22,7 @@ defmodule Metr.Modules.Stately do
   end
 
   def feed(%Event{keys: [:read, :log]}, _repp), do: []
+
   def feed(%Event{keys: [:read, module_atom], data: data}, repp) when is_map(data) do
     module_name = select_module_name(module_atom)
     id_name = module_id(module_atom)
@@ -31,6 +31,7 @@ defmodule Metr.Modules.Stately do
     case id do
       {:error, e} ->
         out_to_event(e, module_name, [module_atom, :error, repp])
+
       _ ->
         state = read(id, module_name)
         [Event.new([module_atom, :read, repp], %{out: state})]
@@ -38,9 +39,11 @@ defmodule Metr.Modules.Stately do
   end
 
   def feed(%Event{keys: [:list, :format]}, _repp), do: []
+
   def feed(%Event{keys: [:list, module_atom], data: data}, repp) when %{} == data do
     module_name = select_module_name(module_atom)
     module_plurals = module_plural(module_atom)
+
     states =
       Data.list_ids(module_name)
       |> Enum.map(fn id -> read(id, module_name) end)
@@ -50,11 +53,12 @@ defmodule Metr.Modules.Stately do
     [Event.new([module_plurals, repp], data)]
   end
 
-
   def feed(
-    %Event{id: _event_id, keys: [:rerun, module_atom], data: %{id: id}},
-    repp) do
+        %Event{id: _event_id, keys: [:rerun, module_atom], data: %{id: id}},
+        repp
+      ) do
     module_name = select_module_name(module_atom)
+
     [
       rerun(id, module_name)
       |> out_to_event(module_name, [:reran, repp])
@@ -69,25 +73,25 @@ defmodule Metr.Modules.Stately do
   ## currently only existing states
   @impl true
   def init({id, module_name}) do
-    validation_result = {:ok, id, module_name}
-    |> validate_module()
-    |> verified_id()
+    validation_result =
+      {:ok, id, module_name}
+      |> validate_module()
+      |> verified_id()
 
     case validation_result do
       {:ok, id, module_name} ->
         state = Data.recall_state(module_name, id)
         {:ok, state}
+
       {:error, e} ->
         {:stop, e}
     end
-
   end
 
   @impl true
   def handle_call(%{keys: [:read, :player]}, _from, state) do
     {:reply, state, state}
   end
-
 
   ## public
   def exist?(id, module_atom) when is_atom(module_atom) do
@@ -124,6 +128,7 @@ defmodule Metr.Modules.Stately do
   end
 
   defp is_running?({:error, e}), do: {:error, e}
+
   defp is_running?({:ok, id, module_name}) do
     case GenServer.whereis(Data.genserver_id(module_name, id)) do
       nil -> false
@@ -153,6 +158,7 @@ defmodule Metr.Modules.Stately do
   end
 
   def out_to_event({:ok, msg}, module_name, keys), do: out_to_event(msg, module_name, keys)
+
   def out_to_event(msg, module_name, keys) when is_bitstring(module_name) do
     Event.new([select_module_atom(module_name)] ++ keys, %{out: msg})
   end
@@ -171,35 +177,40 @@ defmodule Metr.Modules.Stately do
     |> rerun_from_log()
   end
 
-
   def is_accepted_name({:error, e}, _name), do: {:error, e}
   def is_accepted_name(:ok, name), do: is_accepted_name(name)
   def is_accepted_name(""), do: {:error, "name cannot be empty"}
+
   def is_accepted_name(name) when is_bitstring(name) do
     case String.length(name) < @valid_name_length do
       true -> :ok
       false -> {:error, "name to long"}
     end
   end
+
   def is_accepted_name(name) when is_nil(name), do: {:error, "name cannot be nil"}
   def is_accepted_name(_name), do: {:error, "name must be string"}
 
-
-  def create(module_name, %{id: id} = state, %Event{} = event) when is_bitstring(module_name) and is_struct(state) do
-    creation_result = {:ok, id, module_name}
-    |> validate_module()
-    |> verify_unique()
-    |> store_state(state, event)
-    |> start_new(state)
+  def create(module_name, %{id: id} = state, %Event{} = event)
+      when is_bitstring(module_name) and is_struct(state) do
+    creation_result =
+      {:ok, id, module_name}
+      |> validate_module()
+      |> verify_unique()
+      |> store_state(state, event)
+      |> start_new(state)
 
     case creation_result do
       {:ok, _id, _module_name} ->
         {:ok, id}
+
       {:error, e} ->
         {:error, e}
     end
   end
-  def create(module_name, _state) when is_bitstring(module_name), do: {:error, "state must be struct"}
+
+  def create(module_name, _state) when is_bitstring(module_name),
+    do: {:error, "state must be struct"}
 
   def select_module_name(module_atom) when is_atom(module_atom) do
     case module_atom do
@@ -257,6 +268,7 @@ defmodule Metr.Modules.Stately do
 
   ## private {:ok, id, module_name} / {:error, e}
   defp verify_unique({:error, e}), do: {:error, e}
+
   defp verify_unique({:ok, id, module_name}) do
     case exist?(id, module_name) do
       false -> {:ok, id, module_name}
@@ -265,6 +277,7 @@ defmodule Metr.Modules.Stately do
   end
 
   defp store_state({:error, e}), do: {:error, e}
+
   defp store_state({:ok, id, module_name}, state, %Event{} = event) do
     case Data.save_state_with_log(module_name, id, state, event) do
       :ok -> {:ok, id, module_name}
@@ -273,17 +286,21 @@ defmodule Metr.Modules.Stately do
   end
 
   defp start_new({:error, e}), do: {:error, e}
+
   defp start_new({:ok, id, module_name}, state) do
     process_name = Data.genserver_id(module_name, id)
+
     case GenServer.start(select_module(module_name), state, name: process_name) do
       {:ok, _pid} ->
         {:ok, id, module_name}
+
       {:error, e} ->
         {:error, e}
     end
   end
 
   defp rerun_from_log({:error, e}), do: {:error, e}
+
   defp rerun_from_log({:ok, id, module_name}) do
     {:ok, id, module_name}
     |> wipe_state()
@@ -293,6 +310,7 @@ defmodule Metr.Modules.Stately do
   end
 
   defp wipe_state({:error, e}), do: {:error, e}
+
   defp wipe_state({:ok, id, module_name}) do
     case Data.wipe_state(module_name, [id]) do
       :ok -> {:ok, id, module_name}
@@ -301,6 +319,7 @@ defmodule Metr.Modules.Stately do
   end
 
   defp run_log({:error, e}), do: {:error, e}
+
   defp run_log({:ok, id, module_name}) do
     module = select_module(module_name)
     stop(id, module_name)
@@ -308,6 +327,7 @@ defmodule Metr.Modules.Stately do
     case Data.read_log_by_id(module_name, id) do
       {:error, :not_found} ->
         {:error, "Log of #{module_name} #{id} not found"}
+
       log ->
         log
         |> Util.uniq()
@@ -316,6 +336,7 @@ defmodule Metr.Modules.Stately do
   end
 
   defp conclude_rerun({:error, e}), do: {:error, e}
+
   defp conclude_rerun(feedback_events) do
     feedback_events
     |> List.flatten()
@@ -324,7 +345,9 @@ defmodule Metr.Modules.Stately do
 
   defp select_rerun_return({:error, e}), do: {:error, e}
   defp select_rerun_return([]), do: :ok
-  defp select_rerun_return(error_events) when is_list(error_events), do: {:error, Kernel.inspect(error_events)}
+
+  defp select_rerun_return(error_events) when is_list(error_events),
+    do: {:error, Kernel.inspect(error_events)}
 
   defp return_result({:error, e}), do: {:error, e}
   defp return_result({:ok, _id, _module_name}), do: :ok
@@ -369,7 +392,8 @@ defmodule Metr.Modules.Stately do
 
   defp module_has_state({:error, e}), do: {:error, e}
 
-  defp module_has_state({:ok, id, module_name}) when is_bitstring(id) and is_bitstring(module_name) do
+  defp module_has_state({:ok, id, module_name})
+       when is_bitstring(id) and is_bitstring(module_name) do
     Data.state_exists?(module_name, id)
   end
 
@@ -385,14 +409,17 @@ defmodule Metr.Modules.Stately do
   defp recall({:error, e}), do: {:error, e}
 
   defp recall({:ok, id, module_name}) do
-    GenServer.call(Data.genserver_id(module_name, id), %{keys: [:read, select_module_atom(module_name)]})
+    GenServer.call(Data.genserver_id(module_name, id), %{
+      keys: [:read, select_module_atom(module_name)]
+    })
   end
 
   defp ready_process({:error, e}), do: {:error, e}
 
   defp ready_process({:ok, id, module_name}) do
     # Is running?
-    case {GenServer.whereis(Data.genserver_id(module_name, id)), Data.state_exists?(module_name, id)} do
+    case {GenServer.whereis(Data.genserver_id(module_name, id)),
+          Data.state_exists?(module_name, id)} do
       {nil, true} ->
         start_process({:ok, id, module_name})
 
@@ -406,8 +433,12 @@ defmodule Metr.Modules.Stately do
 
   defp start_process({:ok, id, module_name}) do
     # Get state
-    current_state = Map.merge(select_module_struct(module_name), Data.recall_state(module_name, id))
-    case GenServer.start(select_module(module_name), current_state, name: Data.genserver_id(module_name, id)) do
+    current_state =
+      Map.merge(select_module_struct(module_name), Data.recall_state(module_name, id))
+
+    case GenServer.start(select_module(module_name), current_state,
+           name: Data.genserver_id(module_name, id)
+         ) do
       {:ok, _pid} -> {:ok, id, module_name}
       {:error, reason} -> {:error, reason}
       x -> {:error, inspect(x)}

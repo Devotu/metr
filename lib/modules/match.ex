@@ -117,7 +117,6 @@ defmodule Metr.Modules.Match do
     []
   end
 
-
   ## module
   def read(id) do
     Stately.read(id, @name)

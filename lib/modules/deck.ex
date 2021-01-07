@@ -151,8 +151,8 @@ defmodule Metr.Modules.Deck do
         } = event,
         repp
       ) do
-      Stately.update(deck_id, @name, keys, data, event)
-      |> Stately.out_to_event(@name, [:altered, repp])
+    Stately.update(deck_id, @name, keys, data, event)
+    |> Stately.out_to_event(@name, [:altered, repp])
   end
 
   def feed(%Event{keys: [:read, :deck], data: %{deck_id: id}}, repp) do
@@ -177,8 +177,7 @@ defmodule Metr.Modules.Deck do
   end
 
   def feed(
-        %Event{keys: [:alter, :rank] = keys, data: %{deck_id: id, change: change}} =
-          event,
+        %Event{keys: [:alter, :rank] = keys, data: %{deck_id: id, change: change}} = event,
         repp
       ) do
     # call update
@@ -338,6 +337,7 @@ defmodule Metr.Modules.Deck do
   end
 
   defp stamp_deck({:error, _error} = e), do: e
+
   defp stamp_deck(data) when is_map(data) do
     Map.take(data, Map.keys(%Deck{}))
   end

@@ -85,7 +85,6 @@ defmodule Metr.Modules.Result do
   defp valid_time(x) when is_number(x), do: true
   defp valid_time(_), do: false
 
-
   ## gen
   @impl true
   def init(%Result{} = state) do

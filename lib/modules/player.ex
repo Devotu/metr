@@ -18,17 +18,19 @@ defmodule Metr.Modules.Player do
         %Event{id: _event_id, keys: [:create, :player], data: %{name: name}} = event,
         repp
       ) do
-
-    validation = :ok
-        |> Stately.is_accepted_name(name)
+    validation =
+      :ok
+      |> Stately.is_accepted_name(name)
 
     case validation do
       :ok ->
         id = Id.hrid(name)
         state = %Player{id: id, name: name, time: Time.timestamp()}
+
         Stately.create("Player", state, event)
         |> Stately.out_to_event(@name, [:created, repp])
         |> List.wrap()
+
       {:error, e} ->
         [Event.new([:player, :error, repp], %{msg: e})]
     end
@@ -93,8 +95,8 @@ defmodule Metr.Modules.Player do
 
     # call update
     Enum.reduce(player_result_ids, [], fn {id, result_id}, acc ->
-      acc ++
-      Stately.update(id, @name, keys, %{id: result_id, player_id: id}, event)
+      (acc ++
+         Stately.update(id, @name, keys, %{id: result_id, player_id: id}, event))
       |> Stately.out_to_event(@name, [:altered, repp])
       |> List.wrap()
     end)

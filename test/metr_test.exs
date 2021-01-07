@@ -493,11 +493,15 @@ defmodule MetrTest do
   test "rerun log of x" do
     player_name = "Tore Metr"
     deck_name = "Tango Metr"
-    {player_id, deck_id, match_id, game_id} = TestHelper.init_single_states(player_name, deck_name)
+
+    {player_id, deck_id, match_id, game_id} =
+      TestHelper.init_single_states(player_name, deck_name)
 
     original_deck = Stately.read(deck_id, "Deck")
-    Data.wipe_state("Deck", [deck_id]) #To verify it is not the same state read
+    # To verify it is not the same state read
+    Data.wipe_state("Deck", [deck_id])
     assert {:error, "Deck #{deck_id} not found"} == Deck.read(deck_id)
+
     assert_raise File.Error, fn ->
       Data.recall_state("Deck", deck_id)
     end
@@ -510,11 +514,13 @@ defmodule MetrTest do
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
   end
 
-
   test "add tag t to x" do
     player_name = "Urban Metr"
     deck_name = "Uniform Metr"
-    {player_id, deck_id, match_id, game_id} = TestHelper.init_single_states(player_name, deck_name)
+
+    {player_id, deck_id, match_id, game_id} =
+      TestHelper.init_single_states(player_name, deck_name)
+
     game = Game.read(game_id)
 
     tag_name = "test"
@@ -541,7 +547,6 @@ defmodule MetrTest do
     assert is_struct(Metr.add_tag(tag_name, "Result", result_id_1))
     tagged_result = Stately.read(result_id_1, "Result")
     assert [tag_name] == tagged_result.tags
-
 
     test_tag = Metr.read_state("Tag", tag_name)
     [dt, pt, mt, gt, rt] = test_tag.tagged

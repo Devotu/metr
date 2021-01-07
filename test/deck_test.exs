@@ -364,7 +364,6 @@ defmodule DeckTest do
     reverted_deck = Deck.read(deck_id)
     assert true == reverted_deck.active
 
-
     Data.wipe_test("Deck", deck_id)
     Data.wipe_test("Player", player_id)
   end

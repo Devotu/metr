@@ -13,7 +13,7 @@ defmodule Metr.Util do
   end
 
   def uniq(list) do
-    uniq(list, MapSet.new)
+    uniq(list, MapSet.new())
   end
 
   defp uniq([x | rest], found) do
