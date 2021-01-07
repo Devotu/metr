@@ -15,7 +15,10 @@ defmodule Metr.Modules.Result do
   alias Metr.Id
   alias Metr.Event
   alias Metr.Modules.Result
+  alias Metr.Modules.Stately
   alias Metr.Time
+
+  @name __ENV__.module |> Stately.module_to_name()
 
   def create(%Result{} = result, event) do
     id = Id.guid()
