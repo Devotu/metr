@@ -13,7 +13,7 @@ defmodule Metr.Modules.Stately do
   alias Metr.Modules.Result
   alias Metr.Modules.Tag
 
-  @valid_name_length
+  @valid_name_length 32
 
   ## feed
   def feed(%Event{keys: [:read, module_atom], data: %{id: id}}, repp) do
@@ -23,7 +23,7 @@ defmodule Metr.Modules.Stately do
   end
 
   def feed(%Event{keys: [:read, :log]}, _repp), do: []
-  def feed(%Event{keys: [:read, module_atom], data: data} = event, repp) when is_map(data) do
+  def feed(%Event{keys: [:read, module_atom], data: data}, repp) when is_map(data) do
     module_name = select_module_name(module_atom)
     id_name = module_id(module_atom)
     id = Map.get(data, id_name, {:error, "key not found"})
@@ -61,7 +61,7 @@ defmodule Metr.Modules.Stately do
     ]
   end
 
-  def feed(event, _orepp) do
+  def feed(_event, _orepp) do
     []
   end
 
