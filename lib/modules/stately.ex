@@ -5,6 +5,7 @@ defmodule Metr.Modules.Stately do
   alias Metr.Event
   alias Metr.Util
 
+  alias Metr.Modules.Badge
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
   alias Metr.Modules.Match
@@ -220,6 +221,7 @@ defmodule Metr.Modules.Stately do
       :match -> "Match"
       :result -> "Result"
       :tag -> "Tag"
+      :badge -> "Badge"
       _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting module"}
     end
   end
@@ -231,7 +233,7 @@ defmodule Metr.Modules.Stately do
       :game -> :game_id
       :match -> :match_id
       :result -> :result_id
-      :tag -> :tag_id
+      :badge -> :badge_id
       _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting id name"}
     end
   end
@@ -244,6 +246,7 @@ defmodule Metr.Modules.Stately do
       :match -> :matches
       :result -> :results
       :tag -> :tags
+      :badge -> :badges
       _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting plural form"}
     end
   end
@@ -262,6 +265,7 @@ defmodule Metr.Modules.Stately do
       "match" -> :match
       "result" -> :result
       "tag" -> :tag
+      "badge" -> :badge
       _ -> {:error, "#{module_name} is not a valid module name selecting atom"}
     end
   end
@@ -360,6 +364,7 @@ defmodule Metr.Modules.Stately do
       "match" -> Match
       "result" -> Result
       "tag" -> Tag
+      "badge" -> Badge
       _ -> {:error, "#{module_name} is not a valid name selecting module"}
     end
   end
@@ -372,6 +377,7 @@ defmodule Metr.Modules.Stately do
       "match" -> %Match{}
       "result" -> %Result{}
       "tag" -> %Tag{}
+      "badge" -> %Badge{}
       _ -> {:error, "#{module_name} is not a valid module selecting struct"}
     end
   end
@@ -386,6 +392,7 @@ defmodule Metr.Modules.Stately do
       "Match" -> {:ok, id, module_name}
       "Result" -> {:ok, id, module_name}
       "Tag" -> {:ok, id, module_name}
+      "Badge" -> {:ok, id, module_name}
       _ -> {:error, "#{module_name} is not a valid module name"}
     end
   end

@@ -9,7 +9,8 @@ defmodule Metr.Modules.Match do
             status: nil,
             winner: nil,
             time: 0,
-            tags: []
+            tags: [],
+            badges: []
 
   use GenServer
 

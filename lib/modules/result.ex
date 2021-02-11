@@ -7,7 +7,8 @@ defmodule Metr.Modules.Result do
             place: nil,
             power: nil,
             fun: nil,
-            tags: []
+            tags: [],
+            badges: []
 
   use GenServer
 

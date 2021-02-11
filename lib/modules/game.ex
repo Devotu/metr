@@ -1,5 +1,5 @@
 defmodule Metr.Modules.Game do
-  defstruct id: "", time: 0, results: [], match: nil, tags: []
+  defstruct id: "", time: 0, results: [], match: nil, tags: [], badges: []
 
   use GenServer
 

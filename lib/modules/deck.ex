@@ -15,7 +15,8 @@ defmodule Metr.Modules.Deck do
             price: nil,
             time: 0,
             active: true,
-            tags: []
+            tags: [],
+            badges: []
 
   @formats [
     "block",

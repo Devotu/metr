@@ -19,9 +19,9 @@ defmodule TagTest do
       Tag.feed(Event.new([:tag, :player], %{id: player_id, tag: tag}), fake_pid)
 
     assert [:tag, :created, fake_pid] == creation_response.keys
-    assert %{out: tag}
+    assert %{out: tag} == creation_response.data
     assert [:player, :tagged] == creation_propagation.keys
-    assert %{id: player_id, tag: tag}
+    assert %{id: player_id, tag: tag} == creation_propagation.data
 
     Tag.feed(creation_propagation, nil)
 
