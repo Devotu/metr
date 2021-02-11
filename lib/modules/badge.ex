@@ -84,7 +84,6 @@ defmodule Metr.Modules.Badge do
   def is_valid_badge(_badge), do: {:error, "badge must be string"}
 
   defp is_valid_target({:error, e}), do: {:error, e}
-
   defp is_valid_target(:ok, module_name, module_id) do
     case Stately.exist?(module_id, module_name) do
       true -> :ok

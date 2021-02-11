@@ -4,7 +4,6 @@ defmodule BadgeTest do
   alias Metr.Event
   alias Metr.Data
   alias Metr.Modules.Badge
-  alias Metr.Modules.Player
   alias Metr.Modules.Stately
 
   test "badge double" do
@@ -48,14 +47,35 @@ defmodule BadgeTest do
     assert is_number(ts1)
     assert is_number(ts2)
 
-    [third_response, third_propagation] =
+
+    [deck_response, deck_propagation] =
       Badge.feed(Event.new([:badge, :deck], %{id: deck_id, badge: badge}), fake_pid)
 
-    assert [:badge, :altered, fake_pid] == third_response.keys
+    assert [:badge, :altered, fake_pid] == deck_response.keys
 
-    Badge.feed(third_propagation, nil)
-    assert [:deck, :badged] == third_propagation.keys
-    assert %{id: deck_id, badge: badge} == third_propagation.data
+    Badge.feed(deck_propagation, nil)
+    assert [:deck, :badged] == deck_propagation.keys
+    assert %{id: deck_id, badge: badge} == deck_propagation.data
+
+
+    [game_response, game_propagation] =
+      Badge.feed(Event.new([:badge, :game], %{id: game_id, badge: badge}), fake_pid)
+
+    assert [:badge, :altered, fake_pid] == game_response.keys
+
+    Badge.feed(game_propagation, nil)
+    assert [:game, :badged] == game_propagation.keys
+    assert %{id: game_id, badge: badge} == game_propagation.data
+
+
+    [match_response, match_propagation] =
+      Badge.feed(Event.new([:badge, :match], %{id: match_id, badge: badge}), fake_pid)
+
+    assert [:badge, :altered, fake_pid] == match_response.keys
+
+    Badge.feed(match_propagation, nil)
+    assert [:match, :badged] == match_propagation.keys
+    assert %{id: match_id, badge: badge} == match_propagation.data
 
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
     Data.wipe_test("Badge", badge)

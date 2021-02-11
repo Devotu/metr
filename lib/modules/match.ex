@@ -23,6 +23,7 @@ defmodule Metr.Modules.Match do
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Util
   alias Metr.Time
 
   @name __ENV__.module |> Stately.module_to_name()

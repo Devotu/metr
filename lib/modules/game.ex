@@ -9,6 +9,7 @@ defmodule Metr.Modules.Game do
   alias Metr.Modules.Stately
   alias Metr.Modules.Game
   alias Metr.Modules.Result
+  alias Metr.Util
   alias Metr.Time
 
   @name __ENV__.module |> Stately.module_to_name()
