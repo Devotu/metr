@@ -48,6 +48,15 @@ defmodule BadgeTest do
     assert is_number(ts1)
     assert is_number(ts2)
 
+    [third_response, third_propagation] =
+      Badge.feed(Event.new([:badge, :deck], %{id: deck_id, badge: badge}), fake_pid)
+
+    assert [:badge, :altered, fake_pid] == third_response.keys
+
+    Badge.feed(third_propagation, nil)
+    assert [:deck, :badged] == third_propagation.keys
+    assert %{id: deck_id, badge: badge} == third_propagation.data
+
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
     Data.wipe_test("Badge", badge)
   end

@@ -16,7 +16,7 @@ defmodule Metr.Modules.Deck do
             time: 0,
             active: true,
             tags: [],
-            badges: []
+            badges: %{}
 
   @formats [
     "block",
@@ -455,5 +455,16 @@ defmodule Metr.Modules.Deck do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:reply, "Deck #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+  end
+
+  @impl true
+  def handle_call(
+        %{keys: [:badged], data: %{id: id, badge: badge}, event: event},
+        _from,
+        state
+      ) do
+    new_state = Map.put(state, :badges, Util.stamp_ts_map(state.badges, badge))
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:reply, "#{@name} #{id} badges altered to #{Kernel.inspect(new_state.badges)}", new_state}
   end
 end
