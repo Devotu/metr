@@ -42,4 +42,8 @@ defmodule Metr.Rank do
   defp as_number(r) when is_number(r), do: r
   defp as_number(r) when is_bitstring(r), do: String.to_integer(r)
   defp as_number(_), do: :error
+
+  def is_at_same({rank_one, _advantage_one}, {rank_two, _advantage_two}) do
+    rank_one == rank_two
+  end
 end
