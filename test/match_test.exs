@@ -85,7 +85,7 @@ defmodule MatchTest do
         nil
       )
 
-    assert [:match, :create, :fail] == resulting_event.keys
+    assert [:match, :error, nil] == resulting_event.keys
     assert "ranks does not match" == resulting_event.data.cause
     Data.wipe_test("Player", player_id)
     Data.wipe_test("Deck", [deck_id_1, deck_id_2])
