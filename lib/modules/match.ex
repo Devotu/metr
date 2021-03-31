@@ -243,12 +243,14 @@ defmodule Metr.Modules.Match do
       |> Enum.concat()
       |> collect_wins()
 
-    case tally[state.deck_one] - tally[state.deck_two] do
-      0 -> 0
-      x when x > 0 -> 1
-      x when x < 0 -> 2
-    end
+    find_winner(tally[state.deck_one], tally[state.deck_two])
   end
+
+  defp find_winner(nil, nil), do: 0
+  defp find_winner(w1, nil) when w1 > 0, do: 1
+  defp find_winner(nil, w2) when w2 > 0, do: 2
+  defp find_winner(w1, w2) when w1 > w2, do: 1
+  defp find_winner(w1, w2) when w2 > w1, do: 2
 
   ## gen
   @impl true
