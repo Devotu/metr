@@ -387,7 +387,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :results, &(&1 ++ [result_id]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Result #{result_id} added to deck #{id}", new_state}
   end
 
@@ -441,7 +441,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :active, fn active -> not active end)
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Deck #{id} active altered to #{Kernel.inspect(new_state.active)}", new_state}
   end
 
@@ -452,7 +452,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Deck #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end
