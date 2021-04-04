@@ -122,7 +122,7 @@ defmodule Metr.Modules.Deck do
   end
 
   def feed(%Event{keys: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
-    events = Data.read_log_by_id("Deck", id)
+    events = Data.read_log_by_id(id, "Deck")
     [Event.new([:deck, :log, :read, repp], %{out: events})]
   end
 
@@ -409,7 +409,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     original_rank =
-      Data.read_log_by_id("Deck", id)
+      Data.read_log_by_id(id, "Deck")
       |> Enum.filter(fn e -> e.keys == [:create, :deck] end)
       |> List.first()
       |> find_original_rank()

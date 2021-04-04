@@ -25,7 +25,7 @@ defmodule Metr.Data do
     File.write!(path, del, [:append])
   end
 
-  def read_log_by_id(module_name, id) do
+  def read_log_by_id(id, module_name) do
     event_path(module_name, id)
     |> read_binary_from_path
     |> parse_delimited_binary

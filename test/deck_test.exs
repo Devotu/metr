@@ -164,7 +164,7 @@ defmodule DeckTest do
 
     resulting_events = Deck.feed(game_created_event, nil)
     first_resulting_event = List.first(resulting_events)
-    deck_log = Data.read_log_by_id("Deck", deck_1_id)
+    deck_log = Data.read_log_by_id(deck_1_id, "Deck")
     [first_result_id, _second_result_event] = game_created_event.data.result_ids
 
     # Assert

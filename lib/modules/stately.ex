@@ -336,7 +336,7 @@ defmodule Metr.Modules.Stately do
     module = select_module(module_name)
     stop(id, module_name)
 
-    case Data.read_log_by_id(module_name, id) do
+    case Data.read_log_by_id(id, module_name) do
       {:error, :not_found} ->
         {:error, "Log of #{module_name} #{id} not found"}
 

@@ -16,7 +16,7 @@ defmodule PlayerTest do
   test "create player" do
     [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "Testy"}), nil)
     assert [:player, :created, nil] == resulting_event.keys
-    log_entries = Data.read_log_by_id("Player", resulting_event.data.out)
+    log_entries = Data.read_log_by_id(resulting_event.data.out, "Player")
     assert 1 = Enum.count(log_entries)
     Data.wipe_test("Player", resulting_event.data.out)
   end
@@ -70,7 +70,7 @@ defmodule PlayerTest do
 
     resulting_events = Player.feed(game_created_event, nil)
     first_resulting_event = List.first(resulting_events)
-    player_log = Data.read_log_by_id("Player", player_1_id)
+    player_log = Data.read_log_by_id(player_1_id, "Player")
 
     [first_result_id, _second_result_event] = game_created_event.data.result_ids
 

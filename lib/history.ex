@@ -3,7 +3,7 @@ defmodule Metr.History do
   alias Metr.Data
 
   def of_entity(module, id) when is_atom(module) and is_bitstring(id) do
-    Data.read_log_by_id(Stately.select_module_name(module), id)
+    Data.read_log_by_id(id, Stately.select_module_name(module))
     |> Enum.reduce([], fn e, acc -> acc ++ [step(id, module, e)] end)
   end
 
