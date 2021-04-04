@@ -89,11 +89,13 @@ defmodule Metr.Data do
     File.exists?(state_path(module_name, id))
   end
 
-  def wipe_state(module_name, ids) when is_list(ids) do
-    Enum.each(ids, fn id -> wipe_state(module_name, id) end)
+  def wipe_state(ids, module_name) when is_list(ids) do
+    Enum.each(ids, fn id -> wipe_state(id, module_name) end)
   end
 
-  def wipe_state(module_name, id) do
+  def wipe_state(id, module_name) do
+    IO.inspect module_name, label: "Data wipe - module"
+    IO.inspect id, label: "Data wipe - id"
     path = state_path(module_name, id)
     File.rm(path)
   end
@@ -134,7 +136,7 @@ defmodule Metr.Data do
   end
 
   def wipe_test(module_name, id) do
-    wipe_state(module_name, id)
+    wipe_state(id, module_name)
     wipe_log(module_name, id)
   end
 end

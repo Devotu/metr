@@ -324,7 +324,7 @@ defmodule Metr.Modules.Stately do
   defp wipe_state({:error, e}), do: {:error, e}
 
   defp wipe_state({:ok, id, module_name}) do
-    case Data.wipe_state(module_name, [id]) do
+    case Data.wipe_state([id], module_name) do
       :ok -> {:ok, id, module_name}
       _ -> {:error, "Failed to wipe current state of #{module_name} #{id}"}
     end
@@ -463,7 +463,7 @@ defmodule Metr.Modules.Stately do
     case GenServer.start(select_module(module_name), current_state,
            name: Data.genserver_id(module_name, id)
          ) do
-      {:ok, _pid} -> {:ok, id, module_name}
+      {:ok, pid} -> {:ok, id, module_name}
       {:error, reason} -> {:error, reason}
       x -> {:error, inspect(x)}
     end
