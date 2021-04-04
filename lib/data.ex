@@ -94,8 +94,6 @@ defmodule Metr.Data do
   end
 
   def wipe_state(id, module_name) do
-    IO.inspect module_name, label: "Data wipe - module"
-    IO.inspect id, label: "Data wipe - id"
     path = state_path(module_name, id)
     File.rm(path)
   end

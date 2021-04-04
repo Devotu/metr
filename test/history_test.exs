@@ -29,10 +29,8 @@ defmodule HistoryTest do
     assert 1 == Enum.count(match_created.state.matches)
     assert match_created.state == match_created.data
 
-    [result_one_id, result_two_id] = game_created.data.result_ids
-
-    assert result_one_id in game_created.state.results or
-             result_two_id in game_created.state.results
+    [result_id] = game_created.state.results
+    assert result_id in game_created.event.data.result_ids
 
     assert game_created.state == game_created.data
 

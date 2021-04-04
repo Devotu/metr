@@ -3,8 +3,11 @@ defmodule Metr.History do
   alias Metr.Data
 
   def of_entity(module, id) when is_atom(module) and is_bitstring(id) do
-    Data.read_log_by_id(id, Stately.select_module_name(module))
-    |> Enum.reduce([], fn e, acc -> acc ++ [step(id, module, e)] end)
+    module_name = Stately.select_module_name(module)
+    log = Data.read_log_by_id(id, module_name)
+    Stately.stop(id, module_name)
+    Data.wipe_state(id, module_name)
+    Enum.reduce(log, [], fn e, acc -> acc ++ [step(id, module, e)] end)
   end
 
   defp step(id, module, event) do
