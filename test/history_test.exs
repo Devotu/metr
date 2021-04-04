@@ -18,6 +18,7 @@ defmodule HistoryTest do
 
     [creation, match_created, game_created, rank_altered] = deck_history
 
+    assert Map.has_key?(creation, :event) and Map.has_key?(creation, :state) and Map.has_key?(creation, :data)
     assert %{name: deck_name, player_id: player_id} == creation.event.data
     assert deck_name == creation.state.name
     assert creation.state == creation.data

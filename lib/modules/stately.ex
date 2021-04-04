@@ -106,6 +106,13 @@ defmodule Metr.Modules.Stately do
     |> module_has_state()
   end
 
+  def read(id, module) when is_bitstring(id) and is_atom(module) do
+    {:ok, id, select_module_name(module)}
+    |> verified_id()
+    |> ready_process()
+    |> recall()
+  end
+
   def read(id, module_name) do
     {:ok, id, module_name}
     |> validate_module()
@@ -266,6 +273,11 @@ defmodule Metr.Modules.Stately do
     end
   end
 
+  def apply_event(id, module_qualifier, %Event{} = event) when is_bitstring(id) and is_atom(module_qualifier) do
+    module = select_module(module_qualifier)
+    module.feed(event, nil)
+  end
+
   ## private {:ok, id, module_name} / {:error, e}
   defp verify_unique({:error, e}), do: {:error, e}
 
@@ -361,6 +373,18 @@ defmodule Metr.Modules.Stately do
       "result" -> Result
       "tag" -> Tag
       _ -> {:error, "#{module_name} is not a valid name selecting module"}
+    end
+  end
+
+  defp select_module(module) when is_atom(module) do
+    case module do
+      :player -> Player
+      :deck -> Deck
+      :game -> Game
+      :match -> Match
+      :result -> Result
+      :tag -> Tag
+      _ -> {:error, "#{Kernel.inspect(module)} is not a valid atom selecting module"}
     end
   end
 
