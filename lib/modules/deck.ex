@@ -398,7 +398,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :matches, &(&1 ++ [match_id]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Match #{match_id} added to deck #{id}", new_state}
   end
 

@@ -1,6 +1,8 @@
 defmodule HistoryTest do
   use ExUnit.Case
 
+  alias Metr.History
+
   test "read history of entity x" do
     player_name = "Viktor Metr"
     deck_name = "Victory Metr"
@@ -12,7 +14,7 @@ defmodule HistoryTest do
 
     Metr.alter_rank(deck_id, :up)
 
-    deck_history = Metr.read_entity_history("deck", deck_id)
+    deck_history = History.of_entity :deck, deck_id
 
     assert is_list(deck_history)
 
