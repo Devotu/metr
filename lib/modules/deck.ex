@@ -430,7 +430,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :rank, fn rank -> Rank.apply_change(rank, change) end)
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Deck #{id} rank altered to #{Kernel.inspect(new_state.rank)}", new_state}
   end
 
