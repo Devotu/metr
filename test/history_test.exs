@@ -2,7 +2,6 @@ defmodule HistoryTest do
   use ExUnit.Case
 
   test "read history of entity x" do
-
     player_name = "Viktor Metr"
     deck_name = "Victory Metr"
     player_two_name = "Walter Metr"
@@ -24,11 +23,14 @@ defmodule HistoryTest do
     assert creation.state == creation.data
 
     assert [deck_id, deck_two_id] == match_created.event.data.deck_ids
-    assert 1 == Enum.count match_created.state.matches
+    assert 1 == Enum.count(match_created.state.matches)
     assert match_created.state == match_created.data
 
     [result_one_id, result_two_id] = game_created.data.result_ids
-    assert result_one_id in game_created.state.results or result_two_id in game_created.state.results
+
+    assert result_one_id in game_created.state.results or
+             result_two_id in game_created.state.results
+
     assert game_created.state == game_created.data
 
     assert %{change: 1, deck_id: deck_id} == rank_altered.event.data
@@ -36,6 +38,7 @@ defmodule HistoryTest do
     assert rank_altered.state == rank_altered.data
 
     TestHelper.cleanup_double_states(
-      {player_id, deck_id, player_two_id, deck_two_id, match_id, game_id})
+      {player_id, deck_id, player_two_id, deck_two_id, match_id, game_id}
+    )
   end
 end
