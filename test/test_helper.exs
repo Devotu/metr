@@ -3,10 +3,7 @@ ExUnit.start()
 defmodule TestHelper do
   alias Metr.Data
   alias Metr.Event
-  alias Metr.Modules.Deck
   alias Metr.Modules.Game
-  alias Metr.Modules.Match
-  alias Metr.Modules.Player
 
   def init_single_states(player_name, deck_name) do
     player_id = Metr.create_player(%{name: player_name})
@@ -62,11 +59,10 @@ defmodule TestHelper do
       match: match_id
     })
 
-    {player_one_id, deck_one_id, match_id, game_id,
-    player_two_id, deck_two_id, match_id, game_id}
+    {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id}
   end
 
-  def cleanup_double_states({player_one_id, deck_one_id, match_id, game_id, player_two_id, deck_two_id, match_id, game_id}) do
+  def cleanup_double_states({player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id}) do
     game = Game.read(game_id)
 
     Data.wipe_test("Player", [player_one_id, player_two_id])
