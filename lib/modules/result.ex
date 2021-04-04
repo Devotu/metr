@@ -72,7 +72,7 @@ defmodule Metr.Modules.Result do
   end
 
   def delete(id) do
-    Data.wipe_state(__ENV__.module, id)
+    Data.wipe_state(id, __ENV__.module)
   end
 
   defp valid_id(nil), do: false

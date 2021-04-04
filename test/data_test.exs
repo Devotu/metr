@@ -14,14 +14,14 @@ defmodule DataTest do
     Data.log_by_id(module_name, id1, Event.new([:correct], %{data: "you want this"}))
     Data.log_by_id(module_name, id1, Event.new([:correct], %{data: "you want this"}))
 
-    entries = Data.read_log_by_id(module_name, id1)
+    entries = Data.read_log_by_id(id1, module_name)
     assert 3 == Enum.count(entries)
 
     Data.wipe_log(module_name, id1)
     Data.wipe_log(module_name, id2)
 
-    {:error, :not_found} = Data.read_log_by_id(module_name, id1)
-    {:error, :not_found} = Data.read_log_by_id(module_name, id2)
+    {:error, :not_found} = Data.read_log_by_id(id1, module_name)
+    {:error, :not_found} = Data.read_log_by_id(id2, module_name)
   end
 
   test "delimiter mixup" do
@@ -38,11 +38,11 @@ defmodule DataTest do
     Data.log_by_id(module_name, id, Event.new([:correct], %{data: "second"}))
     Data.log_by_id(module_name, id, Event.new([:correct], %{data: "third"}))
 
-    entries = Data.read_log_by_id(module_name, id)
+    entries = Data.read_log_by_id(id, module_name)
     assert 4 == Enum.count(entries)
 
     Data.wipe_log(module_name, id)
 
-    {:error, :not_found} = Data.read_log_by_id(module_name, id)
+    {:error, :not_found} = Data.read_log_by_id(id, module_name)
   end
 end

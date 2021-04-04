@@ -158,7 +158,7 @@ defmodule StatelyTest do
 
     original_player = Stately.read(player_id, "Player")
     # To verify it is not the same state read
-    Data.wipe_state("Player", [player_id])
+    Data.wipe_state([player_id], "Player")
     assert {:error, "Player #{player_id} not found"} == Player.read(player_id)
 
     assert :ok == Stately.rerun(player_id, "Player")

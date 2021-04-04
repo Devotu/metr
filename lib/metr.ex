@@ -1,5 +1,6 @@
 defmodule Metr do
   alias Metr.Event
+  alias Metr.History
   alias Metr.Router
   alias Metr.Modules.Stately
 
@@ -91,6 +92,12 @@ defmodule Metr do
   @spec read_entity_log(:deck | :game | :match | :player | :result, any) :: any
   def read_entity_log(type, id) when is_atom(type) do
     read_log(type, id)
+  end
+
+  def read_entity_log(type, id) when is_bitstring(type) do
+    type
+    |> Stately.select_module_atom()
+    |> read_log(id)
   end
 
   def read_global_log(limit) when is_number(limit) do
@@ -233,6 +240,12 @@ defmodule Metr do
 
     Event.new([:tag, type], %{id: id, tag: tag})
     |> run()
+  end
+
+  def read_entity_history(type, id) when is_bitstring(type) and is_bitstring(id) do
+    type
+    |> Stately.select_module_atom()
+    |> History.of_entity(id)
   end
 
   ## private

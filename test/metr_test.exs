@@ -499,7 +499,7 @@ defmodule MetrTest do
 
     original_deck = Stately.read(deck_id, "Deck")
     # To verify it is not the same state read
-    Data.wipe_state("Deck", [deck_id])
+    Data.wipe_state([deck_id], "Deck")
     assert {:error, "Deck #{deck_id} not found"} == Deck.read(deck_id)
 
     assert_raise File.Error, fn ->

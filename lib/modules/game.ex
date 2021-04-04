@@ -62,7 +62,7 @@ defmodule Metr.Modules.Game do
   end
 
   def feed(%Event{id: _event_id, keys: [:read, :log, :game], data: %{game_id: id}}, repp) do
-    events = Data.read_log_by_id("Game", id)
+    events = Data.read_log_by_id(id, "Game")
     [Event.new([:game, :log, :read, repp], %{out: events})]
   end
 
@@ -216,7 +216,7 @@ defmodule Metr.Modules.Game do
   defp delete_game({:error, reason}), do: {:error, reason}
 
   defp delete_game(%Game{} = game) do
-    case Data.wipe_state(__ENV__.module, game.id) do
+    case Data.wipe_state(game.id, __ENV__.module) do
       :ok -> game
       _ -> {:error, "Could not delete game state"}
     end

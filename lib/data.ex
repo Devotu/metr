@@ -25,7 +25,7 @@ defmodule Metr.Data do
     File.write!(path, del, [:append])
   end
 
-  def read_log_by_id(module_name, id) do
+  def read_log_by_id(id, module_name) do
     event_path(module_name, id)
     |> read_binary_from_path
     |> parse_delimited_binary
@@ -73,7 +73,7 @@ defmodule Metr.Data do
   defp state_dir(), do: data_dir() <> "/state"
   defp state_path(module_name, id), do: state_dir() <> "/#{entity_id(module_name, id)}.state"
 
-  def save_state(module_name, id, state) do
+  defp save_state(module_name, id, state) do
     path = state_path(module_name, id)
     bin = :erlang.term_to_binary(state)
     File.write!(path, bin)
@@ -89,11 +89,11 @@ defmodule Metr.Data do
     File.exists?(state_path(module_name, id))
   end
 
-  def wipe_state(module_name, ids) when is_list(ids) do
-    Enum.each(ids, fn id -> wipe_state(module_name, id) end)
+  def wipe_state(ids, module_name) when is_list(ids) do
+    Enum.each(ids, fn id -> wipe_state(id, module_name) end)
   end
 
-  def wipe_state(module_name, id) do
+  def wipe_state(id, module_name) do
     path = state_path(module_name, id)
     File.rm(path)
   end
@@ -134,7 +134,7 @@ defmodule Metr.Data do
   end
 
   def wipe_test(module_name, id) do
-    wipe_state(module_name, id)
+    wipe_state(id, module_name)
     wipe_log(module_name, id)
   end
 end

@@ -45,7 +45,6 @@ defmodule Metr.Modules.Deck do
   alias Metr.Rank
   alias Metr.Modules.Result
   alias Metr.Util
-  alias Metr.Time
 
   @name __ENV__.module |> Stately.module_to_name()
 
@@ -122,7 +121,7 @@ defmodule Metr.Modules.Deck do
   end
 
   def feed(%Event{keys: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
-    events = Data.read_log_by_id("Deck", id)
+    events = Data.read_log_by_id(id, "Deck")
     [Event.new([:deck, :log, :read, repp], %{out: events})]
   end
 
@@ -264,8 +263,8 @@ defmodule Metr.Modules.Deck do
     end
   end
 
-  defp build_state(id, %{name: name} = data) do
-    %Deck{id: id, name: name, time: Time.timestamp()}
+  defp build_state(id, %{name: name} = data, time_of_creation) do
+    %Deck{id: id, name: name, time: time_of_creation}
     |> apply_colors(data)
     |> apply_format(data)
     |> apply_rank(data)
@@ -360,7 +359,7 @@ defmodule Metr.Modules.Deck do
   ## gen
   @impl true
   def init({id, data, event}) do
-    case build_state(id, data) do
+    case build_state(id, data, event.time) do
       {:error, error} ->
         {:stop, error}
 
@@ -387,7 +386,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :results, &(&1 ++ [result_id]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Result #{result_id} added to deck #{id}", new_state}
   end
 
@@ -398,7 +397,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :matches, &(&1 ++ [match_id]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Match #{match_id} added to deck #{id}", new_state}
   end
 
@@ -409,7 +408,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     original_rank =
-      Data.read_log_by_id("Deck", id)
+      Data.read_log_by_id(id, "Deck")
       |> Enum.filter(fn e -> e.keys == [:create, :deck] end)
       |> List.first()
       |> find_original_rank()
@@ -430,7 +429,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :rank, fn rank -> Rank.apply_change(rank, change) end)
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Deck #{id} rank altered to #{Kernel.inspect(new_state.rank)}", new_state}
   end
 
@@ -441,7 +440,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :active, fn active -> not active end)
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Deck #{id} active altered to #{Kernel.inspect(new_state.active)}", new_state}
   end
 
@@ -452,7 +451,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
     {:reply, "Deck #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end

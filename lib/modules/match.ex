@@ -78,7 +78,7 @@ defmodule Metr.Modules.Match do
   end
 
   def feed(%Event{id: _event_id, keys: [:read, :log, :match], data: %{match_id: id}}, repp) do
-    events = Data.read_log_by_id("Match", id)
+    events = Data.read_log_by_id(id, "Match")
     [Event.new([:match, :log, :read, repp], %{out: events})]
   end
 
