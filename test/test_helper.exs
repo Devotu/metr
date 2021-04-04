@@ -2,7 +2,6 @@ ExUnit.start()
 
 defmodule TestHelper do
   alias Metr.Data
-  alias Metr.Event
   alias Metr.Modules.Game
 
   def init_single_states(player_name, deck_name) do

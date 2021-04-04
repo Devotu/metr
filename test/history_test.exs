@@ -2,6 +2,7 @@ defmodule HistoryTest do
   use ExUnit.Case
 
   alias Metr.History
+  alias Metr.Modules.Stately
 
   test "read history of entity x" do
     player_name = "Viktor Metr"
@@ -13,6 +14,9 @@ defmodule HistoryTest do
       TestHelper.init_double_state(player_name, deck_name, player_two_name, deck_two_name)
 
     Metr.alter_rank(deck_id, :up)
+
+    original_deck = Stately.read(deck_id, :deck)
+    :timer.sleep(1000)
 
     deck_history = History.of_entity :deck, deck_id
 
@@ -37,6 +41,10 @@ defmodule HistoryTest do
     assert %{change: 1, deck_id: deck_id} == rank_altered.event.data
     assert deck_name == rank_altered.state.name
     assert rank_altered.state == rank_altered.data
+
+    #Time created etc should not equal rerun
+    assert List.last(deck_history).state == original_deck
+    assert Stately.read(deck_id, :deck) == original_deck
 
     TestHelper.cleanup_double_states(
       {player_id, deck_id, player_two_id, deck_two_id, match_id, game_id}

@@ -45,7 +45,6 @@ defmodule Metr.Modules.Deck do
   alias Metr.Rank
   alias Metr.Modules.Result
   alias Metr.Util
-  alias Metr.Time
 
   @name __ENV__.module |> Stately.module_to_name()
 
@@ -264,8 +263,8 @@ defmodule Metr.Modules.Deck do
     end
   end
 
-  defp build_state(id, %{name: name} = data) do
-    %Deck{id: id, name: name, time: Time.timestamp()}
+  defp build_state(id, %{name: name} = data, time_of_creation) do
+    %Deck{id: id, name: name, time: time_of_creation}
     |> apply_colors(data)
     |> apply_format(data)
     |> apply_rank(data)
@@ -360,7 +359,7 @@ defmodule Metr.Modules.Deck do
   ## gen
   @impl true
   def init({id, data, event}) do
-    case build_state(id, data) do
+    case build_state(id, data, event.time) do
       {:error, error} ->
         {:stop, error}
 
