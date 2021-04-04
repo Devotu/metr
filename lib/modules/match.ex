@@ -31,7 +31,7 @@ defmodule Metr.Modules.Match do
     case verify_input_data(data) do
       {:error, error} ->
         # Return
-        [Event.new([:match, :create, :fail], %{cause: error, data: data})]
+        [Event.new([:match, :error, repp], %{cause: error, data: data})]
 
       {:ok} ->
         id = Id.guid()
