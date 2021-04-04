@@ -9,23 +9,15 @@ defmodule TestHelper do
   alias Metr.Modules.Player
 
   def init_single_states(player_name, deck_name) do
-    player_id = Metr.create_player(%{name: player_name}) |> IO.inspect label: "test helper - player id"
-
+    player_id = Metr.create_player(%{name: player_name})
     deck_id = Metr.create_deck(%{name: deck_name, player_id: player_id})
-
-    [match_return] =
-      Match.feed(
-        Event.new([:create, :match], %{
-          player_1_id: player_id,
-          deck_1_id: deck_id,
-          player_2_id: player_id,
-          deck_2_id: deck_id,
-          ranking: false
-        }),
-        nil
-      )
-
-    match_id = match_return.data.id
+    match_id = Metr.create_match(%{
+      player_1_id: player_id,
+      deck_1_id: deck_id,
+      player_2_id: player_id,
+      deck_2_id: deck_id,
+      ranking: false
+    })
 
     game_input = %{
       deck_1: deck_id,
