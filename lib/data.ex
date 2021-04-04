@@ -73,7 +73,7 @@ defmodule Metr.Data do
   defp state_dir(), do: data_dir() <> "/state"
   defp state_path(module_name, id), do: state_dir() <> "/#{entity_id(module_name, id)}.state"
 
-  def save_state(module_name, id, state) do
+  defp save_state(module_name, id, state) do
     path = state_path(module_name, id)
     bin = :erlang.term_to_binary(state)
     File.write!(path, bin)
