@@ -18,17 +18,14 @@ defmodule TestHelper do
       deck_2_id: deck_id,
       ranking: false
     })
-
-    game_input = %{
+    game_id = Metr.create_game(%{
       deck_1: deck_id,
       deck_2: deck_id,
       player_1: player_id,
       player_2: player_id,
       winner: 2,
       match: match_id
-    }
-
-    game_id = Metr.create_game(game_input)
+    })
 
     {player_id, deck_id, match_id, game_id}
   end
