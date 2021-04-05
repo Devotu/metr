@@ -18,7 +18,7 @@ defmodule HistoryTest do
     original_deck = Stately.read(deck_id, :deck)
     :timer.sleep(1000)
 
-    deck_history = History.of_entity :deck, deck_id
+    deck_history = History.of_entity deck_id, :deck
 
     assert is_list(deck_history)
 

@@ -100,6 +100,10 @@ defmodule Metr do
     |> read_log(id)
   end
 
+  def read_entity_history(type, id) when is_bitstring(type) do
+    History.of_entity id, Stately.select_module_atom(type)
+  end
+
   def read_global_log(limit) when is_number(limit) do
     read_log(limit)
   end
@@ -240,12 +244,6 @@ defmodule Metr do
 
     Event.new([:tag, type], %{id: id, tag: tag})
     |> run()
-  end
-
-  def read_entity_history(type, id) when is_bitstring(type) and is_bitstring(id) do
-    type
-    |> Stately.select_module_atom()
-    |> History.of_entity(id)
   end
 
   ## private

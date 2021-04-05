@@ -2,7 +2,7 @@ defmodule Metr.History do
   alias Metr.Modules.Stately
   alias Metr.Data
 
-  def of_entity(module, id) when is_atom(module) and is_bitstring(id) do
+  def of_entity(id, module) when is_atom(module) and is_bitstring(id) do
     module_name = Stately.select_module_name(module)
     log = Data.read_log_by_id(id, module_name)
     Stately.stop(id, module_name)
