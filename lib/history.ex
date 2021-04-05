@@ -5,9 +5,13 @@ defmodule Metr.History do
   def of_entity(id, module) when is_atom(module) and is_bitstring(id) do
     module_name = Stately.select_module_name(module)
     log = Data.read_log_by_id(id, module_name)
-    Stately.stop(id, module_name)
-    Data.wipe_state(id, module_name)
-    Enum.reduce(log, [], fn e, acc -> acc ++ [step(id, module, e)] end)
+    case log do
+      nil -> {:error, "Log of #{Kernel.inspect(module)} #{id} not found"}
+      log ->
+        Stately.stop(id, module_name)
+        Data.wipe_state(id, module_name)
+        Enum.reduce(log, [], fn e, acc -> acc ++ [step(id, module, e)] end)
+    end
   end
 
   defp step(id, module, event) do
