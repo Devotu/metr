@@ -193,15 +193,13 @@ defmodule Metr.Modules.Match do
   end
 
   defp collect_rank_alterations(%Match{ranking: false}), do: []
-
   defp collect_rank_alterations(%Match{ranking: true} = state) do
     deck_1 = Deck.read(state.deck_one)
     deck_2 = Deck.read(state.deck_two)
 
-    case deck_1.rank == deck_2.rank do
+    case Rank.is_at_same(deck_1.rank, deck_2.rank) do
       true ->
         rank_decks(state)
-
       false ->
         [Event.new([:match, :error], %{msg: "ranks does not match"})]
     end
