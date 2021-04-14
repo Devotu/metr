@@ -100,7 +100,7 @@ defmodule Metr do
     |> read_log(id)
   end
 
-  def read_entity_history(type, id) when is_bitstring(type) do
+  def read_entity_history(id, type) when is_bitstring(type) do
     History.of_entity id, Stately.select_module_atom(type)
   end
 

@@ -22,6 +22,7 @@ defmodule Metr.Modules.Match do
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Rank
   alias Metr.Time
 
   @name __ENV__.module |> Stately.module_to_name()
@@ -181,27 +182,24 @@ defmodule Metr.Modules.Match do
 
   defp verify_rank({:error, _cause} = error, _deck_id_1, _deck_id_2, _ranking), do: error
   defp verify_rank({:ok}, _deck_id_1, _deck_id_2, false), do: {:ok}
-
   defp verify_rank({:ok}, deck_id_1, deck_id_2, true) do
     deck_1 = Deck.read(deck_id_1)
     deck_2 = Deck.read(deck_id_2)
 
-    case deck_1.rank == deck_2.rank do
+    case Rank.is_at_same(deck_1.rank, deck_2.rank) do
       false -> {:error, "ranks does not match"}
       _ -> {:ok}
     end
   end
 
   defp collect_rank_alterations(%Match{ranking: false}), do: []
-
   defp collect_rank_alterations(%Match{ranking: true} = state) do
     deck_1 = Deck.read(state.deck_one)
     deck_2 = Deck.read(state.deck_two)
 
-    case deck_1.rank == deck_2.rank do
+    case Rank.is_at_same(deck_1.rank, deck_2.rank) do
       true ->
         rank_decks(state)
-
       false ->
         [Event.new([:match, :error], %{msg: "ranks does not match"})]
     end
