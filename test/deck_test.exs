@@ -367,4 +367,40 @@ defmodule DeckTest do
     Data.wipe_test("Deck", deck_id)
     Data.wipe_test("Player", player_id)
   end
+
+  test "result order" do
+    player_name = "Ivar Deck"
+    deck_name = "India Deck"
+    player_two_name = "Johan Deck"
+    deck_two_name = "Juliet Deck"
+
+    {player_id, deck_id, player_two_id, deck_two_id, match_id, game_id} =
+      TestHelper.init_double_state(player_name, deck_name, player_two_name, deck_two_name)
+
+    original_deck = Deck.read(deck_id)
+    [first_result_id] = original_deck.results
+
+    create_game_data = %{
+      deck_1: deck_id,
+      deck_2: deck_two_id,
+      player_1: player_id,
+      player_2: player_two_id,
+      winner: 1
+    }
+
+    second_game_id = Metr.create_game(create_game_data)
+
+    updated_deck = Deck.read(deck_id)
+    [^first_result_id, second_result_id] = updated_deck.results
+
+    third_game_id = Metr.create_game(create_game_data)
+
+    updated_deck = Deck.read(deck_id)
+    [^first_result_id, ^second_result_id, _third_result_id] = updated_deck.results
+
+    Data.wipe_test("Game", [second_game_id, third_game_id])
+    TestHelper.cleanup_double_states(
+      {player_id, deck_id, player_two_id, deck_two_id, match_id, game_id}
+    )
+  end
 end
