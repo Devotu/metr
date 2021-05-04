@@ -384,4 +384,31 @@ defmodule GameTest do
     Data.wipe_test("Result", game_1.results)
     Data.wipe_test("Match", match_id)
   end
+
+  test "game with turns" do
+    player_name = "Peter Game"
+    deck_name = "Papa Game"
+    number_of_turns = Enum.random(1..50)
+
+    {player_id, deck_id, match_id, game_id} =
+      TestHelper.init_single_states(player_name, deck_name)
+
+    game_input = %{
+      deck_1: deck_id,
+      deck_2: deck_id,
+      player_1: player_id,
+      player_2: player_id,
+      winner: 2,
+      match: match_id,
+      turns: number_of_turns
+    }
+
+    game_1_id = Metr.create_game(game_input)
+    game = Metr.read_game(game_1_id)
+
+    assert game.turns == number_of_turns
+
+    TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
+    Data.wipe_test("Game", [game_1_id])
+  end
 end

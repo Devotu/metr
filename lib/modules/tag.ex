@@ -81,16 +81,12 @@ defmodule Metr.Modules.Tag do
   def is_valid_tag(tag) when is_nil(tag), do: {:error, "tag cannot be nil"}
   def is_valid_tag(_tag), do: {:error, "tag must be string"}
 
-  defp is_valid_target({:error, e}), do: {:error, e}
-
   defp is_valid_target(:ok, module_name, module_id) do
     case Stately.exist?(module_id, module_name) do
       true -> :ok
       false -> {:error, "tag target not found"}
     end
   end
-
-  defp is_not_duplicate({:error, e}), do: {:error, e}
 
   defp is_not_duplicate(:ok, module_name, module_id, tag) do
     target = Stately.read(module_id, module_name)
