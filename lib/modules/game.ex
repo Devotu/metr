@@ -1,5 +1,5 @@
 defmodule Metr.Modules.Game do
-  defstruct id: "", time: 0, results: [], match: nil, tags: []
+  defstruct id: "", time: 0, results: [], match: nil, tags: [], turns: nil
 
   use GenServer
 
@@ -31,8 +31,9 @@ defmodule Metr.Modules.Game do
           |> Enum.map(fn {:ok, r} -> r.id end)
 
         match_id = find_match_id(data)
+        turns = find_turns(data)
 
-        case GenServer.start(Metr.Modules.Game, {id, result_ids, match_id, event},
+        case GenServer.start(Metr.Modules.Game, {id, result_ids, match_id, turns, event},
                name: process_name
              ) do
           {:ok, _pid} ->
@@ -199,6 +200,10 @@ defmodule Metr.Modules.Game do
   defp find_match_id(%{match: match_id}), do: match_id
   defp find_match_id(_), do: nil
 
+  defp find_turns(%{turns: 0}), do: nil
+  defp find_turns(%{turns: turns}), do: turns
+  defp find_turns(_), do: nil
+
   defp delete_game_results({:error, reason}), do: {:error, reason}
 
   defp delete_game_results(%Game{} = game) do
@@ -224,8 +229,8 @@ defmodule Metr.Modules.Game do
 
   ## gen
   @impl true
-  def init({id, result_ids, match_id, event}) do
-    state = %Game{id: id, time: Time.timestamp(), results: result_ids, match: match_id}
+  def init({id, result_ids, match_id, turns, event}) do
+    state = %Game{id: id, time: Time.timestamp(), results: result_ids, match: match_id, turns: turns}
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}
   end
