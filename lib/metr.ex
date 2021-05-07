@@ -3,6 +3,7 @@ defmodule Metr do
   alias Metr.History
   alias Metr.Router
   alias Metr.Modules.Stately
+  alias Metr.Modules.Input.GameInput
 
   @default_game %{
     fun_1: nil,
@@ -10,49 +11,31 @@ defmodule Metr do
     power_1: nil,
     power_2: nil,
     winner: 0,
-    rank: false,
+    ranking: false,
     match: nil,
     turns: nil
   }
 
   ## api
-  def list_players() do
-    list(:player)
-  end
+  def list_players(), do: list(:player)
 
-  def list_decks() do
-    list(:deck)
-  end
+  def list_decks(), do: list(:deck)
 
+  def list_results(), do: list(:result)
+
+  def list_matches(), do: list(:match)
+
+  def list_formats(), do: list(:format)
+
+  def list_games(), do: list(:game)
+  def list_games(game_ids) when is_list(game_ids), do: game_ids |> Enum.map(fn gid -> read_game(gid) end)
   def list_games(limit) when is_number(limit) do
     constraints = Map.put(%{}, :limit, limit)
     list(:game, constraints)
   end
-
   def list_games(type, id) when is_atom(type) do
     constraints = Map.put(%{}, Stately.module_id(type), id)
     list(:game, constraints)
-  end
-
-  def list_games(game_ids) when is_list(game_ids) do
-    game_ids
-    |> Enum.map(fn gid -> read_game(gid) end)
-  end
-
-  def list_games() do
-    list(:game)
-  end
-
-  def list_results() do
-    list(:result)
-  end
-
-  def list_matches() do
-    list(:match)
-  end
-
-  def list_formats() do
-    list(:format)
   end
 
   def list_states(type, ids) when is_atom(type) do
@@ -74,21 +57,13 @@ defmodule Metr do
     |> list()
   end
 
-  def read_player(id) do
-    read(:player, id)
-  end
+  def read_player(id), do: read(:player, id)
 
-  def read_deck(id) do
-    read(:deck, id)
-  end
+  def read_deck(id), do: read(:deck, id)
 
-  def read_game(id) do
-    read(:game, id)
-  end
+  def read_game(id), do: read(:game, id)
 
-  def read_match(id) do
-    read(:match, id)
-  end
+  def read_match(id), do: read(:match, id)
 
   @spec read_entity_log(:deck | :game | :match | :player | :result, any) :: any
   def read_entity_log(type, id) when is_atom(type) do
@@ -105,17 +80,13 @@ defmodule Metr do
     History.of_entity id, Stately.select_module_atom(type)
   end
 
-  def read_global_log(limit) when is_number(limit) do
+  def read_input_log(limit) when is_number(limit) do
     read_log(limit)
   end
 
-  def read_state(id, type) when is_atom(type) and is_bitstring(id) do
-    read(type, id)
-  end
+  def read_state(id, type) when is_atom(type) and is_bitstring(id), do: read(type, id)
 
-  def read_state(type, id) when is_atom(type) and is_bitstring(id) do
-    read(type, id)
-  end
+  def read_state(type, id) when is_atom(type) and is_bitstring(id), do: read(type, id)
 
   def read_state(type, id) when is_bitstring(type) and is_bitstring(id) do
     type
@@ -127,29 +98,16 @@ defmodule Metr do
     {:error, "Bad argument(s)"}
   end
 
-  def create_game(%{
-        :deck_1 => d1,
-        :deck_2 => d2,
-        :fun_1 => f1,
-        :fun_2 => f2,
-        :player_1 => p1,
-        :player_2 => p2,
-        :power_1 => s1,
-        :power_2 => s2,
-        :winner => w,
-        rank: r,
-        match: m,
-        turns: turns
-      }) when is_number(turns) or is_nil(turns) do
+  def create_game(%GameInput{} = input) do
     data = %{
-      winner: w,
-      rank: r,
-      match: m,
+      winner: input.winner,
+      ranking: input.ranking,
+      match: input.match,
       parts: [
-        %{part: 1, details: %{deck_id: d1, player_id: p1, power: s1, fun: f1}},
-        %{part: 2, details: %{deck_id: d2, player_id: p2, power: s2, fun: f2}}
+        %{part: 1, details: %{deck_id: input.deck_one, player_id: input.player_one, power: input.power_one, fun: input.fun_one}},
+        %{part: 2, details: %{deck_id: input.deck_two, player_id: input.player_two, power: input.power_two, fun: input.fun_two}},
       ],
-      turns: turns
+      turns: input.turns
     }
 
     create(:game, data)
@@ -165,12 +123,12 @@ defmodule Metr do
         :power_1 => s1,
         :power_2 => s2,
         :winner => w,
-        rank: r,
+        ranking: r,
         match: m
       }) do
     data = %{
       winner: w,
-      rank: r,
+      ranking: r,
       match: m,
       parts: [
         %{part: 1, details: %{deck_id: d1, player_id: p1, power: s1, fun: f1}},
@@ -182,18 +140,18 @@ defmodule Metr do
     create_game(data)
   end
 
-  def create_game(%{balance: b} = game_data) do
-    case parse_balance(b) do
-      {:error, msg} ->
-        {:error, msg}
+  # def create_game(%{balance: b} = game_data) do
+  #   case parse_balance(b) do
+  #     {:error, msg} ->
+  #       {:error, msg}
 
-      {pw1, pw2} ->
-        Map.merge(@default_game, game_data)
-        |> Map.put(:power_1, pw1)
-        |> Map.put(:power_2, pw2)
-        |> create_game()
-    end
-  end
+  #     {pw1, pw2} ->
+  #       Map.merge(@default_game, game_data)
+  #       |> Map.put(:power_1, pw1)
+  #       |> Map.put(:power_2, pw2)
+  #       |> create_game()
+  #   end
+  # end
 
   def create_game(
         %{
@@ -375,14 +333,6 @@ defmodule Metr do
     end
   end
 
-  defp parse_balance(0, 0), do: {0, 0}
-  defp parse_balance(1, 1), do: {1, -1}
-  defp parse_balance(1, 2), do: {2, -2}
-  defp parse_balance(2, 1), do: {-1, 1}
-  defp parse_balance(2, 2), do: {-2, 2}
-  defp parse_balance(nil), do: {nil, nil}
-  defp parse_balance({advantage, level}), do: parse_balance(advantage, level)
-  defp parse_balance(_), do: {:error, "invalid input balance"}
 
   ## feed
   # by type
