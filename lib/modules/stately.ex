@@ -242,6 +242,11 @@ defmodule Metr.Modules.Stately do
       _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting id name"}
     end
   end
+  def module_id(module_name) when is_bitstring(module_name) do
+    module_name
+    |> select_module_atom()
+    |> module_id()
+  end
 
   def module_plural(module_atom) when is_atom(module_atom) do
     case module_atom do
@@ -253,12 +258,6 @@ defmodule Metr.Modules.Stately do
       :tag -> :tags
       _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting plural form"}
     end
-  end
-
-  def module_id(module_name) when is_bitstring(module_name) do
-    module_name
-    |> select_module_atom()
-    |> module_id()
   end
 
   def select_module_atom(module_name) when is_bitstring(module_name) do
@@ -463,7 +462,7 @@ defmodule Metr.Modules.Stately do
     case GenServer.start(select_module(module_name), current_state,
            name: Data.genserver_id(module_name, id)
          ) do
-      {:ok, pid} -> {:ok, id, module_name}
+      {:ok, _pid} -> {:ok, id, module_name}
       {:error, reason} -> {:error, reason}
       x -> {:error, inspect(x)}
     end
