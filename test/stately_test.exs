@@ -4,7 +4,6 @@ defmodule StatelyTest do
   alias Metr.Modules.Stately
   alias Metr.Data
   alias Metr.Event
-  alias Metr.Id
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
   alias Metr.Modules.Match
@@ -60,60 +59,6 @@ defmodule StatelyTest do
 
   test "module_to_name" do
     assert Player.module_name() == "Player"
-  end
-
-  test "recall player" do
-    [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "Erik Player"}), nil)
-    player_id = resulting_event.data.out
-    assert :ok == Data.genserver_id("Player", player_id) |> GenServer.stop()
-    player = Player.read(player_id)
-
-    assert is_struct(player, Player)
-
-    [resulting_event] =
-      Deck.feed(Event.new([:create, :deck], %{name: "Filip Deck", player_id: player_id}), nil)
-
-    deck_id = resulting_event.data.id
-    assert :ok == Data.genserver_id("Deck", deck_id) |> GenServer.stop()
-    deck = Deck.read(deck_id)
-
-    assert is_struct(deck, Deck)
-
-    Data.wipe_test("Player", player_id)
-    Data.wipe_test("Deck", deck_id)
-
-    player_name = "Niklas Game"
-    player_id = Id.hrid(player_name)
-    deck_name = "November Game"
-    deck_id = Id.hrid(deck_name)
-
-    Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
-
-    game_1_input = %{
-      deck_1: deck_id,
-      deck_2: deck_id,
-      player_1: player_id,
-      player_2: player_id,
-      balance: 1,
-      winner: 2
-    }
-
-    {:error, "invalid input balance"} = Metr.create_game(game_1_input)
-
-    game_2_input = %{
-      deck_1: deck_id,
-      deck_2: deck_id,
-      player_1: player_id,
-      player_2: player_id,
-      balance: "2",
-      winner: 2
-    }
-
-    {:error, "invalid input balance"} = Metr.create_game(game_2_input)
-
-    Data.wipe_test("Player", [player_id])
-    Data.wipe_test("Deck", [deck_id])
   end
 
   test "recall as correct struct" do
