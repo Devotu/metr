@@ -14,8 +14,7 @@ defmodule MetrTest do
   @id_length 14
 
   test "list players" do
-    # assert is_list(Metr.list_players())
-    assert is_list(Metr.list_states("Player"))
+    assert is_list(Metr.list_players())
   end
 
   test "create deck" do
@@ -556,7 +555,7 @@ defmodule MetrTest do
     {rid, _rtime} = rt
     assert rid == result_id_1
 
-    assert [test_tag] == Metr.list_states("Tag")
+    assert [test_tag] == Metr.list_tags()
 
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
     Data.wipe_test("Tag", tag_name)

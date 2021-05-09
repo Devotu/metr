@@ -227,7 +227,7 @@ defmodule GameTest do
 
     assert 4 == Enum.count(Metr.list_states(:game, :deck, deck_2_id))
 
-    results = Metr.list_states("Result")
+    results = Metr.list_results()
 
     Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])

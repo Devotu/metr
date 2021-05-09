@@ -79,7 +79,7 @@ defmodule TimeTest do
     )
 
     match =
-      Metr.list_states("Match")
+      Metr.list_matches()
       |> List.first()
 
     assert 0 != match.time

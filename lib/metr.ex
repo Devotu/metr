@@ -16,6 +16,8 @@ defmodule Metr do
 
   def list_formats(), do: list(:format)
 
+  def list_tags(), do: list(:tag)
+
   def list_games(), do: list(:game)
   def list_games(game_ids) when is_list(game_ids), do: game_ids |> Enum.map(fn gid -> read_game(gid) end)
   def list_games(limit) when is_number(limit) do
@@ -40,11 +42,11 @@ defmodule Metr do
     list(state_type, constraints)
   end
 
-  def list_states(type) when is_bitstring(type) do
-    type
-    |> Stately.select_module_atom()
-    |> list()
-  end
+  # def list_states(type) when is_bitstring(type) do
+  #   type
+  #   |> Stately.select_module_atom()
+  #   |> list()
+  # end
 
   def read_player(id), do: read(:player, id)
 
