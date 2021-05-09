@@ -412,5 +412,6 @@ defmodule GameTest do
 
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
     Data.wipe_test("Game", [game.id])
+    Data.wipe_test("Result", game.results)
   end
 end
