@@ -44,12 +44,15 @@ defmodule PlayerTest do
   test "game created" do
     # var
     # Players to participate
-    player_1_name = "Filip"
-    player_1_id = Id.hrid(player_1_name)
-    Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
-    player_two_name = "Gustav"
-    player_two_id = Id.hrid(player_two_name)
-    Player.feed(Event.new([:create, :player], %{name: player_two_name}), nil)
+    player_one_name = "Filip Player"
+    deck_one_name = "Foxtrot Player"
+    player_two_name = "Gustav Player"
+    deck_two_name = "Golf Player"
+
+    {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id} =
+      TestHelper.init_double_state(player_one_name, deck_one_name, player_two_name, deck_two_name)
+
+
     # Resolve game created
 
     [game_created_event] =
@@ -57,20 +60,20 @@ defmodule PlayerTest do
         Event.new([:create, :game], %{
           parts: [
             %{
-              details: %{deck_id: "festering", power: 2, fun: -1, player_id: player_1_id},
+              details: %{deck_id: deck_one_id, power: 2, fun: -1, player_id: player_one_id},
               part: 1
             },
-            %{details: %{deck_id: "gloom", power: 1, fun: 2, player_id: player_two_id}, part: 2}
+            %{details: %{deck_id: deck_two_id, power: 1, fun: 2, player_id: player_two_id}, part: 2}
           ],
           winner: 2,
-          rank: false
+          ranking: false
         }),
         nil
       )
 
     resulting_events = Player.feed(game_created_event, nil)
     first_resulting_event = List.first(resulting_events)
-    player_log = Data.read_log_by_id(player_1_id, "Player")
+    player_log = Data.read_log_by_id(player_one_id, "Player")
 
     [first_result_id, _second_result_event] = game_created_event.data.result_ids
 
@@ -78,15 +81,17 @@ defmodule PlayerTest do
     assert 2 == Enum.count(resulting_events)
     assert [:player, :altered, nil] == first_resulting_event.keys
 
-    assert "Result #{first_result_id} added to player #{player_1_id}" ==
+    assert "Result #{first_result_id} added to player #{player_one_id}" ==
              first_resulting_event.data.out
 
-    assert 2 == Enum.count(player_log)
+    assert 3 + 2 == Enum.count(player_log) # init (3) + result added (2)
 
     # Cleanup
-    Data.wipe_test("Player", [player_1_id, player_two_id])
     Data.wipe_test("Game", game_created_event.data.id)
     Data.wipe_test("Result", game_created_event.data.result_ids)
+    TestHelper.cleanup_double_states(
+      {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id}
+    )
   end
 
   test "list players" do
