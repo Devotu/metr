@@ -31,19 +31,18 @@ defmodule Metr.Modules.Game do
           |> Enum.map(fn {:ok, r} -> r.id end)
 
         match_id = find_match_id(data)
-        turns = find_turns(data)
 
-        case GenServer.start(Metr.Modules.Game, {id, result_ids, match_id, turns, event},
+        case GenServer.start(Metr.Modules.Game, {id, result_ids, match_id, find_turns(data), event},
                name: process_name
              ) do
+
           {:ok, _pid} ->
             match_id = Map.get(data, :match, nil)
-
             [
               Event.new([:game, :created, repp], %{
                 id: id,
                 result_ids: result_ids,
-                ranking: data.rank,
+                ranking: is_ranked?(data),
                 match_id: match_id
               })
             ]
@@ -155,29 +154,59 @@ defmodule Metr.Modules.Game do
     %{part: part, details: Map.put(details, :fun, nil)}
   end
 
+  ## Input verification
   defp verify_input_data(data) do
-    {:ok}
-    |> verify_players(data)
-    |> verify_decks(data)
+    verify_parts(data.parts)
   end
 
-  defp verify_players({:error, _cause} = error, _id), do: error
+  defp verify_parts([part_one, part_two]) do
+    v1 = verify_part(part_one)
+    v2 = verify_part(part_two)
+    case [v1, v2] do
+      [{:error, cause}, _] -> {:error, cause}
+      [_, {:error, cause}] -> {:error, cause}
+      _ -> {:ok}
+    end
+  end
+  defp verify_parts(_), do: {:error, "invalid number of participants"}
 
-  defp verify_players({:ok}, %{
-         parts: [%{details: %{player_id: _id1}}, %{details: %{player_id: _id2}}]
-       }),
-       do: {:ok}
+  defp verify_part(%{details: data}) do
+    {:ok, data}
+    |> verify_player()
+    |> verify_deck()
+    |> verify_power()
+    |> verify_fun()
+  end
 
-  defp verify_players({:ok}, %{player_1_id: _p1, player_2_id: _p2}), do: {:ok}
-  defp verify_players({:ok}, _data), do: {:error, "missing player_id parameter"}
+  # defp verify_player({:error, _reason} = e), do: e
+  defp verify_player({:ok, data}) do
+    case Stately.exist?(data.player_id, :player) do
+      true -> {:ok, data}
+      false -> {:error, "player #{data.player_id} does not exist"}
+    end
+  end
 
-  defp verify_decks({:error, _cause} = error, _id), do: error
+  defp verify_deck({:error, _reason} = e), do: e
+  defp verify_deck({:ok, data}) do
+    case Stately.exist?(data.deck_id, :deck) do
+      true -> {:ok, data}
+      false -> {:error, "deck #{data.deck_id} does not exist"}
+    end
+  end
 
-  defp verify_decks({:ok}, %{parts: [%{details: %{deck_id: _id1}}, %{details: %{deck_id: _id2}}]}),
-    do: {:ok}
+  defp verify_power({:error, _reason} = e), do: e
+  defp verify_power({:ok, %{power: nil} = data}), do: {:ok, data}
+  defp verify_power({:ok, %{power: power}}) when not is_number(power), do: {:error, "invalid power input - power #{Kernel.inspect(power)} not a number"}
+  defp verify_power({:ok, %{power: power}}) when power > 2 or power < -2, do: {:error, "invalid power input - power #{power} is not in range"}
+  defp verify_power({:ok, data}), do: {:ok, data}
 
-  defp verify_decks({:ok}, _data), do: {:error, "missing deck_id parameter"}
+  defp verify_fun({:error, _reason} = e), do: e
+  defp verify_fun({:ok, %{fun: nil} = data}), do: {:ok, data}
+  defp verify_fun({:ok, %{fun: fun}}) when not is_number(fun), do: {:error, "invalid fun input - fun #{Kernel.inspect(fun)} is not a number"}
+  defp verify_fun({:ok, %{fun: fun}}) when fun > 2 or fun < -2, do: {:error, "invalid fun input - fun #{fun} is not in range"}
+  defp verify_fun({:ok, data}), do: {:ok, data}
 
+  ## Internals
   defp part_to_result(part, winner) do
     %Result{
       player_id: part.details.player_id,
@@ -203,6 +232,9 @@ defmodule Metr.Modules.Game do
   defp find_turns(%{turns: 0}), do: nil
   defp find_turns(%{turns: turns}), do: turns
   defp find_turns(_), do: nil
+
+  defp is_ranked?(%{ranked: ranked}) when is_boolean(ranked), do: ranked
+  defp is_ranked?(_), do: false
 
   defp delete_game_results({:error, reason}), do: {:error, reason}
 

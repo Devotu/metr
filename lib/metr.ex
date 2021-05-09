@@ -5,17 +5,6 @@ defmodule Metr do
   alias Metr.Modules.Stately
   alias Metr.Modules.Input.GameInput
 
-  @default_game %{
-    fun_1: nil,
-    fun_2: nil,
-    power_1: nil,
-    power_2: nil,
-    winner: 0,
-    ranking: false,
-    match: nil,
-    turns: nil
-  }
-
   ## api
   def list_players(), do: list(:player)
 
@@ -153,18 +142,18 @@ defmodule Metr do
   #   end
   # end
 
-  def create_game(
-        %{
-          :deck_1 => _d1,
-          :deck_2 => _d2,
-          :player_1 => _p1,
-          :player_2 => _p2
-        } = game_data
-      )
-      when is_map(game_data) do
-    Map.merge(@default_game, game_data)
-    |> create_game()
-  end
+  # def create_game(
+  #       %{
+  #         :deck_1 => _d1,
+  #         :deck_2 => _d2,
+  #         :player_1 => _p1,
+  #         :player_2 => _p2
+  #       } = game_data
+  #     )
+  #     when is_map(game_data) do
+  #   Map.merge(@default_game, game_data)
+  #   |> create_game()
+  # end
 
   def delete_game(game_id) do
     # Start listener
