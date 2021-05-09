@@ -7,6 +7,7 @@ defmodule ResultTest do
   alias Metr.Modules.Deck
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.Input.GameInput
 
   test "valid created" do
     name = "Adam Result"
@@ -34,16 +35,16 @@ defmodule ResultTest do
     )
 
     game =
-      Metr.create_game(%{
-        :deck_1 => id,
-        :deck_2 => id,
-        :player_1 => id,
-        :player_2 => id,
+      Metr.create_game(%GameInput{
+        :player_one => id,
+        :player_two => id,
+        :deck_one => id,
+        :deck_two => id,
         :winner => 1,
-        :fun_1 => 1,
-        :fun_2 => -2,
-        :power_1 => 2,
-        :power_2 => -2
+        :fun_one => 1,
+        :fun_two => -2,
+        :power_one => 2,
+        :power_two => -2
       })
       |> Metr.read_state(:game)
 
