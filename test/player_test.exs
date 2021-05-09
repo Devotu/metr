@@ -5,7 +5,6 @@ defmodule PlayerTest do
   alias Metr.Event
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
-  alias Metr.Id
   alias Metr.Modules.Player
   alias Metr.Modules.Stately
 
