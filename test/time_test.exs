@@ -8,6 +8,7 @@ defmodule TimeTest do
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.Input.GameInput
   alias Metr.Time
 
   test "state timestamps" do
@@ -46,15 +47,15 @@ defmodule TimeTest do
     assert 0 != deck.time
     assert 0 >= deck.time - time_of_creation
 
-    game =
-      Metr.create_game(%{
-        :deck_1 => id,
-        :deck_2 => id,
-        :player_1 => id,
-        :player_2 => id,
-        :winner => 1
-      })
-      |> Metr.read_state(:game)
+    game = %GameInput{
+      deck_one: id,
+      deck_two: id,
+      player_one: id,
+      player_two: id,
+      winner: 1
+    }
+    |> Metr.create_game()
+    |> Metr.read_state(:game)
 
     assert 0 != game.time
     assert 0 >= game.time - time_of_creation
