@@ -102,59 +102,6 @@ defmodule Metr do
     create(:game, data)
   end
 
-  def create_game(%{
-        :deck_1 => d1,
-        :deck_2 => d2,
-        :fun_1 => f1,
-        :fun_2 => f2,
-        :player_1 => p1,
-        :player_2 => p2,
-        :power_1 => s1,
-        :power_2 => s2,
-        :winner => w,
-        ranking: r,
-        match: m
-      }) do
-    data = %{
-      winner: w,
-      ranking: r,
-      match: m,
-      parts: [
-        %{part: 1, details: %{deck_id: d1, player_id: p1, power: s1, fun: f1}},
-        %{part: 2, details: %{deck_id: d2, player_id: p2, power: s2, fun: f2}}
-      ],
-      turns: nil
-    }
-
-    create_game(data)
-  end
-
-  # def create_game(%{balance: b} = game_data) do
-  #   case parse_balance(b) do
-  #     {:error, msg} ->
-  #       {:error, msg}
-
-  #     {pw1, pw2} ->
-  #       Map.merge(@default_game, game_data)
-  #       |> Map.put(:power_1, pw1)
-  #       |> Map.put(:power_2, pw2)
-  #       |> create_game()
-  #   end
-  # end
-
-  # def create_game(
-  #       %{
-  #         :deck_1 => _d1,
-  #         :deck_2 => _d2,
-  #         :player_1 => _p1,
-  #         :player_2 => _p2
-  #       } = game_data
-  #     )
-  #     when is_map(game_data) do
-  #   Map.merge(@default_game, game_data)
-  #   |> create_game()
-  # end
-
   def delete_game(game_id) do
     # Start listener
     listening_task = Task.async(&listen/0)
