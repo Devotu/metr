@@ -7,6 +7,7 @@ defmodule DeckTest do
   alias Metr.Modules.Game
   alias Metr.Id
   alias Metr.Modules.Player
+  alias Metr.Modules.Input.GameInput
 
   test "basic feed" do
     assert [] == Deck.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
@@ -157,7 +158,7 @@ defmodule DeckTest do
             %{details: %{deck_id: deck_2_id, power: 1, fun: 2, player_id: player_2_id}, part: 2}
           ],
           winner: 1,
-          rank: false
+          ranking: false
         }),
         nil
       )
@@ -374,33 +375,38 @@ defmodule DeckTest do
     player_two_name = "Johan Deck"
     deck_two_name = "Juliet Deck"
 
-    {player_id, deck_id, player_two_id, deck_two_id, match_id, game_id} =
+    {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id} =
       TestHelper.init_double_state(player_name, deck_name, player_two_name, deck_two_name)
 
-    original_deck = Deck.read(deck_id)
+    original_deck = Deck.read(deck_one_id)
     [first_result_id] = original_deck.results
 
-    create_game_data = %{
-      deck_1: deck_id,
-      deck_2: deck_two_id,
-      player_1: player_id,
-      player_2: player_two_id,
+    create_game_data = %GameInput{
+      deck_one: deck_one_id,
+      deck_two: deck_two_id,
+      player_one: player_one_id,
+      player_two: player_two_id,
       winner: 1
     }
 
     second_game_id = Metr.create_game(create_game_data)
 
-    updated_deck = Deck.read(deck_id)
+    updated_deck = Deck.read(deck_one_id)
     [^first_result_id, second_result_id] = updated_deck.results
 
     third_game_id = Metr.create_game(create_game_data)
 
-    updated_deck = Deck.read(deck_id)
+    updated_deck = Deck.read(deck_one_id)
     [^first_result_id, ^second_result_id, _third_result_id] = updated_deck.results
 
+    player_one = Metr.read_player(player_one_id)
+    player_two = Metr.read_player(player_two_id)
+
     Data.wipe_test("Game", [second_game_id, third_game_id])
+    Data.wipe_test("Result", player_one.results)
+    Data.wipe_test("Result", player_two.results)
     TestHelper.cleanup_double_states(
-      {player_id, deck_id, player_two_id, deck_two_id, match_id, game_id}
+      {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id}
     )
   end
 end
