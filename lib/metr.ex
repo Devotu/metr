@@ -7,12 +7,16 @@ defmodule Metr do
 
   ## api
   def list_players(), do: list(:player)
+  def list_players(ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:player, id) end)
 
   def list_decks(), do: list(:deck)
+  def list_decks(ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:deck, id) end)
 
   def list_results(), do: list(:result)
+  def list_results(ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:result, id) end)
 
   def list_matches(), do: list(:match)
+  def list_matches(ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:match, id) end)
 
   def list_formats(), do: list(:format)
 
