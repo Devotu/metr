@@ -6,6 +6,50 @@ defmodule Metr do
   alias Metr.Modules.Input.GameInput
 
   ## api
+
+  ###create
+  def create_player(%{name: _n} = data) do
+    create(:player, data)
+  end
+
+  def create_deck(%{rank: r, advantage: a} = data) do
+    data
+    |> Map.delete(:advantage)
+    |> Map.put(:rank, {r, a})
+    |> create_deck()
+  end
+
+  def create_deck(%{name: _n, player_id: _p} = data) do
+    create(:deck, data)
+  end
+
+  def create_game(%GameInput{} = input) do
+    data = %{
+      winner: input.winner,
+      ranking: input.ranking,
+      match: input.match,
+      parts: [
+        %{part: 1, details: %{deck_id: input.deck_one, player_id: input.player_one, power: input.power_one, fun: input.fun_one}},
+        %{part: 2, details: %{deck_id: input.deck_two, player_id: input.player_two, power: input.power_two, fun: input.fun_two}},
+      ],
+      turns: input.turns
+    }
+
+    create(:game, data)
+  end
+
+  def create_match(
+    %{
+      :deck_1_id => _deck_1_id,
+      :deck_2_id => _deck_2_id,
+      :player_1_id => _player_1_id,
+      :player_2_id => _player_2_id
+    } = data
+  ) do
+    create(:match, data)
+  end
+
+  ### list
   def list_players(), do: list(:player)
   def list_players(ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:player, id) end)
 
@@ -52,6 +96,8 @@ defmodule Metr do
   #   |> list()
   # end
 
+  ### read
+
   def read_player(id), do: read(:player, id)
 
   def read_deck(id), do: read(:deck, id)
@@ -93,20 +139,7 @@ defmodule Metr do
     {:error, "Bad argument(s)"}
   end
 
-  def create_game(%GameInput{} = input) do
-    data = %{
-      winner: input.winner,
-      ranking: input.ranking,
-      match: input.match,
-      parts: [
-        %{part: 1, details: %{deck_id: input.deck_one, player_id: input.player_one, power: input.power_one, fun: input.fun_one}},
-        %{part: 2, details: %{deck_id: input.deck_two, player_id: input.player_two, power: input.power_two, fun: input.fun_two}},
-      ],
-      turns: input.turns
-    }
-
-    create(:game, data)
-  end
+  ### delete
 
   def delete_game(game_id) do
     # Start listener
@@ -120,21 +153,10 @@ defmodule Metr do
     Task.await(listening_task)
   end
 
-  def create_player(%{name: _n} = data) do
-    create(:player, data)
-  end
 
-  def create_deck(%{rank: r, advantage: a} = data) do
-    data
-    |> Map.delete(:advantage)
-    |> Map.put(:rank, {r, a})
-    |> create_deck()
-  end
+  ### functions
 
-  def create_deck(%{name: _n, player_id: _p} = data) do
-    create(:deck, data)
-  end
-
+  @spec alter_rank(any, :down | :up) :: any
   def alter_rank(deck_id, :up) do
     Event.new([:alter, :rank], %{deck_id: deck_id, change: 1})
     |> run()
@@ -143,17 +165,6 @@ defmodule Metr do
   def alter_rank(deck_id, :down) do
     Event.new([:alter, :rank], %{deck_id: deck_id, change: -1})
     |> run()
-  end
-
-  def create_match(
-        %{
-          :deck_1_id => _deck_1_id,
-          :deck_2_id => _deck_2_id,
-          :player_1_id => _player_1_id,
-          :player_2_id => _player_2_id
-        } = data
-      ) do
-    create(:match, data)
   end
 
   def end_match(match_id) do
@@ -176,7 +187,8 @@ defmodule Metr do
     |> run()
   end
 
-  ## private
+  ## runners ##
+
   defp list(type) when is_atom(type) do
     # Start listener
     listening_task = Task.async(&listen/0)
@@ -276,7 +288,7 @@ defmodule Metr do
   end
 
 
-  ## feed
+  ## feed ##
   # by type
   def feed(%Event{keys: [type, response_pid]} = event, _orepp)
       when is_atom(type) and is_pid(response_pid) do
