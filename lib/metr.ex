@@ -67,12 +67,12 @@ defmodule Metr do
 
   ### list
   # all
-  def list(:player), do: list_of(:player)
   def list(:deck), do: list_of(:deck)
-  def list(:result), do: list_of(:result)
-  def list(:match), do: list_of(:match)
-  def list(:game), do: list_of(:game)
   def list(:format), do: list_of(:format)
+  def list(:game), do: list_of(:game)
+  def list(:match), do: list_of(:match)
+  def list(:player), do: list_of(:player)
+  def list(:result), do: list_of(:result)
   def list(:tag), do: list_of(:tag)
 
   # specific
@@ -96,11 +96,11 @@ defmodule Metr do
     list_of(:result, constraints)
   end
 
-  def list(:player, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:player, id) end)
   def list(:deck, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:deck, id) end)
-  def list(:result, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:result, id) end)
-  def list(:match, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:match, id) end)
   def list(:game, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:game, id) end)
+  def list(:match, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:match, id) end)
+  def list(:player, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:player, id) end)
+  def list(:result, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:result, id) end)
 
   ### read
 
