@@ -279,10 +279,10 @@ defmodule MetrTest do
     }
     |> Metr.create_game()
 
-    deck_1_log = Metr.read_entity_log(:deck, deck_1_id)
+    deck_1_log = Metr.read_log(deck_1_id, :deck)
     assert 3 == Enum.count(deck_1_log)
 
-    player_1_log = Metr.read_entity_log(:player, player_1_id)
+    player_1_log = Metr.read_log(player_1_id, :player)
     assert 4 == Enum.count(player_1_log)
 
     Data.wipe_test("Player", [player_1_id, player_2_id])
