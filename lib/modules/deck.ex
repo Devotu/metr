@@ -347,7 +347,7 @@ defmodule Metr.Modules.Deck do
   defp recalculate_rank(state, base_rank) do
     rank =
       state.results
-      |> Enum.map(fn game_id -> Metr.read_game(game_id) end)
+      |> Enum.map(fn game_id -> Metr.read(game_id, :game) end)
       |> Enum.filter(fn g -> g.ranking end)
       |> Enum.reduce([], fn g, acc -> acc ++ g.results end)
       |> Enum.filter(fn p -> state.id == p.deck_id end)

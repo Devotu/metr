@@ -46,7 +46,7 @@ defmodule ResultTest do
         :power_one => 2,
         :power_two => -2
       })
-      |> Metr.read_state(:game)
+      |> Metr.read(:game)
 
     result = Result.read(game.results |> List.first())
 
@@ -55,7 +55,7 @@ defmodule ResultTest do
     assert 1 = result.place
     assert 0 != result.time
 
-    assert result == Metr.read_state(result.id, :result)
+    assert result == Metr.read(result.id, :result)
     assert result == Metr.list(:result, game.results) |> List.first()
 
     Data.wipe_test("Deck", id)

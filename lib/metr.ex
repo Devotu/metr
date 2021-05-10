@@ -96,21 +96,20 @@ defmodule Metr do
     list_of(:result, constraints)
   end
 
-  def list(:deck, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:deck, id) end)
-  def list(:game, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:game, id) end)
-  def list(:match, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:match, id) end)
-  def list(:player, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:player, id) end)
-  def list(:result, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:result, id) end)
+  def list(:deck, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:deck, id) end)
+  def list(:game, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:game, id) end)
+  def list(:match, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:match, id) end)
+  def list(:player, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:player, id) end)
+  def list(:result, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:result, id) end)
 
   ### read
 
-  def read_player(id), do: read(:player, id)
-
-  def read_deck(id), do: read(:deck, id)
-
-  def read_game(id), do: read(:game, id)
-
-  def read_match(id), do: read(:match, id)
+  def read(id, :deck), do: read_state(:deck, id)
+  def read(id, :game), do: read_state(:game, id)
+  def read(id, :match), do: read_state(:match, id)
+  def read(id, :player), do: read_state(:player, id)
+  def read(id, :result), do: read_state(:result, id)
+  def read(id, :tag), do: read_state(:tag, id)
 
   @spec read_entity_log(:deck | :game | :match | :player | :result, any) :: any
   def read_entity_log(type, id) when is_atom(type) do
@@ -131,19 +130,19 @@ defmodule Metr do
     read_log(limit)
   end
 
-  def read_state(id, type) when is_atom(type) and is_bitstring(id), do: read(type, id)
+  # def read((id, type) when is_atom(type) and is_bitstring(id), do: read(type, id)
 
-  def read_state(type, id) when is_atom(type) and is_bitstring(id), do: read(type, id)
+  # def read((type, id) when is_atom(type) and is_bitstring(id), do: read(type, id)
 
-  def read_state(type, id) when is_bitstring(type) and is_bitstring(id) do
-    type
-    |> Stately.select_module_atom()
-    |> read(id)
-  end
+  # def read((type, id) when is_bitstring(type) and is_bitstring(id) do
+  #   type
+  #   |> Stately.select_module_atom()
+  #   |> read(id)
+  # end
 
-  def read_state(_type, _id) do
-    {:error, "Bad argument(s)"}
-  end
+  # def read((_type, _id) do
+  #   {:error, "Bad argument(s)"}
+  # end
 
   ### delete
 
@@ -230,7 +229,7 @@ defmodule Metr do
     Task.await(listening_task)
   end
 
-  defp read(type, id) when is_atom(type) do
+  defp read_state(type, id) when is_atom(type) do
     # Start listener
     listening_task = Task.async(&listen/0)
 

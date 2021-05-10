@@ -399,8 +399,8 @@ defmodule DeckTest do
     updated_deck = Deck.read(deck_one_id)
     [^first_result_id, ^second_result_id, _third_result_id] = updated_deck.results
 
-    player_one = Metr.read_player(player_one_id)
-    player_two = Metr.read_player(player_two_id)
+    player_one = Metr.read(player_one_id, :player)
+    player_two = Metr.read(player_two_id, :player)
 
     Data.wipe_test("Game", [second_game_id, third_game_id])
     Data.wipe_test("Result", player_one.results)

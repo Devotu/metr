@@ -122,7 +122,7 @@ defmodule MetrTest do
     assert 2 == Enum.count(deck_1.results)
     [_player_2_result_1, player_2_result_2] = player_2.results
 
-    result_1 = Metr.read_state(:result, player_2_result_2)
+    result_1 = Metr.read(player_2_result_2, :result)
     assert game_2_id == result_1.game_id
     assert player_2_id == result_1.player_id
     assert deck_2_id == result_1.deck_id
@@ -163,10 +163,10 @@ defmodule MetrTest do
     game = Game.read(game_id)
     assert game_id == Metr.delete_game(game_id)
 
-    deck_1 = Metr.read_deck(deck_1_id)
+    deck_1 = Metr.read(deck_1_id, :deck)
     assert 0 == Enum.count(deck_1.results)
 
-    player_1 = Metr.read_player(player_1_id)
+    player_1 = Metr.read(player_1_id, :player)
     assert 0 == Enum.count(player_1.results)
 
     assert {:error, "Game not an actual game id not found"} ==
@@ -304,13 +304,13 @@ defmodule MetrTest do
     Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
     Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
 
-    deck_initial = Metr.read_deck(deck_id)
+    deck_initial = Metr.read(deck_id, :deck)
     assert nil == deck_initial.rank
 
     # 01
     Metr.alter_rank(deck_id, :up)
 
-    deck_0_1 = Metr.read_deck(deck_id)
+    deck_0_1 = Metr.read(deck_id, :deck)
     assert {0, 1} == deck_0_1.rank
 
     # 10
@@ -320,7 +320,7 @@ defmodule MetrTest do
     # 20
     Metr.alter_rank(deck_id, :up)
 
-    deck_2_0 = Metr.read_deck(deck_id)
+    deck_2_0 = Metr.read(deck_id, :deck)
     assert {2, 0} == deck_2_0.rank
 
     # 2-1
@@ -340,7 +340,7 @@ defmodule MetrTest do
     # -20
     Metr.alter_rank(deck_id, :down)
 
-    deck_02_0 = Metr.read_deck(deck_id)
+    deck_02_0 = Metr.read(deck_id, :deck)
     assert {-2, 0} == deck_02_0.rank
 
     Data.wipe_test("Player", [player_id])
@@ -373,7 +373,7 @@ defmodule MetrTest do
 
     match_id = Metr.create_match(match_data)
 
-    initial_match = Metr.read_match(match_id)
+    initial_match = Metr.read(match_id, :match)
     assert [] == initial_match.games
     assert :initialized == initial_match.status
     assert player_1_id == initial_match.player_one
@@ -390,7 +390,7 @@ defmodule MetrTest do
 
     game_1_id = Metr.create_game(game_data)
 
-    ongoing_match = Metr.read_match(match_id)
+    ongoing_match = Metr.read(match_id, :match)
     assert 1 = ongoing_match.games |> Enum.count()
     assert :open == ongoing_match.status
     assert nil == ongoing_match.winner
@@ -400,15 +400,15 @@ defmodule MetrTest do
 
     assert :ok == Metr.end_match(match_id)
 
-    ended_match = Metr.read_match(match_id)
+    ended_match = Metr.read(match_id, :match)
     assert 3 = ended_match.games |> Enum.count()
     assert true == ended_match.ranking
     assert :closed == ended_match.status
     assert 2 == ended_match.winner
 
-    deck_1 = Metr.read_deck(deck_1_id)
+    deck_1 = Metr.read(deck_1_id, :deck)
     assert {0, -1} == deck_1.rank
-    deck_2 = Metr.read_deck(deck_2_id)
+    deck_2 = Metr.read(deck_2_id, :deck)
     assert {0, 1} == deck_2.rank
 
     Data.wipe_test("Player", [player_1_id, player_2_id])
@@ -435,7 +435,7 @@ defmodule MetrTest do
       winner: 1
     }
     |> Metr.create_game()
-    |> Metr.read_game()
+    |> Metr.read(:game)
 
     results = Metr.list(:result, game.results)
     assert 2 == Enum.count(results)
@@ -467,17 +467,15 @@ defmodule MetrTest do
     }
     |> Metr.create_game()
 
-    deck_1_state = Metr.read_state(:deck, deck_1_id)
+    deck_1_state = Metr.read(deck_1_id, :deck)
     [result_1, result_2] = Metr.list(:result, by: {:game, game_1_id})
     assert [result_1.id, result_2.id] == deck_1_state.results
 
-    player_1_state = Metr.read_state(:player, player_1_id)
+    player_1_state = Metr.read(player_1_id, :player)
     assert [result_1.id, result_2.id] == player_1_state.results
 
-    game_1_state = Metr.read_state(:game, game_1_id)
+    game_1_state = Metr.read(game_1_id, :game)
     assert 2 == Enum.count(game_1_state.results)
-
-    assert {:error, "Bad argument(s)"} == Metr.read_state("Game", 123_456)
 
     Data.wipe_test("Player", [player_1_id])
     Data.wipe_test("Deck", [deck_1_id])
@@ -542,7 +540,7 @@ defmodule MetrTest do
     tagged_result = Stately.read(result_id_1, "Result")
     assert [tag_name] == tagged_result.tags
 
-    test_tag = Metr.read_state("Tag", tag_name)
+    test_tag = Metr.read(tag_name, :tag)
     [dt, pt, mt, gt, rt] = test_tag.tagged
     {did, _dtime} = dt
     assert did == deck_id

@@ -135,9 +135,9 @@ defmodule GameTest do
     }
     |> Metr.create_game()
 
-    deck_1 = Metr.read_state(:deck, deck_1_id)
-    deck_2 = Metr.read_state(:deck, deck_2_id)
-    deck_3 = Metr.read_state(:deck, deck_3_id)
+    deck_1 = Metr.read(deck_1_id, :deck)
+    deck_2 = Metr.read(deck_2_id, :deck)
+    deck_3 = Metr.read(deck_3_id, :deck)
 
     assert 5 == Enum.count(deck_1.results)
     assert 3 == Enum.count(Metr.list(:game, limit: 3))
@@ -254,7 +254,7 @@ defmodule GameTest do
       power_two: 1
     }
     |> Metr.create_game()
-    |> Metr.read_game()
+    |> Metr.read(:game)
 
     [result_11_id, result_12_id] = game_1.results
     result_11 = Result.read(result_11_id)
@@ -270,7 +270,7 @@ defmodule GameTest do
       winner: 2
     }
     |> Metr.create_game()
-    |> Metr.read_game()
+    |> Metr.read(:game)
 
     [result_21_id, result_22_id] = game_2.results
     result_21 = Result.read(result_21_id)
@@ -287,7 +287,7 @@ defmodule GameTest do
       winner: 2
     }
     |> Metr.create_game()
-    |> Metr.read_game()
+    |> Metr.read(:game)
 
     [result_31_id, result_32_id] = game_3.results
     result_31 = Result.read(result_31_id)
@@ -377,7 +377,7 @@ defmodule GameTest do
       match: match_id
     }
     |> Metr.create_game()
-    |> Metr.read_game()
+    |> Metr.read(:game)
 
     assert match_id == game_1.match
 
@@ -406,7 +406,7 @@ defmodule GameTest do
       turns: number_of_turns
     }
     |> Metr.create_game()
-    |> Metr.read_game()
+    |> Metr.read(:game)
 
     assert game.turns == number_of_turns
 
