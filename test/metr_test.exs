@@ -14,7 +14,7 @@ defmodule MetrTest do
   @id_length 14
 
   test "list players" do
-    assert is_list(Metr.list_players())
+    assert is_list(Metr.list(:player))
   end
 
   test "create deck" do
@@ -54,15 +54,15 @@ defmodule MetrTest do
   end
 
   test "list decks" do
-    assert is_list(Metr.list_decks())
+    assert is_list(Metr.list(:deck))
   end
 
   test "list games" do
-    assert is_list(Metr.list_games())
+    assert is_list(Metr.list(:game))
   end
 
   test "list results" do
-    assert is_list(Metr.list_results())
+    assert is_list(Metr.list(:result))
   end
 
   test "create game" do
@@ -108,16 +108,16 @@ defmodule MetrTest do
     game_2_id = Metr.create_game(game_2)
     assert @id_length = String.length(game_2_id)
 
-    results = Metr.list_results()
+    results = Metr.list(:result)
 
     assert 2 ==
              Enum.filter(results, fn r -> String.equivalent?(r.game_id, game_2_id) end)
              |> Enum.count()
 
-    [deck_1] = Metr.list_decks() |> Enum.filter(fn d -> String.equivalent?(d.id, deck_1_id) end)
+    [deck_1] = Metr.list(:deck) |> Enum.filter(fn d -> String.equivalent?(d.id, deck_1_id) end)
 
     [player_2] =
-      Metr.list_players() |> Enum.filter(fn p -> String.equivalent?(p.id, player_2_id) end)
+      Metr.list(:player) |> Enum.filter(fn p -> String.equivalent?(p.id, player_2_id) end)
 
     assert 2 == Enum.count(deck_1.results)
     [_player_2_result_1, player_2_result_2] = player_2.results
@@ -172,7 +172,7 @@ defmodule MetrTest do
     assert {:error, "Game not an actual game id not found"} ==
              Metr.delete_game("not an actual game id")
 
-    results = Metr.list_results()
+    results = Metr.list(:result)
 
     assert 0 ==
              Enum.filter(results, fn g -> String.equivalent?(g.id, game_id) end) |> Enum.count()
@@ -291,8 +291,8 @@ defmodule MetrTest do
   end
 
   test "format" do
-    assert "standard" in Metr.list_formats()
-    assert "pauper" in Metr.list_formats()
+    assert "standard" in Metr.list(:format)
+    assert "pauper" in Metr.list(:format)
   end
 
   test "adjust rank" do
@@ -555,7 +555,7 @@ defmodule MetrTest do
     {rid, _rtime} = rt
     assert rid == result_id_1
 
-    assert [test_tag] == Metr.list_tags()
+    assert [test_tag] == Metr.list(:tag)
 
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
     Data.wipe_test("Tag", tag_name)

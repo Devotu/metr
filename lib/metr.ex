@@ -50,31 +50,28 @@ defmodule Metr do
   end
 
   ### list
-  def list_players(), do: list(:player)
-  def list_players(ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:player, id) end)
+  # all
+  def list(:player), do: list_of(:player)
+  def list(:deck), do: list_of(:deck)
+  def list(:result), do: list_of(:result)
+  def list(:match), do: list_of(:match)
+  def list(:game), do: list_of(:game)
+  def list(:format), do: list_of(:format)
+  def list(:tag), do: list_of(:tag)
 
-  def list_decks(), do: list(:deck)
-  def list_decks(ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:deck, id) end)
-
-  def list_results(), do: list(:result)
-  def list_results(ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:result, id) end)
-
-  def list_matches(), do: list(:match)
-  def list_matches(ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:match, id) end)
-
-  def list_formats(), do: list(:format)
-
-  def list_tags(), do: list(:tag)
-
-  def list_games(), do: list(:game)
-  def list_games(game_ids) when is_list(game_ids), do: game_ids |> Enum.map(fn gid -> read_game(gid) end)
+  #specific
+  def list(:player, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:player, id) end)
+  def list(:deck, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:deck, id) end)
+  def list(:result, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:result, id) end)
+  def list(:match, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:match, id) end)
+  def list(:game, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:game, id) end)
   def list_games(limit) when is_number(limit) do
     constraints = Map.put(%{}, :limit, limit)
-    list(:game, constraints)
+    list_of(:game, constraints)
   end
   def list_games(type, id) when is_atom(type) do
     constraints = Map.put(%{}, Stately.module_id(type), id)
-    list(:game, constraints)
+    list_of(:game, constraints)
   end
 
   def list_states(type, ids) when is_atom(type) do
@@ -189,7 +186,7 @@ defmodule Metr do
 
   ## runners ##
 
-  defp list(type) when is_atom(type) do
+  defp list_of(type) when is_atom(type) do
     # Start listener
     listening_task = Task.async(&listen/0)
 
@@ -201,7 +198,7 @@ defmodule Metr do
     Task.await(listening_task)
   end
 
-  defp list(type, constraints) when is_map(constraints) do
+  defp list_of(type, constraints) when is_map(constraints) do
     # Start listener
     listening_task = Task.async(&listen/0)
 
