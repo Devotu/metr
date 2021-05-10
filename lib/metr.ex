@@ -7,7 +7,7 @@ defmodule Metr do
 
   ## api
 
-  ###create
+  ### create
   def create_player(%{name: _n} = data) do
     create(:player, data)
   end
@@ -29,8 +29,24 @@ defmodule Metr do
       ranking: input.ranking,
       match: input.match,
       parts: [
-        %{part: 1, details: %{deck_id: input.deck_one, player_id: input.player_one, power: input.power_one, fun: input.fun_one}},
-        %{part: 2, details: %{deck_id: input.deck_two, player_id: input.player_two, power: input.power_two, fun: input.fun_two}},
+        %{
+          part: 1,
+          details: %{
+            deck_id: input.deck_one,
+            player_id: input.player_one,
+            power: input.power_one,
+            fun: input.fun_one
+          }
+        },
+        %{
+          part: 2,
+          details: %{
+            deck_id: input.deck_two,
+            player_id: input.player_two,
+            power: input.power_two,
+            fun: input.fun_two
+          }
+        }
       ],
       turns: input.turns
     }
@@ -39,13 +55,13 @@ defmodule Metr do
   end
 
   def create_match(
-    %{
-      :deck_1_id => _deck_1_id,
-      :deck_2_id => _deck_2_id,
-      :player_1_id => _player_1_id,
-      :player_2_id => _player_2_id
-    } = data
-  ) do
+        %{
+          :deck_1_id => _deck_1_id,
+          :deck_2_id => _deck_2_id,
+          :player_1_id => _player_1_id,
+          :player_2_id => _player_2_id
+        } = data
+      ) do
     create(:match, data)
   end
 
@@ -59,52 +75,32 @@ defmodule Metr do
   def list(:format), do: list_of(:format)
   def list(:tag), do: list_of(:tag)
 
-  #specific
+  # specific
   def list(:game, limit: limit) when is_number(limit) do
     constraints = Map.put(%{}, :limit, limit)
     list_of(:game, constraints)
   end
+
   def list(:game, by: {:deck, deck_id}) do
     constraints = Map.put(%{}, :deck_id, deck_id)
     list_of(:game, constraints)
   end
+
   def list(:result, by: {:game, game_id}) do
     constraints = Map.put(%{}, :game_id, game_id)
     list_of(:result, constraints)
   end
+
   def list(:result, by: {:deck, deck_id}) do
     constraints = Map.put(%{}, :deck_id, deck_id)
     list_of(:result, constraints)
   end
+
   def list(:player, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:player, id) end)
   def list(:deck, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:deck, id) end)
   def list(:result, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:result, id) end)
   def list(:match, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:match, id) end)
   def list(:game, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read(:game, id) end)
-
-  # def list_games(type, id) when is_atom(type) do
-  #   constraints = Map.put(%{}, Stately.module_id(type), id)
-  #   list_of(:game, constraints)
-  # end
-
-  # def list_states(type, ids) when is_atom(type) do
-  #   Enum.map(ids, fn id -> read(type, id) end)
-  # end
-
-  # def list_states(ids, type) when is_atom(type) do
-  #   Enum.map(ids, fn id -> read(type, id) end)
-  # end
-
-  # def list_states(state_type, by_type, id) when is_atom(state_type) and is_atom(by_type) do
-  #   constraints = Map.put(%{}, Stately.module_id(by_type), id)
-  #   list(state_type, constraints)
-  # end
-
-  # def list_states(type) when is_bitstring(type) do
-  #   type
-  #   |> Stately.select_module_atom()
-  #   |> list()
-  # end
 
   ### read
 
@@ -128,7 +124,7 @@ defmodule Metr do
   end
 
   def read_entity_history(id, type) when is_bitstring(type) do
-    History.of_entity id, Stately.select_module_atom(type)
+    History.of_entity(id, Stately.select_module_atom(type))
   end
 
   def read_input_log(limit) when is_number(limit) do
@@ -162,7 +158,6 @@ defmodule Metr do
     # Await response
     Task.await(listening_task)
   end
-
 
   ### functions
 
@@ -296,7 +291,6 @@ defmodule Metr do
         msg
     end
   end
-
 
   ## feed ##
   # by type
