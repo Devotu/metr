@@ -110,44 +110,15 @@ defmodule Metr do
   def read(id, :result), do: read_state(:result, id)
   def read(id, :tag), do: read_state(:tag, id)
 
-  # @spec read_entity_log(:deck | :game | :match | :player | :result, any) :: any
-  # def read_entity_log(type, id) when is_atom(type) do
-  #   read_log(type, id)
-  # end
-
   def read_log(id, :deck), do: read_log_of(:deck, id)
   def read_log(id, :game), do: read_log_of(:game, id)
   def read_log(id, :match), do: read_log_of(:match, id)
   def read_log(id, :player), do: read_log_of(:player, id)
   def read_log(id, :result), do: read_log_of(:result, id)
 
-  # def read_entity_log(type, id) when is_bitstring(type) do
-  #   type
-  #   |> Stately.select_module_atom()
-  #   |> read_log(id)
-  # end
-
-  # def read_entity_history(id, type) when is_bitstring(type) do
-  #   History.of_entity(id, Stately.select_module_atom(type))
-  # end
-
   def read_input_log(limit) when is_number(limit) do
     read_log(limit)
   end
-
-  # def read((id, type) when is_atom(type) and is_bitstring(id), do: read(type, id)
-
-  # def read((type, id) when is_atom(type) and is_bitstring(id), do: read(type, id)
-
-  # def read((type, id) when is_bitstring(type) and is_bitstring(id) do
-  #   type
-  #   |> Stately.select_module_atom()
-  #   |> read(id)
-  # end
-
-  # def read((_type, _id) do
-  #   {:error, "Bad argument(s)"}
-  # end
 
   ### delete
 
