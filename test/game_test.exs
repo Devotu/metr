@@ -140,7 +140,7 @@ defmodule GameTest do
     deck_3 = Metr.read_state(:deck, deck_3_id)
 
     assert 5 == Enum.count(deck_1.results)
-    assert 3 == Enum.count(Metr.list_games(3))
+    assert 3 == Enum.count(Metr.list(:game, limit: 3))
 
     Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
@@ -225,9 +225,9 @@ defmodule GameTest do
     }
     |> Metr.create_game()
 
-    assert 4 == Enum.count(Metr.list_states(:game, :deck, deck_2_id))
+    assert 4 == Enum.count(Metr.list(:game, by: {:deck, deck_2_id}))
 
-    results = Metr.list_results()
+    results = Metr.list(:result)
 
     Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
     Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
