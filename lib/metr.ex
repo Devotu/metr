@@ -1,6 +1,5 @@
 defmodule Metr do
   alias Metr.Event
-  alias Metr.History
   alias Metr.Router
   alias Metr.Modules.Stately
   alias Metr.Modules.Input.GameInput
@@ -128,9 +127,9 @@ defmodule Metr do
   #   |> read_log(id)
   # end
 
-  def read_entity_history(id, type) when is_bitstring(type) do
-    History.of_entity(id, Stately.select_module_atom(type))
-  end
+  # def read_entity_history(id, type) when is_bitstring(type) do
+  #   History.of_entity(id, Stately.select_module_atom(type))
+  # end
 
   def read_input_log(limit) when is_number(limit) do
     read_log(limit)
