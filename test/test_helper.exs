@@ -4,9 +4,10 @@ defmodule TestHelper do
   alias Metr.Data
   alias Metr.Modules.Game
   alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.PlayerInput
 
   def init_single_states(player_name, deck_name) do
-    player_id = Metr.create_player(%{name: player_name})
+    player_id = Metr.create_player(%PlayerInput{name: player_name})
     deck_id = Metr.create_deck(%{name: deck_name, player_id: player_id})
 
     match_id =
@@ -42,9 +43,9 @@ defmodule TestHelper do
   end
 
   def init_double_state(player_one_name, deck_one_name, player_two_name, deck_two_name) do
-    player_1_id = Metr.create_player(%{name: player_one_name})
+    player_1_id = Metr.create_player(%PlayerInput{name: player_one_name})
     deck_1_id = Metr.create_deck(%{name: deck_one_name, player_id: player_1_id})
-    player_2_id = Metr.create_player(%{name: player_two_name})
+    player_2_id = Metr.create_player(%PlayerInput{name: player_two_name})
     deck_2_id = Metr.create_deck(%{name: deck_two_name, player_id: player_2_id})
 
     match_id =

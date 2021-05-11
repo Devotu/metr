@@ -3,11 +3,12 @@ defmodule Metr do
   alias Metr.Router
   alias Metr.Modules.Stately
   alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.PlayerInput
 
   ## api
 
   ### create
-  def create_player(%{name: _n} = data) do
+  def create_player(%PlayerInput{} = data) do
     create(:player, data)
   end
 
