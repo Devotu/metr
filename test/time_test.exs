@@ -8,6 +8,7 @@ defmodule TimeTest do
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Time
 
@@ -35,9 +36,10 @@ defmodule TimeTest do
     Deck.feed(
       Event.new(
         [:create, :deck],
-        %{
+        %DeckInput{
           name: name,
-          player_id: id
+          player_id: id,
+          format: "standard"
         }
       ),
       nil

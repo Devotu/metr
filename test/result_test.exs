@@ -7,6 +7,7 @@ defmodule ResultTest do
   alias Metr.Modules.Deck
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
 
   test "valid created" do
@@ -26,9 +27,10 @@ defmodule ResultTest do
     Deck.feed(
       Event.new(
         [:create, :deck],
-        %{
+        %DeckInput{
           name: name,
-          player_id: id
+          player_id: id,
+          format: "standard"
         }
       ),
       nil

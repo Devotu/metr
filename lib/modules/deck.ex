@@ -44,13 +44,14 @@ defmodule Metr.Modules.Deck do
   alias Metr.Modules.Player
   alias Metr.Rank
   alias Metr.Modules.Result
+  alias Metr.Modules.Input.DeckInput
   alias Metr.Util
 
   @name __ENV__.module |> Stately.module_to_name()
 
   ## feed
-  def feed(%Event{keys: [:create, :deck], data: data} = event, repp) do
-    case verify_creation_data(data) do
+  def feed(%Event{keys: [:create, :deck], data: %DeckInput{} = data} = event, repp) do
+    case verify_new_deck_input(data) do
       {:error, reason} ->
         # Return
         [Event.new([:deck, :error, repp], %{cause: reason, data: data})]
@@ -207,19 +208,16 @@ defmodule Metr.Modules.Deck do
     @name
   end
 
-  defp verify_creation_data(%{name: name, player_id: player_id} = data) do
-    {:ok}
-    |> verify_name(name)
-    |> verify_player(player_id)
-    |> verify_input_content(data)
+  defp verify_new_deck_input(%DeckInput{} = data) do
+    case {verify_name(data.name), verify_player(data.player_id), verify_format(data.format)} do
+      {{:error, e}, _, _} -> {:error, e}
+      {_, {:error, e}, _} -> {:error, e}
+      {_, _, {:error, e}} -> {:error, e}
+      _ -> {:ok}
+    end
   end
 
-  defp verify_creation_data(%{player_id: _player_id}), do: {:error, "missing name parameter"}
-  defp verify_creation_data(%{name: _name}), do: {:error, "missing player_id parameter"}
-
-  defp verify_name({:error, _cause} = error, _id), do: error
-
-  defp verify_name({:ok}, name) when is_bitstring(name) do
+  defp verify_name(name) when is_bitstring(name) do
     case name do
       nil -> {:error, "no name"}
       "" -> {:error, "name cannot be blank"}
@@ -227,39 +225,17 @@ defmodule Metr.Modules.Deck do
     end
   end
 
-  defp verify_player({:error, _cause} = error, _id), do: error
-
-  defp verify_player({:ok}, player_id) do
+  defp verify_player(player_id) do
     case Player.exist?(player_id) do
       true -> {:ok}
       false -> {:error, "player #{player_id} not found"}
     end
   end
 
-  defp verify_input_content({:error, _error} = e, _data), do: e
-
-  defp verify_input_content({:ok}, data) do
-    valid_input_data = %{
-      name: "",
-      player_id: "",
-      format: "",
-      theme: "",
-      rank: 0,
-      advantage: 0,
-      price: 0,
-      black: false,
-      white: false,
-      red: true,
-      green: false,
-      blue: true,
-      colorless: false,
-      colors: %{},
-      parts: []
-    }
-
-    case Enum.empty?(Map.keys(data) -- Map.keys(valid_input_data)) do
+  defp verify_format(format) do
+    case Enum.member?(@formats, format) do
       true -> {:ok}
-      false -> {:error, "excess params given"}
+      false -> {:error, "format #{format} not vaild"}
     end
   end
 
@@ -356,17 +332,31 @@ defmodule Metr.Modules.Deck do
     Map.put(state, :rank, rank)
   end
 
+
+  defp from_input(%DeckInput{} = data, id, created_time) do
+    %Deck{
+      id: id,
+      name: data.name,
+      format: data.format,
+      theme: data.theme,
+      black: data.black,
+      white: data.white,
+      red: data.red,
+      green: data.green,
+      blue: data.blue,
+      colorless: data.colorless,
+      rank: nil,
+      price: data.price,
+      time: created_time
+    }
+  end
+
   ## gen
   @impl true
   def init({id, data, event}) do
-    case build_state(id, data, event.time) do
-      {:error, error} ->
-        {:stop, error}
-
-      %Deck{} = state ->
-        :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-        {:ok, state}
-    end
+    state = from_input(data, id, event.time)
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:ok, state}
   end
 
   def init(%Deck{} = state) do

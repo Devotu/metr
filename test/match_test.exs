@@ -8,6 +8,7 @@ defmodule MatchTest do
   alias Metr.Modules.Player
   alias Metr.Modules.Stately
   alias Metr.Router
+  alias Metr.Modules.Input.DeckInput
 
   test "basic feed" do
     assert [] == Match.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
@@ -20,7 +21,7 @@ defmodule MatchTest do
     player_id = player_created_event.data.out
 
     [deck_created_event] =
-      Deck.feed(Event.new([:create, :deck], %{name: "Alpha Match", player_id: player_id}), nil)
+      Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Alpha Match", player_id: player_id, format: "standard"}), nil)
 
     deck_id = deck_created_event.data.id
 
@@ -61,17 +62,20 @@ defmodule MatchTest do
     player_id = player_created_event.data.out
 
     [deck_1_created_event] =
-      Deck.feed(Event.new([:create, :deck], %{name: "Bravo Match", player_id: player_id}), nil)
+      Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Bravo Match", player_id: player_id, format: "standard"}), nil)
 
     deck_id_1 = deck_1_created_event.data.id
 
     [deck_2_created_event] =
       Deck.feed(
-        Event.new([:create, :deck], %{name: "Charlie Match", player_id: player_id, rank: {1, 0}}),
+        Event.new([:create, :deck], %DeckInput{name: "Charlie Match", player_id: player_id, format: "standard"}),
         nil
       )
 
     deck_id_2 = deck_2_created_event.data.id
+
+    Metr.alter_rank(deck_id_2, :up)
+    Metr.alter_rank(deck_id_2, :up)
 
     [resulting_event] =
       Match.feed(
@@ -98,7 +102,7 @@ defmodule MatchTest do
     player_id = player_created_event.data.out
 
     [deck_created_event] =
-      Deck.feed(Event.new([:create, :deck], %{name: "Delta Match", player_id: player_id}), nil)
+      Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Delta Match", player_id: player_id, format: "standard"}), nil)
 
     deck_id = deck_created_event.data.id
 

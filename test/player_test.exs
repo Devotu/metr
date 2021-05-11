@@ -7,6 +7,7 @@ defmodule PlayerTest do
   alias Metr.Modules.Game
   alias Metr.Modules.Player
   alias Metr.Modules.Stately
+  alias Metr.Modules.Input.DeckInput
 
   test "basic feed" do
     assert [] == Player.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
@@ -97,8 +98,8 @@ defmodule PlayerTest do
     Player.feed(Event.new([:create, :player], %{name: "Adam List"}), nil)
     Player.feed(Event.new([:create, :player], %{name: "Bertil List"}), nil)
     Player.feed(Event.new([:create, :player], %{name: "Ceasar List"}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: "Alpha List", player_id: "adam_list"}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: "Beta List", player_id: "bertil_list"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Alpha List", player_id: "adam_list"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Beta List", player_id: "bertil_list"}), nil)
     fake_pid = "#123"
     [resulting_event] = Stately.feed(Event.new([:list, :player]), fake_pid)
     assert [:players, fake_pid] == resulting_event.keys

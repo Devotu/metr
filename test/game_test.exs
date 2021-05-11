@@ -10,6 +10,7 @@ defmodule GameTest do
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
 
   test "create game" do
@@ -77,9 +78,9 @@ defmodule GameTest do
     Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
     Player.feed(Event.new([:create, :player], %{name: player_2_name}), nil)
     Player.feed(Event.new([:create, :player], %{name: player_3_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_3_name, player_id: player_3_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_3_name, player_id: player_3_id, format: "standard"}), nil)
 
     # 1
     game_1_id = %GameInput{
@@ -167,9 +168,9 @@ defmodule GameTest do
     Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
     Player.feed(Event.new([:create, :player], %{name: player_2_name}), nil)
     Player.feed(Event.new([:create, :player], %{name: player_3_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_3_name, player_id: player_3_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_3_name, player_id: player_3_id, format: "standard"}), nil)
 
     # 1v2
     game_1_id = %GameInput{
@@ -242,7 +243,7 @@ defmodule GameTest do
     deck_id = Id.hrid(deck_name)
 
     Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
 
     game_1 = %GameInput{
       player_one: player_id,
@@ -316,7 +317,7 @@ defmodule GameTest do
     deck_id = Id.hrid(deck_name)
 
     Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
 
     game_1_input = %GameInput{
       deck_one: deck_id,
@@ -352,7 +353,7 @@ defmodule GameTest do
     deck_id = Id.hrid(deck_name)
 
     Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
 
     [match_created_event] =
       Match.feed(

@@ -7,6 +7,7 @@ defmodule MetrTest do
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
   alias Metr.Modules.Player
+  alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Router
   alias Metr.Id
@@ -22,7 +23,7 @@ defmodule MetrTest do
     format = "commander"
     price = 12.34
 
-    deck_data = %{
+    deck_data = %DeckInput{
       black: false,
       white: false,
       red: true,
@@ -33,8 +34,6 @@ defmodule MetrTest do
       name: "Mike Metr",
       player_id: "martin_metr",
       theme: "commanding",
-      rank: -1,
-      advantage: 1,
       price: price
     }
 
@@ -47,7 +46,7 @@ defmodule MetrTest do
     assert false == deck.green
     assert true == deck.blue
     assert false == deck.colorless
-    assert {-1, 1} == deck.rank
+    assert nil == deck.rank # can only be initialized with nil and then adjusted
     assert price == deck.price
     Data.wipe_test("Deck", deck_id)
     Data.wipe_test("Player", deck_data.player_id)
@@ -78,8 +77,8 @@ defmodule MetrTest do
 
     Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
     Player.feed(Event.new([:create, :player], %{name: player_2_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
 
     game_1_id = %GameInput{
       player_one: player_1_id,
@@ -148,8 +147,8 @@ defmodule MetrTest do
 
     Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
     Player.feed(Event.new([:create, :player], %{name: player_2_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
 
     game_id = %GameInput{
       player_one: player_1_id,
@@ -202,9 +201,9 @@ defmodule MetrTest do
     Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
     Player.feed(Event.new([:create, :player], %{name: player_2_name}), nil)
     Player.feed(Event.new([:create, :player], %{name: player_3_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_3_name, player_id: player_3_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_3_name, player_id: player_3_id, format: "standard"}), nil)
 
     # 1 vs 2
     game_1_id = %GameInput{
@@ -256,8 +255,8 @@ defmodule MetrTest do
 
     Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
     Player.feed(Event.new([:create, :player], %{name: player_2_name}), nil)
-    Router.input(Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}))
-    Router.input(Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}))
+    Router.input(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}))
+    Router.input(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}))
 
     # 1 vs 2
     game_1_id = %GameInput{
@@ -299,7 +298,7 @@ defmodule MetrTest do
     deck_id = Id.hrid(deck_name)
 
     Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
 
     deck_initial = Metr.read(deck_id, :deck)
     assert nil == deck_initial.rank
@@ -357,8 +356,8 @@ defmodule MetrTest do
 
     Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
     Player.feed(Event.new([:create, :player], %{name: player_2_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
 
     match_data = %{
       player_1_id: player_1_id,
@@ -422,7 +421,7 @@ defmodule MetrTest do
     deck_id = Id.hrid(deck_name)
 
     Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
 
     game = %GameInput{
       player_one: player_id,
@@ -453,7 +452,7 @@ defmodule MetrTest do
     deck_1_id = Id.hrid(deck_1_name)
 
     Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
-    Router.input(Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}))
+    Router.input(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}))
 
     game_1_id = %GameInput{
       player_one: player_1_id,

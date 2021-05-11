@@ -3,12 +3,13 @@ ExUnit.start()
 defmodule TestHelper do
   alias Metr.Data
   alias Metr.Modules.Game
+  alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.PlayerInput
 
   def init_single_states(player_name, deck_name) do
     player_id = Metr.create_player(%PlayerInput{name: player_name})
-    deck_id = Metr.create_deck(%{name: deck_name, player_id: player_id})
+    deck_id = Metr.create_deck(%DeckInput{name: deck_name, player_id: player_id, format: "standard"})
 
     match_id =
       Metr.create_match(%{
@@ -44,9 +45,9 @@ defmodule TestHelper do
 
   def init_double_state(player_one_name, deck_one_name, player_two_name, deck_two_name) do
     player_1_id = Metr.create_player(%PlayerInput{name: player_one_name})
-    deck_1_id = Metr.create_deck(%{name: deck_one_name, player_id: player_1_id})
+    deck_1_id = Metr.create_deck(%DeckInput{name: deck_one_name, player_id: player_1_id, format: "standard"})
     player_2_id = Metr.create_player(%PlayerInput{name: player_two_name})
-    deck_2_id = Metr.create_deck(%{name: deck_two_name, player_id: player_2_id})
+    deck_2_id = Metr.create_deck(%DeckInput{name: deck_two_name, player_id: player_2_id, format: "standard"})
 
     match_id =
       Metr.create_match(%{
