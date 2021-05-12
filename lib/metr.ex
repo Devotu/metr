@@ -17,34 +17,7 @@ defmodule Metr do
     create(:deck, data)
   end
 
-  def create_game(%GameInput{} = input) do
-    data = %{
-      winner: input.winner,
-      ranking: input.ranking,
-      match: input.match,
-      parts: [
-        %{
-          part: 1,
-          details: %{
-            deck_id: input.deck_one,
-            player_id: input.player_one,
-            power: input.power_one,
-            fun: input.fun_one
-          }
-        },
-        %{
-          part: 2,
-          details: %{
-            deck_id: input.deck_two,
-            player_id: input.player_two,
-            power: input.power_two,
-            fun: input.fun_two
-          }
-        }
-      ],
-      turns: input.turns
-    }
-
+  def create_game(%GameInput{} = data) do
     create(:game, data)
   end
 

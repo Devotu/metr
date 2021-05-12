@@ -6,15 +6,47 @@ defmodule Metr.Modules.Game do
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
-  alias Metr.Modules.Stately
+  alias Metr.Modules.Deck
   alias Metr.Modules.Game
+  alias Metr.Modules.Player
   alias Metr.Modules.Result
-  alias Metr.Time
+  alias Metr.Modules.Stately
+  alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.ResultInput
 
   @name __ENV__.module |> Stately.module_to_name()
 
   ## feed
-  def feed(%Event{id: _event_id, keys: [:create, :game], data: data} = event, repp) do
+  def feed(%Event{id: _event_id, keys: [:create, :game], data: %GameInput{} = data} = event, repp) do
+
+
+    # data = %{
+    #   winner: input.winner,
+    #   ranking: input.ranking,
+    #   match: input.match,
+    #   parts: [
+    #     %{
+    #       part: 1,
+    #       details: %{
+    #         deck_id: input.deck_one,
+    #         player_id: input.player_one,
+    #         power: input.power_one,
+    #         fun: input.fun_one
+    #       }
+    #     },
+    #     %{
+    #       part: 2,
+    #       details: %{
+    #         deck_id: input.deck_two,
+    #         player_id: input.player_two,
+    #         power: input.power_two,
+    #         fun: input.fun_two
+    #       }
+    #     }
+    #   ],
+    #   turns: input.turns
+    # }
+
     case verify_input_data(data) do
       {:error, error} ->
         [Event.new([:game, :error, repp], %{cause: error, data: data})]
@@ -22,17 +54,17 @@ defmodule Metr.Modules.Game do
       {:ok} ->
         id = Id.guid()
         process_name = Data.genserver_id(__ENV__.module, id)
-        results = convert_to_results(data.parts, data.winner)
+        result_inputs = convert_to_result_inputs(data, id)
 
         result_ids =
-          results
-          |> Enum.map(fn r -> Map.put(r, :game_id, id) end)
+          result_inputs
           |> Enum.map(fn r -> Result.create(r, event) end)
-          |> Enum.map(fn {:ok, r} -> r.id end)
+          |> Enum.map(fn {:ok, result_id} -> result_id end)
 
-        match_id = find_match_id(data)
 
-        case GenServer.start(Metr.Modules.Game, {id, result_ids, match_id, find_turns(data), event},
+        data = Map.put(data, :results, result_ids)
+
+        case GenServer.start(Metr.Modules.Game, {id, data, event},
                name: process_name
              ) do
 
@@ -125,6 +157,31 @@ defmodule Metr.Modules.Game do
   end
 
   ## private
+  defp convert_to_result_inputs(%GameInput{} = data, game_id) do
+    [to_result_input(data.player_one, data.deck_one, game_id, is_winner(data.winner, 1), data.power_one, data.fun_one),
+    to_result_input(data.player_two, data.deck_two, game_id, is_winner(data.winner, 2), data.power_two, data.fun_two)]
+  end
+
+  defp to_result_input(player_id, deck_id, game_id, place, power, fun) do
+    %ResultInput{
+      player_id: player_id,
+      deck_id: deck_id,
+      game_id: game_id,
+      place: place,
+      power: power,
+      fun: fun
+    }
+  end
+
+  @spec is_winner(integer, integer) :: integer
+  defp is_winner(winner, part) do
+    case winner == part do
+      true -> 1
+      false -> 2
+    end
+  end
+
+
   defp convert_to_results(parts, winner) do
     parts
     |> Enum.map(fn p -> fill_power(p) end)
@@ -155,6 +212,67 @@ defmodule Metr.Modules.Game do
   end
 
   ## Input verification
+  defp verify_input_data(%GameInput{} = data) do
+    p1 = verify_part(data.player_one, data.deck_one, data.power_one, data.fun_one)
+    p2 = verify_part(data.player_two, data.deck_two, data.power_two, data.fun_two)
+    w = verify_winner(data.winner)
+
+    case [p1, p2, w] do
+      [{:error, e}, _, _] -> {:error, e}
+      [_, {:error, e}, _] -> {:error, e}
+      [_, _, {:error, e}] -> {:error, e}
+      _ -> {:ok}
+    end
+  end
+
+  defp verify_part(player_id, deck_id, power, fun) do
+    p = verify_player(player_id)
+    d = verify_deck(deck_id)
+    po = verify_power(power)
+    f = verify_fun(fun)
+
+    case [p, d, po, f] do
+      [{:error, e}, _, _, _] -> {:error, e}
+      [_, {:error, e}, _, _] -> {:error, e}
+      [_, _, {:error, e}, _] -> {:error, e}
+      [_, _, _, {:error, e}] -> {:error, e}
+      _ -> {:ok}
+    end
+  end
+
+  defp verify_player(player_id) do
+    case Player.exist?(player_id) do
+      true -> {:ok}
+      false -> {:error, "player #{player_id} not found"}
+    end
+  end
+
+  defp verify_deck(deck_id) do
+    case Deck.exist?(deck_id) do
+      true -> {:ok}
+      false -> {:error, "deck #{deck_id} not found"}
+    end
+  end
+
+  defp verify_winner(0), do: {:ok}
+  defp verify_winner(1), do: {:ok}
+  defp verify_winner(2), do: {:ok}
+  defp verify_winner(nil), do: {:error, "winner must be set"}
+  defp verify_winner(winner) when not is_number(winner), do: {:error, "winner must be a number"}
+  defp verify_winner(winner) when winner > 2 or winner < 0, do: {:error, "winner must be a number in [0,1,2]"}
+  defp verify_winner(_), do: {:ok}
+
+  defp verify_power(nil), do: {:ok}
+  defp verify_power(power) when not is_number(power), do: {:error, "invalid power input - power #{Kernel.inspect(power)} not a number"}
+  defp verify_power(power) when power > 2 or power < -2, do: {:error, "invalid power input - power #{power} is not in range"}
+  defp verify_power(data), do: {:ok}
+
+  defp verify_fun(nil), do: {:ok}
+  defp verify_fun(fun) when not is_number(fun), do: {:error, "invalid fun input - fun #{Kernel.inspect(fun)} is not a number"}
+  defp verify_fun(fun) when fun > 2 or fun < -2, do: {:error, "invalid fun input - fun #{fun} is not in range"}
+  defp verify_fun(_), do: {:ok}
+
+
   defp verify_input_data(data) do
     verify_parts(data.parts)
   end
@@ -259,10 +377,21 @@ defmodule Metr.Modules.Game do
     end
   end
 
+  defp from_input(%GameInput{} = data, id, created_time) do
+    %Game{
+      id: id,
+      time: created_time,
+      match: data.match,
+      turns: data.turns,
+      tags: data.tags,
+      results: data.results
+    }
+  end
+
   ## gen
   @impl true
-  def init({id, result_ids, match_id, turns, event}) do
-    state = %Game{id: id, time: Time.timestamp(), results: result_ids, match: match_id, turns: turns}
+  def init({id, %GameInput{} = data, event}) do
+    state = from_input(data, id, event.time)
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}
   end

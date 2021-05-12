@@ -5,7 +5,6 @@ defmodule GameTest do
   alias Metr.Modules.Deck
   alias Metr.Event
   alias Metr.Modules.Game
-  alias Metr.HRC
   alias Metr.Id
   alias Metr.Modules.Match
   alias Metr.Modules.Player
@@ -19,43 +18,26 @@ defmodule GameTest do
     player_two_name = "Fredrik Game"
     deck_two_name = "Foxtrot Game"
 
-    {player_id, deck_id, player_two_id, deck_two_id, match_id, game_id} =
+    {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id} =
       TestHelper.init_double_state(player_name, deck_name, player_two_name, deck_two_name)
 
-    hcr =
-      HRC.parse("""
-      create game
-        with
-          part 1
-          player_id erik_game
-          and deck_id echo_game
-          and power positive
-          and fun bad
-        with
-          part 2
-          player_id fredrik_game
-          and deck_id foxtrot_game
-        with winner 2
-      """)
+    game_input = %GameInput{
+      player_one: player_one_id,
+      player_two: player_two_id,
+      deck_one: deck_one_id,
+      deck_two: deck_two_id,
+      power_one: 1,
+      fun_one: -2,
+      winner: 2
+    }
 
-    assert is_struct(hcr)
-    assert hcr.action == :create
-    assert hcr.subject == :game
-    assert hcr.details == %{winner: 2}
-
-    assert hcr.parts ==
-             [
-               %{part: 1, details: %{deck_id: "echo_game", player_id: "erik_game", power: 1, fun: -2}},
-               %{part: 2, details: %{deck_id: "foxtrot_game", player_id: "fredrik_game"}}
-             ]
-
-    [resulting_event] = Game.feed(Event.new(hcr), nil)
+    [resulting_event] = Game.feed(Event.new([:create, :game], game_input), nil)
     assert [:game, :created, nil] == resulting_event.keys
     assert is_bitstring(resulting_event.id)
     Data.wipe_test("Game", resulting_event.data.id)
     Data.wipe_test("Result", resulting_event.data.result_ids)
     TestHelper.cleanup_double_states(
-      {player_id, deck_id, player_two_id, deck_two_id, match_id, game_id}
+      {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id}
     )
   end
 
@@ -329,7 +311,7 @@ defmodule GameTest do
       winner: 2
     }
 
-    {:error, "invalid power input - power 3 is not in range"} = Metr.create_game(game_1_input)
+    {:error, "invalid power input - power 3 is not in range"} = Metr.create_game(game_1_input) |> IO.inspect(label: "game test - inlaid input")
 
     game_2_input = %GameInput{
       deck_one: deck_id,

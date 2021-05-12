@@ -274,7 +274,7 @@ defmodule Metr.Modules.Deck do
 
   ## gen
   @impl true
-  def init({id, data, event}) do
+  def init({id, %DeckInput{} = data, event}) do
     state = from_input(data, id, event.time)
     :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
     {:ok, state}

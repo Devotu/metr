@@ -8,6 +8,7 @@ defmodule PlayerTest do
   alias Metr.Modules.Player
   alias Metr.Modules.Stately
   alias Metr.Modules.Input.DeckInput
+  alias Metr.Modules.Input.GameInput
 
   test "basic feed" do
     assert [] == Player.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
@@ -57,14 +58,15 @@ defmodule PlayerTest do
 
     [game_created_event] =
       Game.feed(
-        Event.new([:create, :game], %{
-          parts: [
-            %{
-              details: %{deck_id: deck_one_id, power: 2, fun: -1, player_id: player_one_id},
-              part: 1
-            },
-            %{details: %{deck_id: deck_two_id, power: 1, fun: 2, player_id: player_two_id}, part: 2}
-          ],
+        Event.new([:create, :game], %GameInput{
+          player_one: player_one_id,
+          player_two: player_two_id,
+          deck_one: deck_one_id,
+          deck_two: deck_two_id,
+          power_one: 2,
+          power_two: 1,
+          fun_one: -1,
+          fun_two: 2,
           winner: 2,
           ranking: false
         }),

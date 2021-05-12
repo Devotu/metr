@@ -139,14 +139,15 @@ defmodule DeckTest do
 
     [game_created_event] =
       Game.feed(
-        Event.new([:create, :game], %{
-          parts: [
-            %{
-              details: %{deck_id: deck_1_id, power: -1, fun: -2, player_id: player_1_id},
-              part: 1
-            },
-            %{details: %{deck_id: deck_2_id, power: 1, fun: 2, player_id: player_2_id}, part: 2}
-          ],
+        Event.new([:create, :game], %GameInput{
+          player_one: player_1_id,
+          player_two: player_2_id,
+          deck_one: deck_1_id,
+          deck_two: deck_2_id,
+          power_one: -1,
+          power_two: 1,
+          fun_one: -2,
+          fun_two: 2,
           winner: 1,
           ranking: false
         }),
