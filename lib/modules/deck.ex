@@ -219,7 +219,6 @@ defmodule Metr.Modules.Deck do
 
   defp verify_name(name) when is_bitstring(name) do
     case name do
-      nil -> {:error, "no name"}
       "" -> {:error, "name cannot be blank"}
       _ -> {:ok}
     end
@@ -237,84 +236,6 @@ defmodule Metr.Modules.Deck do
       true -> {:ok}
       false -> {:error, "format #{format} not vaild"}
     end
-  end
-
-  defp build_state(id, %{name: name} = data, time_of_creation) do
-    %Deck{id: id, name: name, time: time_of_creation}
-    |> apply_colors(data)
-    |> apply_format(data)
-    |> apply_rank(data)
-    |> stamp_deck()
-  end
-
-  defp apply_colors({:error, _error} = e, _data), do: {e}
-
-  defp apply_colors(%Deck{} = deck, data) when is_map(data) do
-    case color_data_type(data) do
-      :list ->
-        Enum.reduce(data.colors, deck, fn c, d -> apply_color(c, d) end)
-
-      :bool ->
-        Map.merge(deck, data)
-
-      _ ->
-        deck
-    end
-  end
-
-  defp color_data_type(%{colors: _colors}), do: :list
-
-  defp color_data_type(%{
-         black: _b,
-         white: _w,
-         red: _r,
-         green: _g,
-         blue: _bl,
-         colorless: _c
-       }),
-       do: :bool
-
-  defp color_data_type(_), do: :none
-
-  defp apply_color(color, %Deck{} = deck) when is_atom(color) do
-    Map.put(deck, color, true)
-  end
-
-  defp apply_format({:error, _error} = e, _data), do: e
-
-  defp apply_format(%Deck{} = deck, data) when is_map(data) do
-    case Map.has_key?(data, :format) do
-      true ->
-        apply_format(deck, data.format)
-
-      false ->
-        deck
-    end
-  end
-
-  defp apply_format(deck, format_descriptor) when is_bitstring(format_descriptor) do
-    case String.downcase(format_descriptor) do
-      f when f in @formats -> Map.put(deck, :format, format_descriptor)
-      _ -> {:error, :invalid_format}
-    end
-  end
-
-  defp apply_rank({:error, _error} = e, _data), do: e
-
-  defp apply_rank(%Deck{} = deck, data) do
-    case Map.has_key?(data, :rank) and is_tuple(data.rank) do
-      true ->
-        Map.update!(deck, :rank, fn _r -> Rank.uniform_rank(data.rank) end)
-
-      false ->
-        deck
-    end
-  end
-
-  defp stamp_deck({:error, _error} = e), do: e
-
-  defp stamp_deck(data) when is_map(data) do
-    Map.take(data, Map.keys(%Deck{}))
   end
 
   defp find_original_rank(%Event{data: %{rank: rank}}), do: Rank.uniform_rank(rank)
