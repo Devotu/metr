@@ -267,8 +267,8 @@ defmodule Metr.Modules.Match do
     {:ok, state}
   end
 
-  def init(recalled_state) do
-    {:ok, recalled_state}
+  def init(%Match{} = state) do
+    {:ok, state}
   end
 
   @impl true
