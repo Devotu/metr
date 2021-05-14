@@ -177,41 +177,8 @@ defmodule Metr.Modules.Match do
     end
   end
 
-  defp verify_rank(deck_id_1, _deck_id_2, false), do: {:ok}
+  defp verify_rank(_deck_id_1, _deck_id_2, false), do: {:ok}
   defp verify_rank(deck_id_1, deck_id_2, true) do
-    deck_1 = Deck.read(deck_id_1)
-    deck_2 = Deck.read(deck_id_2)
-
-    case Rank.is_at_same(deck_1.rank, deck_2.rank) do
-      false -> {:error, "ranks does not match"}
-      _ -> {:ok}
-    end
-  end
-
-
-  defp verify_player({:error, _cause} = error, _id), do: error
-
-  defp verify_player({:ok}, id) do
-    case Player.read(id) do
-      nil -> {:error, "player #{id} not found"}
-      {:error, reason} -> {:error, reason}
-      _ -> {:ok}
-    end
-  end
-
-  defp verify_deck({:error, _cause} = error, _id), do: error
-
-  defp verify_deck({:ok}, id) do
-    case Deck.read(id) do
-      nil -> {:error, "deck #{id} not found"}
-      {:error, reason} -> {:error, reason}
-      _ -> {:ok}
-    end
-  end
-
-  defp verify_rank({:error, _cause} = error, _deck_id_1, _deck_id_2, _ranking), do: error
-  defp verify_rank({:ok}, _deck_id_1, _deck_id_2, false), do: {:ok}
-  defp verify_rank({:ok}, deck_id_1, deck_id_2, true) do
     deck_1 = Deck.read(deck_id_1)
     deck_2 = Deck.read(deck_id_2)
 

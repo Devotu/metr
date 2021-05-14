@@ -181,36 +181,6 @@ defmodule Metr.Modules.Game do
     end
   end
 
-
-  defp convert_to_results(parts, winner) do
-    parts
-    |> Enum.map(fn p -> fill_power(p) end)
-    |> Enum.map(fn p -> fill_fun(p) end)
-    |> Enum.map(fn p -> part_to_result(p, winner) end)
-  end
-
-  defp fill_power(%{
-         part: part,
-         details: %{player_id: _player, deck_id: _deck, power: _power} = details
-       }) do
-    %{part: part, details: details}
-  end
-
-  defp fill_power(%{part: part, details: %{player_id: _player, deck_id: _deck} = details}) do
-    %{part: part, details: Map.put(details, :power, nil)}
-  end
-
-  defp fill_fun(%{
-         part: part,
-         details: %{player_id: _player, deck_id: _deck, fun: _power} = details
-       }) do
-    %{part: part, details: details}
-  end
-
-  defp fill_fun(%{part: part, details: %{player_id: _player, deck_id: _deck} = details}) do
-    %{part: part, details: Map.put(details, :fun, nil)}
-  end
-
   ## Input verification
   defp verify_input_data(%GameInput{} = data) do
     p1 = verify_part(data.player_one, data.deck_one, data.power_one, data.fun_one)
@@ -265,92 +235,14 @@ defmodule Metr.Modules.Game do
   defp verify_power(nil), do: {:ok}
   defp verify_power(power) when not is_number(power), do: {:error, "invalid power input - power #{Kernel.inspect(power)} not a number"}
   defp verify_power(power) when power > 2 or power < -2, do: {:error, "invalid power input - power #{power} is not in range"}
-  defp verify_power(data), do: {:ok}
+  defp verify_power(_data), do: {:ok}
 
   defp verify_fun(nil), do: {:ok}
   defp verify_fun(fun) when not is_number(fun), do: {:error, "invalid fun input - fun #{Kernel.inspect(fun)} is not a number"}
   defp verify_fun(fun) when fun > 2 or fun < -2, do: {:error, "invalid fun input - fun #{fun} is not in range"}
   defp verify_fun(_), do: {:ok}
 
-
-  defp verify_input_data(data) do
-    verify_parts(data.parts)
-  end
-
-  defp verify_parts([part_one, part_two]) do
-    v1 = verify_part(part_one)
-    v2 = verify_part(part_two)
-    case [v1, v2] do
-      [{:error, cause}, _] -> {:error, cause}
-      [_, {:error, cause}] -> {:error, cause}
-      _ -> {:ok}
-    end
-  end
-  defp verify_parts(_), do: {:error, "invalid number of participants"}
-
-  defp verify_part(%{details: data}) do
-    {:ok, data}
-    |> verify_player()
-    |> verify_deck()
-    |> verify_power()
-    |> verify_fun()
-  end
-
-  # defp verify_player({:error, _reason} = e), do: e
-  defp verify_player({:ok, data}) do
-    case Stately.exist?(data.player_id, :player) do
-      true -> {:ok, data}
-      false -> {:error, "player #{data.player_id} does not exist"}
-    end
-  end
-
-  defp verify_deck({:error, _reason} = e), do: e
-  defp verify_deck({:ok, data}) do
-    case Stately.exist?(data.deck_id, :deck) do
-      true -> {:ok, data}
-      false -> {:error, "deck #{data.deck_id} does not exist"}
-    end
-  end
-
-  defp verify_power({:error, _reason} = e), do: e
-  defp verify_power({:ok, %{power: nil} = data}), do: {:ok, data}
-  defp verify_power({:ok, %{power: power}}) when not is_number(power), do: {:error, "invalid power input - power #{Kernel.inspect(power)} not a number"}
-  defp verify_power({:ok, %{power: power}}) when power > 2 or power < -2, do: {:error, "invalid power input - power #{power} is not in range"}
-  defp verify_power({:ok, data}), do: {:ok, data}
-
-  defp verify_fun({:error, _reason} = e), do: e
-  defp verify_fun({:ok, %{fun: nil} = data}), do: {:ok, data}
-  defp verify_fun({:ok, %{fun: fun}}) when not is_number(fun), do: {:error, "invalid fun input - fun #{Kernel.inspect(fun)} is not a number"}
-  defp verify_fun({:ok, %{fun: fun}}) when fun > 2 or fun < -2, do: {:error, "invalid fun input - fun #{fun} is not in range"}
-  defp verify_fun({:ok, data}), do: {:ok, data}
-
   ## Internals
-  defp part_to_result(part, winner) do
-    %Result{
-      player_id: part.details.player_id,
-      deck_id: part.details.deck_id,
-      place: place(part.part, winner),
-      power: part.details.power,
-      fun: part.details.fun
-    }
-  end
-
-  defp place(_part_id, 0), do: 0
-
-  defp place(part_id, winner_id) do
-    case part_id == winner_id do
-      true -> 1
-      false -> 2
-    end
-  end
-
-  defp find_match_id(%{match: match_id}), do: match_id
-  defp find_match_id(_), do: nil
-
-  defp find_turns(%{turns: 0}), do: nil
-  defp find_turns(%{turns: turns}), do: turns
-  defp find_turns(_), do: nil
-
   defp is_ranked?(%{ranked: ranked}) when is_boolean(ranked), do: ranked
   defp is_ranked?(_), do: false
 
