@@ -1,5 +1,5 @@
 defmodule Metr.Modules.Input.DeckInput do
-  @enforce_keys [:name, :player_id]
+  @enforce_keys [:name, :player_id, :format]
   defstruct name: nil,
             player_id: nil,
             format: "",

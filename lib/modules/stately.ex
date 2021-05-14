@@ -187,7 +187,6 @@ defmodule Metr.Modules.Stately do
   def is_accepted_name({:error, e}, _name), do: {:error, e}
   def is_accepted_name(:ok, name), do: is_accepted_name(name)
   def is_accepted_name(""), do: {:error, "name cannot be empty"}
-
   def is_accepted_name(name) when is_bitstring(name) do
     case String.length(name) < @valid_name_length do
       true -> :ok

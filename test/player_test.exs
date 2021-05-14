@@ -100,8 +100,8 @@ defmodule PlayerTest do
     Player.feed(Event.new([:create, :player], %{name: "Adam List"}), nil)
     Player.feed(Event.new([:create, :player], %{name: "Bertil List"}), nil)
     Player.feed(Event.new([:create, :player], %{name: "Ceasar List"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Alpha List", player_id: "adam_list"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Beta List", player_id: "bertil_list"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Alpha List", player_id: "adam_list", format: "standard"}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Beta List", player_id: "bertil_list", format: "standard"}), nil)
     fake_pid = "#123"
     [resulting_event] = Stately.feed(Event.new([:list, :player]), fake_pid)
     assert [:players, fake_pid] == resulting_event.keys

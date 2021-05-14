@@ -9,6 +9,7 @@ defmodule DeckTest do
   alias Metr.Modules.Player
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.PlayerInput
 
   test "basic feed" do
     assert [] == Deck.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
@@ -364,5 +365,93 @@ defmodule DeckTest do
     TestHelper.cleanup_double_states(
       {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id}
     )
+  end
+
+
+  test "create deck failed name" do
+    player_name = "Kalle Deck"
+    player_id = Id.hrid(player_name)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
+
+    [resulting_event] =
+      Deck.feed(
+        Event.new([:create, :deck], %DeckInput{
+          name:  "",
+          player_id: player_id,
+          black: true,
+          red: true,
+          format: "standard"
+        }),
+        nil
+      )
+
+    assert [:deck, :error, nil] == resulting_event.keys
+
+    [resulting_event] =
+      Deck.feed(
+        Event.new([:create, :deck], %DeckInput{
+          name:  nil,
+          player_id: nil,
+          black: true,
+          red: true,
+          format: "standard"
+        }),
+        nil
+      )
+
+    assert [:deck, :error, nil] == resulting_event.keys
+
+    [resulting_event] =
+      Deck.feed(
+        Event.new([:create, :deck], %DeckInput{
+          name:  "a name with more than 32 codepoints",
+          player_id: nil,
+          black: true,
+          red: true,
+          format: "standard"
+        }),
+        nil
+      )
+
+    assert [:deck, :error, nil] == resulting_event.keys
+
+    Data.wipe_test("Player", player_id)
+  end
+
+  test "create deck failed format" do
+    player_name = "Kalle Deck"
+    player_id = Id.hrid(player_name)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
+
+    [resulting_event] =
+      Deck.feed(
+        Event.new([:create, :deck], %DeckInput{
+          name:  "",
+          player_id: player_id,
+          black: true,
+          red: true,
+          format: "not something we have"
+        }),
+        nil
+      )
+
+    assert [:deck, :error, nil] == resulting_event.keys
+    Data.wipe_test("Player", player_id)
+  end
+
+  test "create deck failed player" do
+    [resulting_event] =
+      Deck.feed(
+        Event.new([:create, :deck], %DeckInput{
+          name:  "",
+          player_id: nil,
+          black: true,
+          red: true,
+          format: "standard"
+        }),
+        nil
+      )
+
+    assert [:deck, :error, nil] == resulting_event.keys
   end
 end

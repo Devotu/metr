@@ -217,6 +217,7 @@ defmodule Metr.Modules.Deck do
     end
   end
 
+  defp verify_name(nil), do: {:error, "a legal name must be assigned"}
   defp verify_name(name) when is_bitstring(name) do
     case name do
       "" -> {:error, "name cannot be blank"}
@@ -224,6 +225,7 @@ defmodule Metr.Modules.Deck do
     end
   end
 
+  defp verify_player(nil), do: {:error, "a owner (player) must be assigned"}
   defp verify_player(player_id) do
     case Player.exist?(player_id) do
       true -> {:ok}
