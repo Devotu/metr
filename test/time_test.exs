@@ -11,6 +11,7 @@ defmodule TimeTest do
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.MatchInput
+  alias Metr.Modules.Input.PlayerInput
   alias Metr.Time
 
   test "state timestamps" do
@@ -23,7 +24,7 @@ defmodule TimeTest do
     Player.feed(
       Event.new(
         [:create, :player],
-        %{
+        %PlayerInput{
           name: name
         }
       ),

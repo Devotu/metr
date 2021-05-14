@@ -9,13 +9,14 @@ defmodule PlayerTest do
   alias Metr.Modules.Stately
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.PlayerInput
 
   test "basic feed" do
     assert [] == Player.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
   end
 
   test "create player" do
-    [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "Testy"}), nil)
+    [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "Testy"}), nil)
     assert [:player, :created, nil] == resulting_event.keys
     log_entries = Data.read_log_by_id(resulting_event.data.out, "Player")
     assert 1 = Enum.count(log_entries)
@@ -28,7 +29,7 @@ defmodule PlayerTest do
     deck_id = "player_deck"
     # Player to own the deck
     [player_created_event] =
-      Player.feed(Event.new([:create, :player], %{name: "Deck owner"}), nil)
+      Player.feed(Event.new([:create, :player], %PlayerInput{name: "Deck owner"}), nil)
 
     # Resolve deck created
     [resulting_event] =
@@ -97,9 +98,9 @@ defmodule PlayerTest do
   end
 
   test "list players" do
-    Player.feed(Event.new([:create, :player], %{name: "Adam List"}), nil)
-    Player.feed(Event.new([:create, :player], %{name: "Bertil List"}), nil)
-    Player.feed(Event.new([:create, :player], %{name: "Ceasar List"}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Adam List"}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Bertil List"}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Ceasar List"}), nil)
     Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Alpha List", player_id: "adam_list", format: "standard"}), nil)
     Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Beta List", player_id: "bertil_list", format: "standard"}), nil)
     fake_pid = "#123"
@@ -121,7 +122,7 @@ defmodule PlayerTest do
       time: 0
     }
 
-    [resulting_event] = Player.feed(Event.new([:create, :player], %{name: "David Player"}), nil)
+    [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "David Player"}), nil)
     player_id = resulting_event.data.out
     gen_id = Data.genserver_id("Player", player_id)
     assert :ok == GenServer.stop(gen_id)

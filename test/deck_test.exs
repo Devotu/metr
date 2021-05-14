@@ -16,7 +16,7 @@ defmodule DeckTest do
   end
 
   test "create deck" do
-    Player.feed(Event.new([:create, :player], %{name: "Decky"}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Decky"}), nil)
 
     [resulting_event] =
       Deck.feed(
@@ -47,7 +47,7 @@ defmodule DeckTest do
   end
 
   test "create deck with format" do
-    Player.feed(Event.new([:create, :player], %{name: "Ceasar Deck"}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Ceasar Deck"}), nil)
     format = "pauper"
 
     [create_event] =
@@ -72,7 +72,7 @@ defmodule DeckTest do
   end
 
   test "create deck with colors" do
-    Player.feed(Event.new([:create, :player], %{name: "Erik Deck"}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Erik Deck"}), nil)
 
     [create_event] =
       Deck.feed(
@@ -101,7 +101,7 @@ defmodule DeckTest do
   end
 
   test "create deck with failed format" do
-    Player.feed(Event.new([:create, :player], %{name: "David Deck"}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: "David Deck"}), nil)
     format = "failingformat"
 
     [create_event] =
@@ -125,10 +125,10 @@ defmodule DeckTest do
     # Players to participate
     player_1_name = "Helge"
     player_1_id = Id.hrid(player_1_name)
-    Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_1_name}), nil)
     player_2_name = "Ivar"
     player_2_id = Id.hrid(player_2_name)
-    Player.feed(Event.new([:create, :player], %{name: player_2_name}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_2_name}), nil)
     # Decks to participate
     deck_1_name = "Haste"
     deck_1_id = Id.hrid(deck_1_name)
@@ -179,7 +179,7 @@ defmodule DeckTest do
   test "alter rank" do
     player_1_name = "Adam Deck"
     player_1_id = Id.hrid(player_1_name)
-    Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_1_name}), nil)
     deck_1_name = "Alpha Deck"
     deck_1_id = Id.hrid(deck_1_name)
     Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
@@ -274,7 +274,7 @@ defmodule DeckTest do
   test "create minimum deck" do
     player_name = "Gustav Deck"
     player_id = Id.hrid(player_name)
-    Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
     deck_name = "Golf Deck"
     format = "block"
 
@@ -304,7 +304,7 @@ defmodule DeckTest do
   test "toggle deck active" do
     player_name = "Helge Deck"
     player_id = Id.hrid(player_name)
-    Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
     deck_name = "Hotel Deck"
 
     [resulting_event] =

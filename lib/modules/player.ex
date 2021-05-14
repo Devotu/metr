@@ -9,13 +9,14 @@ defmodule Metr.Modules.Player do
   alias Metr.Data
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.Input.PlayerInput
   alias Metr.Util
   alias Metr.Time
 
   @name __ENV__.module |> Stately.module_to_name()
 
   def feed(
-        %Event{id: _event_id, keys: [:create, :player], data: %{name: name}} = event,
+        %Event{id: _event_id, keys: [:create, :player], data: %PlayerInput{name: name}} = event,
         repp
       ) do
     validation =

@@ -9,6 +9,7 @@ defmodule ResultTest do
   alias Metr.Modules.Result
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.PlayerInput
 
   test "valid created" do
     name = "Adam Result"
@@ -17,7 +18,7 @@ defmodule ResultTest do
     Player.feed(
       Event.new(
         [:create, :player],
-        %{
+        %PlayerInput{
           name: name
         }
       ),

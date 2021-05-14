@@ -10,6 +10,7 @@ defmodule MatchTest do
   alias Metr.Router
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.MatchInput
+  alias Metr.Modules.Input.PlayerInput
 
   test "basic feed" do
     assert [] == Match.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
@@ -17,7 +18,7 @@ defmodule MatchTest do
 
   test "create match" do
     [player_created_event] =
-      Player.feed(Event.new([:create, :player], %{name: "Adam Match"}), nil)
+      Player.feed(Event.new([:create, :player], %PlayerInput{name: "Adam Match"}), nil)
 
     player_id = player_created_event.data.out
 
@@ -58,7 +59,7 @@ defmodule MatchTest do
 
   test "fail create match" do
     [player_created_event] =
-      Player.feed(Event.new([:create, :player], %{name: "Bertil Match"}), nil)
+      Player.feed(Event.new([:create, :player], %PlayerInput{name: "Bertil Match"}), nil)
 
     player_id = player_created_event.data.out
 
@@ -98,7 +99,7 @@ defmodule MatchTest do
 
   test "list matches" do
     [player_created_event] =
-      Player.feed(Event.new([:create, :player], %{name: "David Match"}), nil)
+      Player.feed(Event.new([:create, :player], %PlayerInput{name: "David Match"}), nil)
 
     player_id = player_created_event.data.out
 
