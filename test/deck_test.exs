@@ -345,12 +345,12 @@ defmodule DeckTest do
       winner: 1
     }
 
-    second_game_id = Metr.create_game(create_game_data)
+    second_game_id = Metr.create(create_game_data, :game)
 
     updated_deck = Deck.read(deck_one_id)
     [^first_result_id, second_result_id] = updated_deck.results
 
-    third_game_id = Metr.create_game(create_game_data)
+    third_game_id = Metr.create(create_game_data, :game)
 
     updated_deck = Deck.read(deck_one_id)
     [^first_result_id, ^second_result_id, _third_result_id] = updated_deck.results

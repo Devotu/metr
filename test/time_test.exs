@@ -57,7 +57,7 @@ defmodule TimeTest do
       player_two: id,
       winner: 1
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
     |> Metr.read(:game)
 
     assert 0 != game.time

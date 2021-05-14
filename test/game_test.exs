@@ -73,7 +73,7 @@ defmodule GameTest do
       player_two: player_2_id,
       winner: 2
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
 
     # 2
     game_2_id = %GameInput{
@@ -87,7 +87,7 @@ defmodule GameTest do
       fun_one: 1,
       fun_two: 2
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
 
     # 3
     game_3_id = %GameInput{
@@ -97,7 +97,7 @@ defmodule GameTest do
       player_two: player_2_id,
       winner: 2
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
 
     # 4
     game_4_id = %GameInput{
@@ -107,7 +107,7 @@ defmodule GameTest do
       player_two: player_2_id,
       winner: 1
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
 
     # 5
     game_5_id = %GameInput{
@@ -117,7 +117,7 @@ defmodule GameTest do
       player_two: player_2_id,
       winner: 2
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
 
     deck_1 = Metr.read(deck_1_id, :deck)
     deck_2 = Metr.read(deck_2_id, :deck)
@@ -163,7 +163,7 @@ defmodule GameTest do
       player_two: player_2_id,
       winner: 2
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
 
     # 1v3
     game_2_id = %GameInput{
@@ -177,7 +177,7 @@ defmodule GameTest do
       fun_one: 1,
       fun_two: 2
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
 
     # 1v2
     game_3_id = %GameInput{
@@ -187,7 +187,7 @@ defmodule GameTest do
       player_two: player_2_id,
       winner: 2
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
 
     # 1v2
     game_4_id = %GameInput{
@@ -197,7 +197,7 @@ defmodule GameTest do
       player_two: player_2_id,
       winner: 1
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
 
     # 1v2
     game_5_id = %GameInput{
@@ -207,7 +207,7 @@ defmodule GameTest do
       player_two: player_2_id,
       winner: 2
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
 
     assert 4 == Enum.count(Metr.list(:game, by: {:deck, deck_2_id}))
 
@@ -237,7 +237,7 @@ defmodule GameTest do
       power_one: -1,
       power_two: 1
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
     |> Metr.read(:game)
 
     [result_11_id, result_12_id] = game_1.results
@@ -253,7 +253,7 @@ defmodule GameTest do
       player_two: player_id,
       winner: 2
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
     |> Metr.read(:game)
 
     [result_21_id, result_22_id] = game_2.results
@@ -270,7 +270,7 @@ defmodule GameTest do
       power_one: -1,
       winner: 2
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
     |> Metr.read(:game)
 
     [result_31_id, result_32_id] = game_3.results
@@ -312,7 +312,7 @@ defmodule GameTest do
       winner: 2
     }
 
-    {:error, "invalid power input - power 3 is not in range"} = Metr.create_game(game_1_input) |> IO.inspect(label: "game test - inlaid input")
+    {:error, "invalid power input - power 3 is not in range"} = Metr.create(game_1_input, :game)
 
     game_2_input = %GameInput{
       deck_one: deck_id,
@@ -323,7 +323,7 @@ defmodule GameTest do
       winner: 2
     }
 
-    {:error, "invalid power input - power \"2\" not a number"} = Metr.create_game(game_2_input)
+    {:error, "invalid power input - power \"2\" not a number"} = Metr.create(game_2_input, :game)
 
     Data.wipe_test("Player", [player_id])
     Data.wipe_test("Deck", [deck_id])
@@ -360,7 +360,7 @@ defmodule GameTest do
       winner: 2,
       match: match_id
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
     |> Metr.read(:game)
 
     assert match_id == game_1.match
@@ -389,7 +389,7 @@ defmodule GameTest do
       match: match_id,
       turns: number_of_turns
     }
-    |> Metr.create_game()
+    |> Metr.create(:game)
     |> Metr.read(:game)
 
     assert game.turns == number_of_turns

@@ -37,7 +37,7 @@ defmodule ResultTest do
     )
 
     game =
-      Metr.create_game(%GameInput{
+      Metr.create(%GameInput{
         :player_one => id,
         :player_two => id,
         :deck_one => id,
@@ -47,7 +47,7 @@ defmodule ResultTest do
         :fun_two => -2,
         :power_one => 2,
         :power_two => -2
-      })
+      }, :game)
       |> Metr.read(:game)
 
     result = Result.read(game.results |> List.first())

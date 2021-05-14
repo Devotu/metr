@@ -9,27 +9,27 @@ defmodule TestHelper do
   alias Metr.Modules.Input.PlayerInput
 
   def init_single_states(player_name, deck_name) do
-    player_id = Metr.create_player(%PlayerInput{name: player_name})
-    deck_id = Metr.create_deck(%DeckInput{name: deck_name, player_id: player_id, format: "standard"})
+    player_id = Metr.create(%PlayerInput{name: player_name}, :player)
+    deck_id = Metr.create(%DeckInput{name: deck_name, player_id: player_id, format: "standard"}, :deck)
 
     match_id =
-      Metr.create_match(%MatchInput{
+      Metr.create(%MatchInput{
         player_one: player_id,
         player_two: player_id,
         deck_one: deck_id,
         deck_two: deck_id,
         ranking: false
-      })
+      }, :match)
 
     game_id =
-      Metr.create_game(%GameInput{
+      Metr.create(%GameInput{
         player_one: player_id,
         player_two: player_id,
         deck_one: deck_id,
         deck_two: deck_id,
         winner: 2,
         match: match_id
-      })
+      }, :game)
 
     {player_id, deck_id, match_id, game_id}
   end
@@ -45,29 +45,29 @@ defmodule TestHelper do
   end
 
   def init_double_state(player_one_name, deck_one_name, player_two_name, deck_two_name) do
-    player_1_id = Metr.create_player(%PlayerInput{name: player_one_name})
-    deck_1_id = Metr.create_deck(%DeckInput{name: deck_one_name, player_id: player_1_id, format: "standard"})
-    player_2_id = Metr.create_player(%PlayerInput{name: player_two_name})
-    deck_2_id = Metr.create_deck(%DeckInput{name: deck_two_name, player_id: player_2_id, format: "standard"})
+    player_1_id = Metr.create(%PlayerInput{name: player_one_name}, :player)
+    deck_1_id = Metr.create(%DeckInput{name: deck_one_name, player_id: player_1_id, format: "standard"}, :deck)
+    player_2_id = Metr.create(%PlayerInput{name: player_two_name}, :player)
+    deck_2_id = Metr.create(%DeckInput{name: deck_two_name, player_id: player_2_id, format: "standard"}, :deck)
 
     match_id =
-      Metr.create_match(%MatchInput{
+      Metr.create(%MatchInput{
         player_one: player_1_id,
         player_two: player_2_id,
         deck_one: deck_1_id,
         deck_two: deck_2_id,
         ranking: false
-      })
+      }, :match)
 
     game_id =
-      Metr.create_game(%GameInput{
+      Metr.create(%GameInput{
         player_one: player_1_id,
         player_two: player_2_id,
         deck_one: deck_1_id,
         deck_two: deck_2_id,
         winner: 2,
         match: match_id
-      })
+      }, :game)
 
     {player_1_id, deck_1_id, player_2_id, deck_2_id, match_id, game_id}
   end

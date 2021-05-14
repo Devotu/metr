@@ -10,20 +10,20 @@ defmodule Metr do
   ## api
 
   ### create
-  def create_player(%PlayerInput{} = data) do
-    create(:player, data)
+  def create(%PlayerInput{} = data, :player) do
+    create_state(:player, data)
   end
 
-  def create_deck(%DeckInput{} = data) do
-    create(:deck, data)
+  def create(%DeckInput{} = data, :deck) do
+    create_state(:deck, data)
   end
 
-  def create_game(%GameInput{} = data) do
-    create(:game, data)
+  def create(%GameInput{} = data, :game) do
+    create_state(:game, data)
   end
 
-  def create_match(%MatchInput{} = data) do
-    create(:match, data)
+  def create(%MatchInput{} = data, :match) do
+    create_state(:match, data)
   end
 
   ### list
@@ -155,7 +155,7 @@ defmodule Metr do
     Task.await(listening_task)
   end
 
-  defp create(type, data) when is_atom(type) do
+  defp create_state(type, data) when is_atom(type) do
     # Start listener
     listening_task = Task.async(&listen/0)
 
