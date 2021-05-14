@@ -11,6 +11,7 @@ defmodule GameTest do
   alias Metr.Modules.Result
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.MatchInput
 
   test "create game" do
     player_name = "Erik Game"
@@ -339,11 +340,11 @@ defmodule GameTest do
 
     [match_created_event] =
       Match.feed(
-        Event.new([:create, :match], %{
-          player_1_id: player_id,
-          deck_1_id: deck_id,
-          player_2_id: player_id,
-          deck_2_id: deck_id,
+        Event.new([:create, :match], %MatchInput{
+          player_one: player_id,
+          player_two: player_id,
+          deck_one: deck_id,
+          deck_two: deck_id,
           ranking: false
         }),
         nil

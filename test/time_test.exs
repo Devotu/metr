@@ -10,6 +10,7 @@ defmodule TimeTest do
   alias Metr.Modules.Result
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.MatchInput
   alias Metr.Time
 
   test "state timestamps" do
@@ -69,11 +70,11 @@ defmodule TimeTest do
     Match.feed(
       Event.new(
         [:create, :match],
-        %{
-          player_1_id: id,
-          deck_1_id: id,
-          player_2_id: id,
-          deck_2_id: id,
+        %MatchInput{
+          player_one: id,
+          deck_one: id,
+          player_two: id,
+          deck_two: id,
           ranking: false
         }
       ),

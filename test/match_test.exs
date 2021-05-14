@@ -9,6 +9,7 @@ defmodule MatchTest do
   alias Metr.Modules.Stately
   alias Metr.Router
   alias Metr.Modules.Input.DeckInput
+  alias Metr.Modules.Input.MatchInput
 
   test "basic feed" do
     assert [] == Match.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
@@ -26,11 +27,11 @@ defmodule MatchTest do
     deck_id = deck_created_event.data.id
 
     Router.input(
-      Event.new([:create, :match], %{
-        player_1_id: player_id,
-        deck_1_id: deck_id,
-        player_2_id: player_id,
-        deck_2_id: deck_id,
+      Event.new([:create, :match], %MatchInput{
+        player_one: player_id,
+        deck_one: deck_id,
+        player_two: player_id,
+        deck_two: deck_id,
         ranking: false
       })
     )
@@ -79,11 +80,11 @@ defmodule MatchTest do
 
     [resulting_event] =
       Match.feed(
-        Event.new([:create, :match], %{
-          player_1_id: player_id,
-          deck_1_id: deck_id_1,
-          player_2_id: player_id,
-          deck_2_id: deck_id_2,
+        Event.new([:create, :match], %MatchInput{
+          player_one: player_id,
+          player_two: player_id,
+          deck_one: deck_id_1,
+          deck_two: deck_id_2,
           ranking: true
         }),
         nil
@@ -107,33 +108,33 @@ defmodule MatchTest do
     deck_id = deck_created_event.data.id
 
     Match.feed(
-      Event.new([:create, :match], %{
-        player_1_id: player_id,
-        deck_1_id: deck_id,
-        player_2_id: player_id,
-        deck_2_id: deck_id,
+      Event.new([:create, :match], %MatchInput{
+        player_one: player_id,
+        deck_one: deck_id,
+        player_two: player_id,
+        deck_two: deck_id,
         ranking: false
       }),
       nil
     )
 
     Match.feed(
-      Event.new([:create, :match], %{
-        player_1_id: player_id,
-        deck_1_id: deck_id,
-        player_2_id: player_id,
-        deck_2_id: deck_id,
+      Event.new([:create, :match], %MatchInput{
+        player_one: player_id,
+        deck_one: deck_id,
+        player_two: player_id,
+        deck_two: deck_id,
         ranking: true
       }),
       nil
     )
 
     Match.feed(
-      Event.new([:create, :match], %{
-        player_1_id: player_id,
-        deck_1_id: deck_id,
-        player_2_id: player_id,
-        deck_2_id: deck_id,
+      Event.new([:create, :match], %MatchInput{
+        player_one: player_id,
+        deck_one: deck_id,
+        player_two: player_id,
+        deck_two: deck_id,
         ranking: false
       }),
       nil

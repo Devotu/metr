@@ -9,6 +9,7 @@ defmodule MetrTest do
   alias Metr.Modules.Player
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.MatchInput
   alias Metr.Router
   alias Metr.Id
 
@@ -359,11 +360,11 @@ defmodule MetrTest do
     Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
     Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
 
-    match_data = %{
-      player_1_id: player_1_id,
-      player_2_id: player_2_id,
-      deck_1_id: deck_1_id,
-      deck_2_id: deck_2_id,
+    match_data = %MatchInput{
+      player_one: player_1_id,
+      player_two: player_2_id,
+      deck_one: deck_1_id,
+      deck_two: deck_2_id,
       ranking: true
     }
 

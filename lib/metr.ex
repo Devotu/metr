@@ -4,6 +4,7 @@ defmodule Metr do
   alias Metr.Modules.Stately
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.MatchInput
   alias Metr.Modules.Input.PlayerInput
 
   ## api
@@ -21,14 +22,7 @@ defmodule Metr do
     create(:game, data)
   end
 
-  def create_match(
-        %{
-          :deck_1_id => _deck_1_id,
-          :deck_2_id => _deck_2_id,
-          :player_1_id => _player_1_id,
-          :player_2_id => _player_2_id
-        } = data
-      ) do
+  def create_match(%MatchInput{} = data) do
     create(:match, data)
   end
 
