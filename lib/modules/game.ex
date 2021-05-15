@@ -130,8 +130,8 @@ defmodule Metr.Modules.Game do
 
   ## private
   defp convert_to_result_inputs(%GameInput{} = data, game_id) do
-    [to_result_input(data.player_one, data.deck_one, game_id, is_winner(data.winner, 1), data.power_one, data.fun_one),
-    to_result_input(data.player_two, data.deck_two, game_id, is_winner(data.winner, 2), data.power_two, data.fun_two)]
+    [to_result_input(data.player_one, data.deck_one, game_id, find_place(data.winner, 1), data.power_one, data.fun_one),
+    to_result_input(data.player_two, data.deck_two, game_id, find_place(data.winner, 2), data.power_two, data.fun_two)]
   end
 
   defp to_result_input(player_id, deck_id, game_id, place, power, fun) do
@@ -145,8 +145,9 @@ defmodule Metr.Modules.Game do
     }
   end
 
-  @spec is_winner(integer, integer) :: integer
-  defp is_winner(winner, part) do
+  @spec find_place(integer, integer) :: integer
+  defp find_place(0, _part), do: 0
+  defp find_place(winner, part) do
     case winner == part do
       true -> 1
       false -> 2
