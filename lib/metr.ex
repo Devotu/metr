@@ -179,10 +179,10 @@ defmodule Metr do
   """
   ## feed ##
   # by type
-  def feed(%Event{keys: [type, response_pid]} = event, _orepp) when is_atom(type) and is_pid(response_pid) do
-    send(response_pid, event.data[type])
-    []
-  end
+  # def feed(%Event{keys: [type, response_pid]} = event, _orepp) when is_atom(type) and is_pid(response_pid) do
+  #   send(response_pid, event.data[type])
+  #   []
+  # end
 
   def feed(%Event{keys: [type, :error, response_pid], data: %{cause: cause}}, _orepp) when is_atom(type) and is_pid(response_pid) do
     send(response_pid, {:error, cause})
@@ -215,12 +215,18 @@ defmodule Metr do
     []
   end
 
+  def feed(%Event{keys: [type, :list, response_pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(response_pid) do
+    send(response_pid, out)
+    []
+  end
+
   def feed(%Event{keys: [:match, :ended, response_pid], data: %{out: out}}, _orepp) when is_pid(response_pid) do
     send(response_pid, out)
     []
   end
 
-  def feed(_event, _orepp) do
+  def feed(event, _orepp) do
+    # IO.inspect event, label: "metr - passed"
     []
   end
 end

@@ -75,7 +75,7 @@ defmodule Metr.Modules.Game do
   def feed(%Event{id: _event_id, keys: [:list, :game], data: %{ids: ids}}, repp)
       when is_list(ids) do
     games = Enum.map(ids, &read/1)
-    [Event.new([:games, repp], %{games: games})]
+    [Event.new([:game, :list, repp], %{out: games})]
   end
 
   def feed(%Event{id: _event_id, keys: [:list, :game], data: %{limit: limit}}, repp)
@@ -86,7 +86,7 @@ defmodule Metr.Modules.Game do
       |> Enum.sort(&(&1.time < &2.time))
       |> Enum.take(limit)
 
-    [Event.new([:games, repp], %{games: games})]
+    [Event.new([:game, :list, repp], %{out: games})]
   end
 
   def feed(%Event{id: _event_id, keys: [:list, :result], data: %{game_id: id}}, repp) do

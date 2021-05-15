@@ -89,7 +89,7 @@ defmodule Metr.Modules.Result do
   def feed(%Event{id: _event_id, keys: [:list, :result], data: %{ids: ids}}, repp)
       when is_list(ids) do
     results = Enum.map(ids, &read/1)
-    [Event.new([:results, repp], %{results: results})]
+    [Event.new([:result, :list, repp], %{out: results})]
   end
 
   def feed(%Event{id: _event_id, keys: [:read, :result], data: %{result_id: id}}, repp) do

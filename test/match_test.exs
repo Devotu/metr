@@ -142,7 +142,7 @@ defmodule MatchTest do
     )
 
     [match_list_event] = Stately.feed(Event.new([:list, :match], %{}), nil)
-    matches = match_list_event.data.matches
+    matches = match_list_event.data.out
     assert 3 = Enum.count(matches)
 
     Data.wipe_test("Match", Enum.map(matches, fn m -> m.id end))

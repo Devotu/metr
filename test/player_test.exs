@@ -103,9 +103,9 @@ defmodule PlayerTest do
     Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Beta List", player_id: "bertil_list", format: "standard"}), nil)
     fake_pid = "#123"
     [resulting_event] = Stately.feed(Event.new([:list, :player]), fake_pid)
-    assert [:players, fake_pid] == resulting_event.keys
+    assert [:player, :list, fake_pid] == resulting_event.keys
     # any actual data will break proper comparison
-    assert 3 <= Enum.count(resulting_event.data.players)
+    assert 3 <= Enum.count(resulting_event.data.out)
     Data.wipe_test("Player", ["adam_list", "bertil_list", "ceasar_list"])
     Data.wipe_test("Deck", ["alpha_list", "beta_list"])
   end
