@@ -3,7 +3,6 @@ defmodule ResultTest do
 
   alias Metr.Id
   alias Metr.Event
-  alias Metr.Data
   alias Metr.Modules.Deck
   alias Metr.Modules.Player
   alias Metr.Modules.Result
@@ -61,9 +60,9 @@ defmodule ResultTest do
     assert result == Metr.read(result.id, :result)
     assert result == Metr.list(game.results, :result) |> List.first()
 
-    Data.wipe_test(:deck, id)
-    Data.wipe_test(:player, id)
-    Data.wipe_test(:game, game.id)
-    Data.wipe_test(:result, game.results)
+    TestHelper.wipe_test(:deck, id)
+    TestHelper.wipe_test(:player, id)
+    TestHelper.wipe_test(:game, game.id)
+    TestHelper.wipe_test(:result, game.results)
   end
 end

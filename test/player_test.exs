@@ -20,7 +20,7 @@ defmodule PlayerTest do
     assert [:player, :created, nil] == resulting_event.keys
     log_entries = Data.read_log_by_id(resulting_event.data.out, :player)
     assert 1 = Enum.count(log_entries)
-    Data.wipe_test(:player, resulting_event.data.out)
+    TestHelper.wipe_test(:player, resulting_event.data.out)
   end
 
   test "deck created" do
@@ -40,7 +40,7 @@ defmodule PlayerTest do
     assert [:player, :altered, nil] == resulting_event.keys
     assert resulting_feedback_should_be == resulting_event.data.out
     # Cleanup
-    Data.wipe_test(:player, player_created_event.data.out)
+    TestHelper.wipe_test(:player, player_created_event.data.out)
   end
 
   test "game created" do
@@ -88,8 +88,8 @@ defmodule PlayerTest do
     assert 3 + 2 == Enum.count(player_log) # init (3) + result added (2)
 
     # Cleanup
-    Data.wipe_test(:game, game_created_event.data.id)
-    Data.wipe_test(:result, game_created_event.data.result_ids)
+    TestHelper.wipe_test(:game, game_created_event.data.id)
+    TestHelper.wipe_test(:result, game_created_event.data.result_ids)
     TestHelper.cleanup_double_states(
       {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id}
     )
@@ -106,8 +106,8 @@ defmodule PlayerTest do
     assert [:player, :list, fake_pid] == resulting_event.keys
     # any actual data will break proper comparison
     assert 3 <= Enum.count(resulting_event.data.out)
-    Data.wipe_test(:player, ["adam_list", "bertil_list", "ceasar_list"])
-    Data.wipe_test(:deck, ["alpha_list", "beta_list"])
+    TestHelper.wipe_test(:player, ["adam_list", "bertil_list", "ceasar_list"])
+    TestHelper.wipe_test(:deck, ["alpha_list", "beta_list"])
   end
 
   test "recall player" do
@@ -133,6 +133,6 @@ defmodule PlayerTest do
     assert read_player.results == expected_player.results
     assert read_player.matches |> Enum.count() == 0
 
-    Data.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:player, player_id)
   end
 end

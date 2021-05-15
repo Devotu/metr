@@ -51,8 +51,8 @@ defmodule MetrTest do
     assert false == deck.colorless
     assert nil == deck.rank # can only be initialized with nil and then adjusted
     assert price == deck.price
-    Data.wipe_test(:deck, deck_id)
-    Data.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:deck, deck_id)
+    TestHelper.wipe_test(:player, player_id)
   end
 
   test "list decks" do
@@ -130,11 +130,11 @@ defmodule MetrTest do
     assert deck_2_id == result_1.deck_id
     assert 2 == result_1.place
 
-    Data.wipe_test(:player, [player_1_id, player_2_id])
-    Data.wipe_test(:deck, [deck_1_id, deck_2_id])
-    Data.wipe_test(:game, [game_1_id, game_2_id])
-    Data.wipe_test(:result, deck_1.results)
-    Data.wipe_test(:result, player_2.results)
+    TestHelper.wipe_test(:player, [player_1_id, player_2_id])
+    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
+    TestHelper.wipe_test(:game, [game_1_id, game_2_id])
+    TestHelper.wipe_test(:result, deck_1.results)
+    TestHelper.wipe_test(:result, player_2.results)
   end
 
   test "delete game" do
@@ -179,10 +179,10 @@ defmodule MetrTest do
     assert 0 ==
              Enum.filter(results, fn g -> String.equivalent?(g.id, game_id) end) |> Enum.count()
 
-    Data.wipe_test(:player, [player_1_id, player_2_id])
-    Data.wipe_test(:deck, [deck_1_id, deck_2_id])
-    Data.wipe_test(:game, [game_id])
-    Data.wipe_test(:result, game.results)
+    TestHelper.wipe_test(:player, [player_1_id, player_2_id])
+    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
+    TestHelper.wipe_test(:game, [game_id])
+    TestHelper.wipe_test(:result, game.results)
   end
 
   test "list results by deck" do
@@ -239,10 +239,10 @@ defmodule MetrTest do
     assert 2 == Metr.list(:result, by: {:deck, deck_1_id}) |> Enum.count()
     assert 1 == Metr.list(:result, by: {:deck, deck_2_id}) |> Enum.count()
 
-    Data.wipe_test(:player, [player_1_id, player_2_id, player_3_id])
-    Data.wipe_test(:deck, [deck_1_id, deck_2_id, deck_3_id])
-    Data.wipe_test(:game, [game_1_id, game_2_id])
-    Data.wipe_test(:result, Enum.map(results, fn r -> r.id end))
+    TestHelper.wipe_test(:player, [player_1_id, player_2_id, player_3_id])
+    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id, deck_3_id])
+    TestHelper.wipe_test(:game, [game_1_id, game_2_id])
+    TestHelper.wipe_test(:result, Enum.map(results, fn r -> r.id end))
   end
 
   test "read log of x" do
@@ -284,9 +284,9 @@ defmodule MetrTest do
     assert 3 == Metr.read_log(deck_1_id, :deck) |> Enum.count()
     assert 4 == Metr.read_log(player_1_id, :player) |> Enum.count()
 
-    Data.wipe_test(:player, [player_1_id, player_2_id])
-    Data.wipe_test(:deck, [deck_1_id, deck_2_id])
-    Data.wipe_test(:game, [game_1_id, game_2_id])
+    TestHelper.wipe_test(:player, [player_1_id, player_2_id])
+    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
+    TestHelper.wipe_test(:game, [game_1_id, game_2_id])
   end
 
   test "format" do
@@ -342,8 +342,8 @@ defmodule MetrTest do
     deck_02_0 = Metr.read(deck_id, :deck)
     assert {-2, 0} == deck_02_0.rank
 
-    Data.wipe_test(:player, [player_id])
-    Data.wipe_test(:deck, [deck_id])
+    TestHelper.wipe_test(:player, [player_id])
+    TestHelper.wipe_test(:deck, [deck_id])
   end
 
   test "match lifecycle" do
@@ -410,11 +410,11 @@ defmodule MetrTest do
     deck_2 = Metr.read(deck_2_id, :deck)
     assert {0, 1} == deck_2.rank
 
-    Data.wipe_test(:player, [player_1_id, player_2_id])
-    Data.wipe_test(:deck, [deck_1_id, deck_2_id])
-    Data.wipe_test(:game, [game_1_id, game_2_id, game_3_id])
-    Data.wipe_test(:match, [match_id])
-    Data.wipe_test(:result, [deck_1.results])
+    TestHelper.wipe_test(:player, [player_1_id, player_2_id])
+    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
+    TestHelper.wipe_test(:game, [game_1_id, game_2_id, game_3_id])
+    TestHelper.wipe_test(:match, [match_id])
+    TestHelper.wipe_test(:result, [deck_1.results])
   end
 
   test "list results by ids" do
@@ -442,10 +442,10 @@ defmodule MetrTest do
     assert deck_id == first_result.deck_id
     assert player_id == first_result.player_id
 
-    Data.wipe_test(:player, [player_id])
-    Data.wipe_test(:deck, deck_id)
-    Data.wipe_test(:game, game.id)
-    Data.wipe_test(:result, game.results)
+    TestHelper.wipe_test(:player, [player_id])
+    TestHelper.wipe_test(:deck, deck_id)
+    TestHelper.wipe_test(:game, game.id)
+    TestHelper.wipe_test(:result, game.results)
   end
 
   test "read state of x" do
@@ -476,9 +476,9 @@ defmodule MetrTest do
     game_1_state = Metr.read(game_1_id, :game)
     assert 2 == Enum.count(game_1_state.results)
 
-    Data.wipe_test(:player, [player_1_id])
-    Data.wipe_test(:deck, [deck_1_id])
-    Data.wipe_test(:game, [game_1_id])
+    TestHelper.wipe_test(:player, [player_1_id])
+    TestHelper.wipe_test(:deck, [deck_1_id])
+    TestHelper.wipe_test(:game, [game_1_id])
   end
 
   test "rerun log of x" do
@@ -555,6 +555,6 @@ defmodule MetrTest do
     assert [test_tag] == Metr.list(:tag)
 
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
-    Data.wipe_test(:tag, tag_name)
+    TestHelper.wipe_test(:tag, tag_name)
   end
 end

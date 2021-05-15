@@ -16,7 +16,7 @@ defmodule StatelyTest do
     [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "Adam Stately"}), nil)
     player_id = resulting_event.data.out
     assert true == Stately.exist?(player_id, :player)
-    Data.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:player, player_id)
   end
 
   test "read state" do
@@ -24,7 +24,7 @@ defmodule StatelyTest do
     player_id = resulting_event.data.out
     player = Stately.read(player_id, :player)
     assert player_id == player.id
-    Data.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:player, player_id)
   end
 
   test "ready" do
@@ -34,7 +34,7 @@ defmodule StatelyTest do
     [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "Ceasar Stately"}), nil)
     player_id = resulting_event.data.out
     assert {:ok} == Stately.ready(player_id, :player)
-    Data.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:player, player_id)
   end
 
   test "update" do
@@ -48,7 +48,7 @@ defmodule StatelyTest do
     assert "Deck deck_id added to player #{player_id}" ==
              Stately.update(player_id, :player, event.keys, event.data, event)
 
-    Data.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:player, player_id)
   end
 
   test "to_event" do
@@ -88,11 +88,11 @@ defmodule StatelyTest do
     result = Result.read(game.results |> List.first())
     assert is_struct(result, Result)
 
-    Data.wipe_test(:player, [player_id])
-    Data.wipe_test(:deck, [deck_id])
-    Data.wipe_test(:game, [game_id])
-    Data.wipe_test(:result, game.results)
-    Data.wipe_test(:match, match_id)
+    TestHelper.wipe_test(:player, [player_id])
+    TestHelper.wipe_test(:deck, [deck_id])
+    TestHelper.wipe_test(:game, [game_id])
+    TestHelper.wipe_test(:result, game.results)
+    TestHelper.wipe_test(:match, match_id)
   end
 
   test "rerun" do
@@ -114,11 +114,11 @@ defmodule StatelyTest do
 
     game = Game.read(game_id)
 
-    Data.wipe_test(:player, [player_id])
-    Data.wipe_test(:deck, [deck_id])
-    Data.wipe_test(:game, [game_id])
-    Data.wipe_test(:result, game.results)
-    Data.wipe_test(:match, match_id)
+    TestHelper.wipe_test(:player, [player_id])
+    TestHelper.wipe_test(:deck, [deck_id])
+    TestHelper.wipe_test(:game, [game_id])
+    TestHelper.wipe_test(:result, game.results)
+    TestHelper.wipe_test(:match, match_id)
   end
 
   test "rerun fail" do

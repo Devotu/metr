@@ -125,15 +125,6 @@ defmodule Metr.Data do
     |> Enum.map(fn fp -> extract_id(fp, module) end)
   end
 
-  def wipe_test(module, ids) when is_list(ids) when is_atom(module) and is_list(ids)  do
-    Enum.each(ids, fn id -> wipe_test(module, id) end)
-  end
-
-  def wipe_test(module, id) when is_atom(module) and is_bitstring(id)  do
-    wipe_state(id, module)
-    wipe_log(module, id)
-  end
-
   defp to_module_name(module) when is_atom(module) do
     module
     |> Atom.to_string()

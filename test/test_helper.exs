@@ -37,11 +37,11 @@ defmodule TestHelper do
   def cleanup_single_states({player_id, deck_id, match_id, game_id}) do
     game = Game.read(game_id)
 
-    Data.wipe_test(:player, [player_id])
-    Data.wipe_test(:deck, [deck_id])
-    Data.wipe_test(:game, [game_id])
-    Data.wipe_test(:result, game.results)
-    Data.wipe_test(:match, match_id)
+    TestHelper.wipe_test(:player, [player_id])
+    TestHelper.wipe_test(:deck, [deck_id])
+    TestHelper.wipe_test(:game, [game_id])
+    TestHelper.wipe_test(:result, game.results)
+    TestHelper.wipe_test(:match, match_id)
   end
 
   def init_double_state(player_one_name, deck_one_name, player_two_name, deck_two_name) do
@@ -75,10 +75,19 @@ defmodule TestHelper do
   def cleanup_double_states({player_1_id, deck_1_id, player_2_id, deck_2_id, match_id, game_id}) do
     game = Game.read(game_id)
 
-    Data.wipe_test(:player, [player_1_id, player_2_id])
-    Data.wipe_test(:deck, [deck_1_id, deck_2_id])
-    Data.wipe_test(:game, [game_id])
-    Data.wipe_test(:result, game.results)
-    Data.wipe_test(:match, match_id)
+    TestHelper.wipe_test(:player, [player_1_id, player_2_id])
+    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
+    TestHelper.wipe_test(:game, [game_id])
+    TestHelper.wipe_test(:result, game.results)
+    TestHelper.wipe_test(:match, match_id)
+  end
+
+  def wipe_test(module, ids) when is_list(ids) when is_atom(module) and is_list(ids)  do
+    Enum.each(ids, fn id -> wipe_test(module, id) end)
+  end
+
+  def wipe_test(module, id) when is_atom(module) and is_bitstring(id)  do
+    Data.wipe_state(id, module)
+    Data.wipe_log(module, id)
   end
 end

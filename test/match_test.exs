@@ -1,7 +1,6 @@
 defmodule MatchTest do
   use ExUnit.Case
 
-  alias Metr.Data
   alias Metr.Modules.Deck
   alias Metr.Modules.Match
   alias Metr.Event
@@ -52,9 +51,9 @@ defmodule MatchTest do
     assert false == match.ranking
     assert deck_id == match.deck_one
 
-    Data.wipe_test(:match, match_id)
-    Data.wipe_test(:player, player_id)
-    Data.wipe_test(:deck, deck_id)
+    TestHelper.wipe_test(:match, match_id)
+    TestHelper.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:deck, deck_id)
   end
 
   test "fail create match" do
@@ -93,8 +92,8 @@ defmodule MatchTest do
 
     assert [:match, :error, nil] == resulting_event.keys
     assert "ranks does not match" == resulting_event.data.cause
-    Data.wipe_test(:player, player_id)
-    Data.wipe_test(:deck, [deck_id_1, deck_id_2])
+    TestHelper.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:deck, [deck_id_1, deck_id_2])
   end
 
   test "list matches" do
@@ -145,8 +144,8 @@ defmodule MatchTest do
     matches = match_list_event.data.out
     assert 3 = Enum.count(matches)
 
-    Data.wipe_test(:match, Enum.map(matches, fn m -> m.id end))
-    Data.wipe_test(:player, player_id)
-    Data.wipe_test(:deck, deck_id)
+    TestHelper.wipe_test(:match, Enum.map(matches, fn m -> m.id end))
+    TestHelper.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:deck, deck_id)
   end
 end

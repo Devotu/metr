@@ -3,7 +3,6 @@ defmodule TimeTest do
 
   alias Metr.Id
   alias Metr.Event
-  alias Metr.Data
   alias Metr.Modules.Deck
   alias Metr.Modules.Match
   alias Metr.Modules.Player
@@ -89,9 +88,9 @@ defmodule TimeTest do
     assert 0 != match.time
     assert 0 >= match.time - time_of_creation
 
-    Data.wipe_test(:deck, id)
-    Data.wipe_test(:player, id)
-    Data.wipe_test(:game, game.id)
-    Data.wipe_test(:match, match.id)
+    TestHelper.wipe_test(:deck, id)
+    TestHelper.wipe_test(:player, id)
+    TestHelper.wipe_test(:game, game.id)
+    TestHelper.wipe_test(:match, match.id)
   end
 end
