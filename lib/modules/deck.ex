@@ -47,7 +47,6 @@ defmodule Metr.Modules.Deck do
   alias Metr.Modules.Input.DeckInput
   alias Metr.Util
 
-  @name __ENV__.module |> Stately.module_to_name()
   @atom :deck
 
   ## feed
@@ -207,7 +206,7 @@ defmodule Metr.Modules.Deck do
   end
 
   def module_name() do
-    @name
+    @atom
   end
 
   defp verify_new_deck_input(%DeckInput{} = data) do

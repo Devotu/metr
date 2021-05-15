@@ -13,7 +13,6 @@ defmodule Metr.Modules.Player do
   alias Metr.Util
   alias Metr.Time
 
-  @name __ENV__.module |> Stately.module_to_name()
   @atom :player
 
   def feed(

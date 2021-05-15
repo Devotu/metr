@@ -14,7 +14,6 @@ defmodule Metr.Modules.Game do
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.ResultInput
 
-  @name __ENV__.module |> Stately.module_to_name()
   @atom :game
 
   ## feed
@@ -83,8 +82,11 @@ defmodule Metr.Modules.Game do
       when is_number(limit) do
     games =
       Data.list_ids(@atom)
+      |> IO.inspect(label: "game - ids")
       |> Enum.map(&read/1)
+      |> IO.inspect(label: "game - read")
       |> Enum.sort(&(&1.time < &2.time))
+      |> IO.inspect(label: "game - sorted")
       |> Enum.take(limit)
 
     [Event.new([@atom, :list, repp], %{out: games})]
@@ -126,7 +128,7 @@ defmodule Metr.Modules.Game do
   end
 
   def module_name() do
-    @name
+    @atom
   end
 
   ## private
@@ -280,6 +282,6 @@ defmodule Metr.Modules.Game do
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
     :ok = Data.save_state_with_log(@atom, id, state, event)
-    {:reply, "#{@name} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+    {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end

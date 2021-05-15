@@ -26,7 +26,6 @@ defmodule Metr.Modules.Match do
   alias Metr.Rank
   alias Metr.Time
 
-  @name __ENV__.module |> Stately.module_to_name()
   @atom :match
 
   ## feed
@@ -136,12 +135,12 @@ defmodule Metr.Modules.Match do
   end
 
   def module_name() do
-    @name
+    @atom
   end
 
   ## private
   defp close(id, keys, data, event, repp) do
-    Stately.ready(id, @name)
+    Stately.ready(id, @atom)
 
     cause =
       GenServer.call(Data.genserver_id(@atom, id), %{
@@ -320,6 +319,6 @@ defmodule Metr.Modules.Match do
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
     :ok = Data.save_state_with_log(@atom, id, state, event)
-    {:reply, "#{@name} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+    {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end

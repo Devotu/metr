@@ -15,50 +15,49 @@ defmodule Metr.Modules.Stately do
   @valid_name_length 32
 
   ## feed
-  def feed(%Event{keys: [:read, module_atom], data: %{id: id}}, repp) do
-    module = select_module(module_atom)
-    state = read(id, module)
-    [Event.new([module_atom, :read, repp], %{out: state})]
+  def feed(%Event{keys: [:read, entity], data: %{id: id}}, repp) do
+    state = read(id, entity)
+    [Event.new([entity, :read, repp], %{out: state})]
   end
 
   def feed(%Event{keys: [:read, :log]}, _repp), do: []
 
-  def feed(%Event{keys: [:read, module_atom], data: data}, repp) when is_map(data) do
-    module = select_module(module_atom)
-    id_name = module_id(module_atom)
+  def feed(%Event{keys: [:read, entity], data: data}, repp) when is_map(data) do
+    module = select_entity(entity)
+    id_name = entity_id(entity)
     id = Map.get(data, id_name, {:error, "key not found"})
 
     case id do
       {:error, e} ->
-        out_to_event(e, module, [module_atom, :error, repp])
+        out_to_event(e, entity, [entity, :error, repp])
 
       _ ->
-        state = read(id, module)
-        [Event.new([module_atom, :read, repp], %{out: state})]
+        state = read(id, entity)
+        [Event.new([entity, :read, repp], %{out: state})]
     end
   end
 
   def feed(%Event{keys: [:list, :format]}, _repp), do: []
 
-  def feed(%Event{keys: [:list, module_atom], data: data}, repp) when %{} == data do
-    module = select_module(module_atom)
+  def feed(%Event{keys: [:list, entity], data: data}, repp) when %{} == data do
+    module = select_entity(entity)
 
     states =
       Data.list_ids(module)
-      |> Enum.map(fn id -> read(id, module) end)
+      |> Enum.map(fn id -> read(id, entity) end)
 
-    [Event.new([module_atom, :list, repp], %{out: states})]
+    [Event.new([entity, :list, repp], %{out: states})]
   end
 
   def feed(
-        %Event{id: _event_id, keys: [:rerun, module_atom], data: %{id: id}},
+        %Event{id: _event_id, keys: [:rerun, entity], data: %{id: id}},
         repp
       ) do
-    module = select_module(module_atom)
+    module = select_entity(entity)
 
     [
-      rerun(id, module)
-      |> out_to_event(module, [:reran, repp])
+      rerun(id, entity)
+      |> out_to_event(entity, [:reran, repp])
     ]
   end
 
@@ -69,15 +68,15 @@ defmodule Metr.Modules.Stately do
   ## gen
   ## currently only existing states
   @impl true
-  def init({id, module}) do
+  def init({id, entity}) do
     validation_result =
-      {:ok, id, module}
-      |> validate_module()
+      {:ok, id, entity}
+      |> validate_entity()
       |> verified_id()
 
     case validation_result do
-      {:ok, id, module} ->
-        state = Data.recall_state(module, id)
+      {:ok, id, entity} ->
+        state = Data.recall_state(entity, id)
         {:ok, state}
 
       {:error, e} ->
@@ -91,16 +90,16 @@ defmodule Metr.Modules.Stately do
   end
 
   ## public
-  def exist?(id, module) when is_atom(module) do
-    {:ok, id, module}
-    |> validate_module()
-    |> module_has_state()
+  def exist?(id, entity) when is_atom(entity) do
+    {:ok, id, entity}
+    |> validate_entity()
+    |> entity_has_state()
   end
 
-  def read(id, module) when is_atom(module) and is_bitstring(id) do
-    {:ok, id, module}
-    |> validate_module()
-    |> IO.inspect(label: "stately - module")
+  def read(id, entity) when is_atom(entity) and is_bitstring(id) do
+    {:ok, id, entity}
+    |> validate_entity()
+    |> IO.inspect(label: "stately - entity")
     |> verified_id()
     |> IO.inspect(label: "stately - id")
     |> ready_process()
@@ -108,66 +107,66 @@ defmodule Metr.Modules.Stately do
     |> recall()
   end
 
-  def ready(id, module) do
+  def ready(id, entity) do
     result =
-      {:ok, id, module}
-      |> validate_module()
+      {:ok, id, entity}
+      |> validate_entity()
       |> verified_id()
       |> ready_process()
 
     case result do
-      {:ok, _id, _module} -> {:ok}
+      {:ok, _id, _entity} -> {:ok}
       x -> x
     end
   end
 
   defp is_running?({:error, e}), do: {:error, e}
 
-  defp is_running?({:ok, id, module}) do
-    case GenServer.whereis(Data.genserver_id(module, id)) do
+  defp is_running?({:ok, id, entity}) do
+    case GenServer.whereis(Data.genserver_id(entity, id)) do
       nil -> false
-      _pid -> {:ok, id, module}
+      _pid -> {:ok, id, entity}
     end
   end
 
-  def stop(id, module) do
+  def stop(id, entity) do
     result =
-      {:ok, id, module}
-      |> validate_module()
+      {:ok, id, entity}
+      |> validate_entity()
       |> is_running?()
 
     case result do
       {:error, e} -> {:error, e}
-      {:ok, _id, _module} -> Data.genserver_id(module, id) |> GenServer.stop()
+      {:ok, _id, _entity} -> Data.genserver_id(entity, id) |> GenServer.stop()
       x -> x
     end
   end
 
-  def update(id, module, keys, data, event) when is_atom(module) and is_bitstring(id) do
-    {:ok, id, module}
-    |> validate_module()
+  def update(id, entity, keys, data, event) when is_atom(entity) and is_bitstring(id) do
+    {:ok, id, entity}
+    |> validate_entity()
     |> verified_id()
     |> ready_process()
     |> alter(keys, data, event)
   end
 
-  def out_to_event({:ok, msg}, module, keys), do: out_to_event(msg, module, keys)
+  def out_to_event({:ok, msg}, entity, keys), do: out_to_event(msg, entity, keys)
 
-  def out_to_event(msg, module, keys) when is_atom(module) do
-    Event.new([module] ++ keys, %{out: msg})
+  def out_to_event(msg, entity, keys) when is_atom(entity) do
+    Event.new([entity] ++ keys, %{out: msg})
   end
 
-  def module_to_name(module) do
-    module
+  def entity_to_name(entity) do
+    entity
     |> Kernel.inspect()
     |> String.split(".")
     |> List.last()
     |> String.replace("\"", "")
   end
 
-  def rerun(id, module) do
-    {:ok, id, module}
-    |> validate_module()
+  def rerun(id, entity) do
+    {:ok, id, entity}
+    |> validate_entity()
     |> rerun_from_log()
   end
 
@@ -184,17 +183,17 @@ defmodule Metr.Modules.Stately do
   def is_accepted_name(name) when is_nil(name), do: {:error, "name cannot be nil"}
   def is_accepted_name(_name), do: {:error, "name must be string"}
 
-  def create(module, %{id: id} = state, %Event{} = event)
-      when is_atom(module) and is_struct(state) do
+  def create(entity, %{id: id} = state, %Event{} = event)
+      when is_atom(entity) and is_struct(state) do
     creation_result =
-      {:ok, id, module}
-      |> validate_module()
+      {:ok, id, entity}
+      |> validate_entity()
       |> verify_unique()
       |> store_state(state, event)
       |> start_new(state)
 
     case creation_result do
-      {:ok, _id, _module} ->
+      {:ok, _id, _entity} ->
         {:ok, id}
 
       {:error, e} ->
@@ -202,57 +201,57 @@ defmodule Metr.Modules.Stately do
     end
   end
 
-  def create(module, _state) when is_bitstring(module),
+  def create(entity, _state) when is_bitstring(entity),
     do: {:error, "state must be struct"}
 
-  def module_id(module_atom) when is_atom(module_atom) do
-    case module_atom do
+  def entity_id(entity) when is_atom(entity) do
+    case entity do
       :player -> :player_id
       :deck -> :deck_id
       :game -> :game_id
       :match -> :match_id
       :result -> :result_id
       :tag -> :tag_id
-      _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting id name"}
+      _ -> {:error, "#{Kernel.inspect(entity)} is not a valid atom selecting id name"}
     end
   end
-  def module_id(module) when is_atom(module) do
-    module
-    |> module_id()
+  def entity_id(entity) when is_atom(entity) do
+    entity
+    |> entity_id()
   end
 
-  def apply_event(id, module_qualifier, %Event{} = event) when is_bitstring(id) and is_atom(module_qualifier) do
-    module = select_module(module_qualifier)
+  def apply_event(id, entity_qualifier, %Event{} = event) when is_bitstring(id) and is_atom(entity_qualifier) do
+    module = select_entity(entity_qualifier)
     module.feed(event, nil)
   end
 
-  ## private {:ok, id, module} / {:error, e}
+  ## private {:ok, id, entity} / {:error, e}
   defp verify_unique({:error, e}), do: {:error, e}
 
-  defp verify_unique({:ok, id, module}) when is_atom(module) and is_bitstring(id) do
-    case exist?(id, module) do
-      false -> {:ok, id, module}
+  defp verify_unique({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
+    case exist?(id, entity) do
+      false -> {:ok, id, entity}
       true -> {:error, "name already in use"}
     end
   end
 
   defp store_state({:error, e}), do: {:error, e}
 
-  defp store_state({:ok, id, module}, state, %Event{} = event) do
-    case Data.save_state_with_log(module, id, state, event) do
-      :ok -> {:ok, id, module}
+  defp store_state({:ok, id, entity}, state, %Event{} = event) do
+    case Data.save_state_with_log(entity, id, state, event) do
+      :ok -> {:ok, id, entity}
       _ -> {:error, "could not save state"}
     end
   end
 
   defp start_new({:error, e}), do: {:error, e}
 
-  defp start_new({:ok, id, module}, state) do
-    process_name = Data.genserver_id(module, id)
+  defp start_new({:ok, id, entity}, state) do
+    process_name = Data.genserver_id(entity, id)
 
-    case GenServer.start(select_module(module), state, name: process_name) do
+    case GenServer.start(select_entity(entity), state, name: process_name) do
       {:ok, _pid} ->
-        {:ok, id, module}
+        {:ok, id, entity}
 
       {:error, e} ->
         {:error, e}
@@ -261,8 +260,8 @@ defmodule Metr.Modules.Stately do
 
   defp rerun_from_log({:error, e}), do: {:error, e}
 
-  defp rerun_from_log({:ok, id, module}) do
-    {:ok, id, module}
+  defp rerun_from_log({:ok, id, entity}) do
+    {:ok, id, entity}
     |> wipe_state()
     |> run_log()
     |> conclude_rerun()
@@ -271,27 +270,27 @@ defmodule Metr.Modules.Stately do
 
   defp wipe_state({:error, e}), do: {:error, e}
 
-  defp wipe_state({:ok, id, module}) do
-    case Data.wipe_state([id], module) do
-      :ok -> {:ok, id, module}
-      _ -> {:error, "Failed to wipe current state of #{module} #{id}"}
+  defp wipe_state({:ok, id, entity}) do
+    case Data.wipe_state([id], entity) do
+      :ok -> {:ok, id, entity}
+      _ -> {:error, "Failed to wipe current state of #{entity} #{id}"}
     end
   end
 
   defp run_log({:error, e}), do: {:error, e}
 
-  defp run_log({:ok, id, module}) do
-    module = select_module(module)
-    stop(id, module)
+  defp run_log({:ok, id, entity}) do
+    module = select_entity(entity)
+    stop(id, entity)
 
-    case Data.read_log_by_id(id, module) do
+    case Data.read_log_by_id(id, entity) do
       {:error, :not_found} ->
-        {:error, "Log of #{module} #{id} not found"}
+        {:error, "Log of #{entity} #{id} not found"}
 
       log ->
         log
         |> Util.uniq()
-        |> Enum.map(fn e -> module.feed(e, nil) end)
+        |> Enum.map(fn e -> entity.feed(e, nil) end)
     end
   end
 
@@ -310,95 +309,95 @@ defmodule Metr.Modules.Stately do
     do: {:error, Kernel.inspect(error_events)}
 
   defp return_result({:error, e}), do: {:error, e}
-  defp return_result({:ok, _id, _module}), do: :ok
+  defp return_result({:ok, _id, _entity}), do: :ok
 
-  defp select_module(module) when is_atom(module) do
-    case module do
+  defp select_entity(entity) when is_atom(entity) do
+    case entity do
       :player -> Player
       :deck -> Deck
       :game -> Game
       :match -> Match
       :result -> Result
       :tag -> Tag
-      _ -> {:error, "#{Kernel.inspect(module)} is not a valid atom selecting module"}
+      _ -> {:error, "#{Kernel.inspect(entity)} is not a valid atom selecting entity"}
     end
   end
 
-  defp select_module_struct(module) when is_atom(module) do
-    case module do
+  defp select_module(entity) when is_atom(entity) do
+    case entity do
       :player -> %Player{}
       :deck -> %Deck{}
       :game -> %Game{}
       :match -> %Match{}
       :result -> %Result{}
       :tag -> %Tag{}
-      _ -> {:error, "#{module} is not a valid module selecting struct"}
+      _ -> {:error, "#{entity} is not a valid entity selecting struct"}
     end
   end
 
-  defp validate_module({:error, e}), do: {:error, e}
+  defp validate_entity({:error, e}), do: {:error, e}
 
-  defp validate_module({:ok, id, module}) when is_atom(module) and is_bitstring(id) do
-    case module do
-      :player -> {:ok, id, module}
-      :deck -> {:ok, id, module}
-      :game -> {:ok, id, module}
-      :match -> {:ok, id, module}
-      :result -> {:ok, id, module}
-      :tag -> {:ok, id, module}
-      _ -> {:error, "#{module} is not a valid module name"}
+  defp validate_entity({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
+    case entity do
+      :player -> {:ok, id, entity}
+      :deck -> {:ok, id, entity}
+      :game -> {:ok, id, entity}
+      :match -> {:ok, id, entity}
+      :result -> {:ok, id, entity}
+      :tag -> {:ok, id, entity}
+      _ -> {:error, "#{entity} is not a valid entity name"}
     end
   end
 
-  defp module_has_state({:error, e}), do: {:error, e}
+  defp entity_has_state({:error, e}), do: {:error, e}
 
-  defp module_has_state({:ok, id, module}) when is_atom(module) and is_bitstring(id) do
-    Data.state_exists?(module, id)
+  defp entity_has_state({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
+    Data.state_exists?(entity, id)
   end
 
   defp verified_id({:error, e}), do: {:error, e}
 
-  defp verified_id({:ok, id, module}) when is_atom(module) and is_bitstring(id) do
-    case module_has_state({:ok, id, module}) do
-      true -> {:ok, id, module}
-      false -> {:error, "#{module} #{id} not found"}
+  defp verified_id({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
+    case entity_has_state({:ok, id, entity}) do
+      true -> {:ok, id, entity}
+      false -> {:error, "#{entity} #{id} not found"}
     end
   end
 
   defp recall({:error, e}), do: {:error, e}
 
-  defp recall({:ok, id, module}) when is_atom(module) and is_bitstring(id) do
-    GenServer.call(Data.genserver_id(module, id), %{
-      keys: [:read, module]
+  defp recall({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
+    GenServer.call(Data.genserver_id(entity, id), %{
+      keys: [:read, entity]
     })
   end
 
   defp ready_process({:error, e}), do: {:error, e}
 
-  defp ready_process({:ok, id, module}) do
+  defp ready_process({:ok, id, entity}) do
     # Is running?
-    case {GenServer.whereis(Data.genserver_id(module, id)),
-          Data.state_exists?(module, id)} do
+    case {GenServer.whereis(Data.genserver_id(entity, id)),
+          Data.state_exists?(entity, id)} do
       {nil, true} ->
-        start_process({:ok, id, module})
+        start_process({:ok, id, entity})
 
       {nil, false} ->
         {:error, :no_such_id}
 
       _ ->
-        {:ok, id, module}
+        {:ok, id, entity}
     end
   end
 
-  defp start_process({:ok, id, module}) do
+  defp start_process({:ok, id, entity}) do
     # Get state
     current_state =
-      Map.merge(select_module_struct(module), Data.recall_state(module, id))
+      Map.merge(select_module(entity), Data.recall_state(entity, id))
 
-    case GenServer.start(select_module(module), current_state,
-           name: Data.genserver_id(module, id)
+    case GenServer.start(select_entity(entity), current_state,
+           name: Data.genserver_id(entity, id)
          ) do
-      {:ok, _pid} -> {:ok, id, module}
+      {:ok, _pid} -> {:ok, id, entity}
       {:error, cause} -> {:error, cause}
       x -> {:error, inspect(x)}
     end
@@ -406,8 +405,8 @@ defmodule Metr.Modules.Stately do
 
   defp alter({:error, e}, _keys, _data, _event), do: {:error, e}
 
-  defp alter({:ok, id, module}, keys, data, event) do
+  defp alter({:ok, id, entity}, keys, data, event) do
     # Call update
-    GenServer.call(Data.genserver_id(module, id), %{keys: keys, data: data, event: event})
+    GenServer.call(Data.genserver_id(entity, id), %{keys: keys, data: data, event: event})
   end
 end

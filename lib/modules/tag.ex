@@ -9,7 +9,7 @@ defmodule Metr.Modules.Tag do
   alias Metr.Time
   alias Metr.Modules.Tag
 
-  @name __ENV__.module |> Stately.module_to_name()
+
   @atom :tag
   @valid_tag_length 20
 
@@ -31,7 +31,7 @@ defmodule Metr.Modules.Tag do
         state = %Tag{id: Id.hrid(tag), name: tag, tagged: [{module_id, Time.timestamp()}]}
         propagating_event = Event.new([module_atom, :tagged], %{id: module_id, tag: tag})
 
-        Stately.create(@name, state, event)
+        Stately.create(@atom, state, event)
         |> Stately.out_to_event(@atom, [:created, repp])
         |> List.wrap()
         |> Enum.concat([propagating_event])
@@ -39,7 +39,7 @@ defmodule Metr.Modules.Tag do
       {:ok, true} ->
         propagating_event = Event.new([module_atom, :tagged], %{id: module_id, tag: tag})
 
-        Stately.update(tag, @name, [:tagged], %{id: module_id}, event)
+        Stately.update(tag, @atom, [:tagged], %{id: module_id}, event)
         |> Stately.out_to_event(@atom, [:altered, repp])
         |> List.wrap()
         |> Enum.concat([propagating_event])
@@ -108,7 +108,7 @@ defmodule Metr.Modules.Tag do
   end
 
   def module_name() do
-    @name
+    @atom
   end
 
   ## gen

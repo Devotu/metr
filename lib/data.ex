@@ -90,7 +90,6 @@ defmodule Metr.Data do
   end
 
   def state_exists?(module, id) when is_atom(module) and is_bitstring(id)  do
-    IO.inspect(state_path(module, id), label: "data - state_path")
     File.exists?(state_path(module, id))
   end
 
@@ -108,17 +107,9 @@ defmodule Metr.Data do
     "#{to_module_name(module)}_#{id}"
   end
 
-  defp module_to_name(module) do
-    module
-    |> Kernel.inspect()
-    |> String.split(".")
-    |> List.last()
-    |> String.replace("\"", "")
-  end
-
   defp extract_id(name, module) do
     name
-    |> String.replace_prefix(module_to_name(module), "")
+    |> String.replace_prefix(to_module_name(module), "")
     |> String.replace_prefix("_", "")
     |> String.replace_suffix(".state", "")
   end
@@ -127,10 +118,10 @@ defmodule Metr.Data do
     {:global, entity_id(module, id)}
   end
 
-  def list_ids(module) do
+  def list_ids(module) when is_atom(module) do
     File.ls!(state_dir())
     |> Enum.map(fn fp -> String.replace(fp, state_dir(), "") end)
-    |> Enum.filter(fn fp -> String.starts_with?(fp, module_to_name(module)) end)
+    |> Enum.filter(fn fp -> String.starts_with?(fp, to_module_name(module)) end)
     |> Enum.map(fn fp -> extract_id(fp, module) end)
   end
 

@@ -20,7 +20,6 @@ defmodule Metr.Modules.Result do
   alias Metr.Modules.Stately
   alias Metr.Modules.Input.ResultInput
 
-  @name __ENV__.module |> Stately.module_to_name()
   @atom :result
 
   def create(%ResultInput{} = data, %Event{} = event) do
@@ -136,6 +135,6 @@ defmodule Metr.Modules.Result do
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
     :ok = Data.save_state_with_log(@atom, id, state, event)
-    {:reply, "#{@name} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+    {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end
