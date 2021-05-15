@@ -18,13 +18,12 @@ defmodule Metr.Modules.Tag do
           event,
         repp
       ) do
-    target_module_name = Stately.select_module_name(module_atom)
 
     validation =
       :ok
       |> is_valid_tag(tag)
-      |> is_valid_target(target_module_name, module_id)
-      |> is_not_duplicate(target_module_name, module_id, tag)
+      |> is_valid_target(module_atom, module_id)
+      |> is_not_duplicate(module_atom, module_id, tag)
 
     case {validation, exist?(tag)} do
       {:ok, false} ->
@@ -55,12 +54,12 @@ defmodule Metr.Modules.Tag do
       ) do
     Stately.update(
       event.data.id,
-      Stately.select_module_name(module_atom),
+      module_atom,
       [:tagged],
       event.data,
       event
     )
-    |> Stately.out_to_event(Stately.select_module_name(module_atom), [module_atom, :tagged])
+    |> Stately.out_to_event(module_atom, [module_atom, :tagged])
     |> List.wrap()
   end
 
