@@ -95,11 +95,8 @@ defmodule Metr.Modules.Stately do
   def read(id, entity) when is_atom(entity) and is_bitstring(id) do
     {:ok, id, entity}
     |> validate_entity()
-    |> IO.inspect(label: "stately - entity")
     |> verified_id()
-    |> IO.inspect(label: "stately - id")
     |> ready_process()
-    |> IO.inspect(label: "stately - process")
     |> recall()
   end
 
@@ -256,7 +253,6 @@ defmodule Metr.Modules.Stately do
   defp rerun_from_log({:error, e}), do: {:error, e}
 
   defp rerun_from_log({:ok, id, entity}) do
-    IO.inspect(entity, label: "stately rerun entity")
     {:ok, id, entity}
     |> wipe_state()
     |> run_log()
@@ -276,7 +272,6 @@ defmodule Metr.Modules.Stately do
   defp run_log({:error, e}), do: {:error, e}
 
   defp run_log({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
-    IO.inspect(entity, label: "stately entity")
     module = select_module(entity)
     stop(id, entity)
 
