@@ -26,7 +26,7 @@ defmodule Metr.Modules.Match do
   alias Metr.Rank
   alias Metr.Time
 
-  @name __ENV__.module |> Stately.module_to_name()
+  @atom :match
 
   ## feed
   def feed(%Event{id: _event_id, keys: [:create, :match], data: %MatchInput{} = data} = event, repp) do
@@ -37,7 +37,7 @@ defmodule Metr.Modules.Match do
 
       {:ok} ->
         id = Id.guid()
-        process_name = Data.genserver_id(__ENV__.module, id)
+        process_name = Data.genserver_id(@atom, id)
         # Start genserver
         case GenServer.start(Match, {id, data, event}, name: process_name) do
           {:ok, _pid} ->
@@ -86,7 +86,7 @@ defmodule Metr.Modules.Match do
   end
 
   def feed(%Event{id: _event_id, keys: [:read, :log, :match], data: %{match_id: id}}, repp) do
-    events = Data.read_log_by_id(id, "Match")
+    events = Data.read_log_by_id(id, :match)
     [Event.new([:match, :read, repp], %{out: events})]
   end
 
@@ -116,8 +116,8 @@ defmodule Metr.Modules.Match do
         repp
       ) do
     [
-      Stately.update(id, @name, event.keys, event.data, event)
-      |> Stately.out_to_event(@name, [:altered, repp])
+      Stately.update(id, @atom, event.keys, event.data, event)
+      |> Stately.out_to_event(@atom, [:altered, repp])
     ]
   end
 
@@ -127,23 +127,23 @@ defmodule Metr.Modules.Match do
 
   ## module
   def read(id) do
-    Stately.read(id, @name)
+    Stately.read(id, @atom)
   end
 
   def exist?(id) do
-    Stately.exist?(id, @name)
+    Stately.exist?(id, @atom)
   end
 
   def module_name() do
-    @name
+    @atom
   end
 
   ## private
   defp close(id, keys, data, event, repp) do
-    Stately.ready(id, @name)
+    Stately.ready(id, @atom)
 
     cause =
-      GenServer.call(Data.genserver_id(__ENV__.module, id), %{
+      GenServer.call(Data.genserver_id(@atom, id), %{
         keys: keys,
         data: data,
         event: event
@@ -269,7 +269,7 @@ defmodule Metr.Modules.Match do
       time: Time.timestamp()
     }
 
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(@atom, id, state, event)
     {:ok, state}
   end
 
@@ -290,7 +290,7 @@ defmodule Metr.Modules.Match do
       |> Map.put(:winner, find_winner(state))
       |> Map.put(:status, :closed)
 
-    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
+    :ok = Data.save_state_with_log(@atom, id, new_state, event)
     # Reply
     {:reply, :ok, new_state}
   end
@@ -306,7 +306,7 @@ defmodule Metr.Modules.Match do
       |> Map.update!(:games, &(&1 ++ [game_id]))
       |> Map.put(:status, :open)
 
-    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
+    :ok = Data.save_state_with_log(@atom, id, new_state, event)
     # Reply
     {:reply, "Game #{game_id} added to match #{id}", new_state}
   end
@@ -318,7 +318,7 @@ defmodule Metr.Modules.Match do
         state
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-    {:reply, "#{@name} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+    :ok = Data.save_state_with_log(@atom, id, state, event)
+    {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end

@@ -14,17 +14,17 @@ defmodule Metr.Modules.Game do
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.ResultInput
 
-  @name __ENV__.module |> Stately.module_to_name()
+  @atom :game
 
   ## feed
-  def feed(%Event{id: _event_id, keys: [:create, :game], data: %GameInput{} = data} = event, repp) do
+  def feed(%Event{id: _event_id, keys: [:create, @atom], data: %GameInput{} = data} = event, repp) do
     case verify_input_data(data) do
       {:error, error} ->
-        [Event.new([:game, :error, repp], %{cause: error, data: data})]
+        [Event.new([@atom, :error, repp], %{cause: error, data: data})]
 
       {:ok} ->
         id = Id.guid()
-        process_name = Data.genserver_id(__ENV__.module, id)
+        process_name = Data.genserver_id(@atom, id)
         result_inputs = convert_to_result_inputs(data, id)
 
         result_ids =
@@ -42,51 +42,51 @@ defmodule Metr.Modules.Game do
           {:ok, _pid} ->
             match_id = Map.get(data, :match, nil)
             [
-              Event.new([:game, :created, nil], %{
+              Event.new([@atom, :created, nil], %{
                 id: id,
                 result_ids: result_ids,
                 ranking: is_ranked?(data),
                 match_id: match_id
               }),
-              Event.new([:game, :created, repp], %{
+              Event.new([@atom, :created, repp], %{
                 out: id
               })
             ]
 
           {:error, cause} ->
-            [Event.new([:game, :error, repp], %{cause: cause})]
+            [Event.new([@atom, :error, repp], %{cause: cause})]
 
           _ ->
-            [Event.new([:game, :error, repp], %{cause: "Could not save game state"})]
+            [Event.new([@atom, :error, repp], %{cause: "Could not save game state"})]
         end
     end
   end
 
-  def feed(%Event{id: _event_id, keys: [:read, :game], data: %{game_id: id}}, repp) do
+  def feed(%Event{id: _event_id, keys: [:read, @atom], data: %{game_id: id}}, repp) do
     game = read(id)
-    [Event.new([:game, :read, repp], %{out: game})]
+    [Event.new([@atom, :read, repp], %{out: game})]
   end
 
-  def feed(%Event{id: _event_id, keys: [:read, :log, :game], data: %{game_id: id}}, repp) do
-    events = Data.read_log_by_id(id, "Game")
-    [Event.new([:game, :read, repp], %{out: events})]
+  def feed(%Event{id: _event_id, keys: [:read, :log, @atom], data: %{game_id: id}}, repp) do
+    events = Data.read_log_by_id(id, @atom)
+    [Event.new([@atom, :read, repp], %{out: events})]
   end
 
-  def feed(%Event{id: _event_id, keys: [:list, :game], data: %{ids: ids}}, repp)
+  def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{ids: ids}}, repp)
       when is_list(ids) do
     games = Enum.map(ids, &read/1)
-    [Event.new([:game, :list, repp], %{out: games})]
+    [Event.new([@atom, :list, repp], %{out: games})]
   end
 
-  def feed(%Event{id: _event_id, keys: [:list, :game], data: %{limit: limit}}, repp)
+  def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{limit: limit}}, repp)
       when is_number(limit) do
     games =
-      Data.list_ids(__ENV__.module)
+      Data.list_ids(@atom)
       |> Enum.map(&read/1)
       |> Enum.sort(&(&1.time < &2.time))
       |> Enum.take(limit)
 
-    [Event.new([:game, :list, repp], %{out: games})]
+    [Event.new([@atom, :list, repp], %{out: games})]
   end
 
   def feed(%Event{id: _event_id, keys: [:list, :result], data: %{game_id: id}}, repp) do
@@ -94,7 +94,7 @@ defmodule Metr.Modules.Game do
     [{Event.new([:list, :result], %{ids: game.results}), repp}]
   end
 
-  def feed(%Event{id: _event_id, keys: [:delete, :game], data: %{game_id: game_id}}, repp) do
+  def feed(%Event{id: _event_id, keys: [:delete, @atom], data: %{game_id: game_id}}, repp) do
     delete_conclusion =
       game_id
       |> read()
@@ -103,11 +103,11 @@ defmodule Metr.Modules.Game do
 
     case delete_conclusion do
       %Game{} = game ->
-        [Event.new([:game, :deleted, nil], %{id: game_id, results: game.results}),
-        Event.new([:game, :deleted, repp], %{out: game_id})]
+        [Event.new([@atom, :deleted, nil], %{id: game_id, results: game.results}),
+        Event.new([@atom, :deleted, repp], %{out: game_id})]
 
       {:error, cause} ->
-        [Event.new([:game, :error, repp], %{cause: cause})]
+        [Event.new([@atom, :error, repp], %{cause: cause})]
     end
   end
 
@@ -117,15 +117,15 @@ defmodule Metr.Modules.Game do
 
   ## module
   def read(id) do
-    Stately.read(id, @name)
+    Stately.read(id, @atom)
   end
 
   def exist?(id) do
-    Stately.exist?(id, @name)
+    Stately.exist?(id, @atom)
   end
 
   def module_name() do
-    @name
+    @atom
   end
 
   ## private
@@ -236,7 +236,7 @@ defmodule Metr.Modules.Game do
   defp delete_game({:error, cause}), do: {:error, cause}
 
   defp delete_game(%Game{} = game) do
-    case Data.wipe_state(game.id, __ENV__.module) do
+    case Data.wipe_state(game.id, @atom) do
       :ok -> game
       _ -> {:error, "Could not delete game state"}
     end
@@ -257,7 +257,7 @@ defmodule Metr.Modules.Game do
   @impl true
   def init({id, %GameInput{} = data, event}) do
     state = from_input(data, id, event.time)
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(@atom, id, state, event)
     {:ok, state}
   end
 
@@ -266,7 +266,7 @@ defmodule Metr.Modules.Game do
   end
 
   @impl true
-  def handle_call(%{keys: [:read, :game]}, _from, state) do
+  def handle_call(%{keys: [:read, @atom]}, _from, state) do
     # Reply
     {:reply, state, state}
   end
@@ -278,7 +278,7 @@ defmodule Metr.Modules.Game do
         state
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-    {:reply, "#{@name} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+    :ok = Data.save_state_with_log(@atom, id, state, event)
+    {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end

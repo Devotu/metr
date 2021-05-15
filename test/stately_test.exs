@@ -12,54 +12,54 @@ defmodule StatelyTest do
   alias Metr.Modules.Input.PlayerInput
 
   test "exists" do
-    assert false == Stately.exist?("not yet created", "Player")
+    assert false == Stately.exist?("not yet created", :player)
     [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "Adam Stately"}), nil)
     player_id = resulting_event.data.out
-    assert true == Stately.exist?(player_id, "Player")
-    Data.wipe_test("Player", player_id)
+    assert true == Stately.exist?(player_id, :player)
+    Data.wipe_test(:player, player_id)
   end
 
   test "read state" do
     [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "Bertil Stately"}), nil)
     player_id = resulting_event.data.out
-    player = Stately.read(player_id, "Player")
+    player = Stately.read(player_id, :player)
     assert player_id == player.id
-    Data.wipe_test("Player", player_id)
+    Data.wipe_test(:player, player_id)
   end
 
   test "ready" do
     assert {:error, "Player not_yet_created not found"} ==
-             Stately.ready("not_yet_created", "Player")
+             Stately.ready("not_yet_created", :player)
 
     [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "Ceasar Stately"}), nil)
     player_id = resulting_event.data.out
-    assert {:ok} == Stately.ready(player_id, "Player")
-    Data.wipe_test("Player", player_id)
+    assert {:ok} == Stately.ready(player_id, :player)
+    Data.wipe_test(:player, player_id)
   end
 
   test "update" do
     assert {:error, "Player not_yet_created not found"} ==
-             Stately.update("not_yet_created", "Player", [], %{}, %Event{})
+             Stately.update("not_yet_created", :player, [], %{}, %Event{})
 
     [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "David Stately"}), nil)
     player_id = resulting_event.data.out
     event = Event.new([:deck, :created, nil], %{id: "deck_id", player_id: player_id})
 
     assert "Deck deck_id added to player #{player_id}" ==
-             Stately.update(player_id, "Player", event.keys, event.data, event)
+             Stately.update(player_id, :player, event.keys, event.data, event)
 
-    Data.wipe_test("Player", player_id)
+    Data.wipe_test(:player, player_id)
   end
 
   test "to_event" do
     expected_output = "Expected output"
-    e = Stately.out_to_event(expected_output, "Player", [:altered, nil])
+    e = Stately.out_to_event(expected_output, :player, [:altered, nil])
     assert [:player, :altered, nil] == e.keys
     assert %{out: expected_output} == e.data
   end
 
   test "module_to_name" do
-    assert Player.module_name() == "Player"
+    assert Player.module_name() == :player
   end
 
   test "recall as correct struct" do
@@ -69,30 +69,30 @@ defmodule StatelyTest do
     {player_id, deck_id, match_id, game_id} =
       TestHelper.init_single_states(player_name, deck_name)
 
-    assert :ok == Data.genserver_id("Player", player_id) |> GenServer.stop()
+    assert :ok == Data.genserver_id(:player, player_id) |> GenServer.stop()
     player = Player.read(player_id)
     assert is_struct(player, Player)
 
-    assert :ok == Data.genserver_id("Deck", deck_id) |> GenServer.stop()
+    assert :ok == Data.genserver_id(:deck, deck_id) |> GenServer.stop()
     deck = Deck.read(deck_id)
     assert is_struct(deck, Deck)
 
-    assert :ok == Data.genserver_id("Match", match_id) |> GenServer.stop()
+    assert :ok == Data.genserver_id(:match, match_id) |> GenServer.stop()
     match = Match.read(match_id)
     assert is_struct(match, Match)
 
-    assert :ok == Data.genserver_id("Game", game_id) |> GenServer.stop()
+    assert :ok == Data.genserver_id(:game, game_id) |> GenServer.stop()
     game = Game.read(game_id)
     assert is_struct(game, Game)
 
     result = Result.read(game.results |> List.first())
     assert is_struct(result, Result)
 
-    Data.wipe_test("Player", [player_id])
-    Data.wipe_test("Deck", [deck_id])
-    Data.wipe_test("Game", [game_id])
-    Data.wipe_test("Result", game.results)
-    Data.wipe_test("Match", match_id)
+    Data.wipe_test(:player, [player_id])
+    Data.wipe_test(:deck, [deck_id])
+    Data.wipe_test(:game, [game_id])
+    Data.wipe_test(:result, game.results)
+    Data.wipe_test(:match, match_id)
   end
 
   test "rerun" do
@@ -102,28 +102,28 @@ defmodule StatelyTest do
     {player_id, deck_id, match_id, game_id} =
       TestHelper.init_single_states(player_name, deck_name)
 
-    original_player = Stately.read(player_id, "Player")
+    original_player = Stately.read(player_id, :player)
     # To verify it is not the same state read
-    Data.wipe_state([player_id], "Player")
+    Data.wipe_state([player_id], :player)
     assert {:error, "Player #{player_id} not found"} == Player.read(player_id)
 
-    assert :ok == Stately.rerun(player_id, "Player")
+    assert :ok == Stately.rerun(player_id, :player)
 
-    recreated_player = Stately.read(player_id, "Player")
+    recreated_player = Stately.read(player_id, :player)
     assert recreated_player == original_player
 
     game = Game.read(game_id)
 
-    Data.wipe_test("Player", [player_id])
-    Data.wipe_test("Deck", [deck_id])
-    Data.wipe_test("Game", [game_id])
-    Data.wipe_test("Result", game.results)
-    Data.wipe_test("Match", match_id)
+    Data.wipe_test(:player, [player_id])
+    Data.wipe_test(:deck, [deck_id])
+    Data.wipe_test(:game, [game_id])
+    Data.wipe_test(:result, game.results)
+    Data.wipe_test(:match, match_id)
   end
 
   test "rerun fail" do
     player_id = "fail_rerun_base"
-    Stately.rerun(player_id, "Player")
-    assert {:error, "Log of Player #{player_id} not found"} == Stately.rerun(player_id, "Player")
+    Stately.rerun(player_id, :player)
+    assert {:error, "Log of player #{player_id} not found"} == Stately.rerun(player_id, :player)
   end
 end
