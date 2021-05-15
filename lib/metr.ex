@@ -18,21 +18,10 @@ defmodule Metr do
   ## api
 
   ### create
-  def create(%PlayerInput{} = data, :player) do
-    create_state(:player, data)
-  end
-
-  def create(%DeckInput{} = data, :deck) do
-    create_state(:deck, data)
-  end
-
-  def create(%GameInput{} = data, :game) do
-    create_state(:game, data)
-  end
-
-  def create(%MatchInput{} = data, :match) do
-    create_state(:match, data)
-  end
+  def create(%PlayerInput{} = data, :player), do: create_state(:player, data)
+  def create(%DeckInput{} = data, :deck), do: create_state(:deck, data)
+  def create(%GameInput{} = data, :game), do: create_state(:game, data)
+  def create(%MatchInput{} = data, :match), do: create_state(:match, data)
 
   ### list
   # all
@@ -86,10 +75,7 @@ defmodule Metr do
   def read_log(id, :player), do: read_log_of(:player, id)
   def read_log(id, :result), do: read_log_of(:result, id)
 
-  def read_input_log(limit) when is_number(limit) do
-      Event.new([:read, :log], %{limit: limit})
-      |> run()
-  end
+  def read_input_log(limit) when is_number(limit), do: read_log(limit);
 
   ### delete
 
@@ -163,6 +149,11 @@ defmodule Metr do
   defp read_log_of(type, id) when is_atom(type) do
     Map.put(%{}, Stately.module_id(type), id)
     |> Event.new([:read, :log, type])
+    |> run()
+  end
+
+  defp read_log(limit) when is_number(limit) do
+    Event.new([:read, :log], %{limit: limit})
     |> run()
   end
 
