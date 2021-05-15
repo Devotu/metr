@@ -40,10 +40,8 @@ defmodule Metr.Modules.Stately do
   def feed(%Event{keys: [:list, :format]}, _repp), do: []
 
   def feed(%Event{keys: [:list, entity], data: data}, repp) when %{} == data do
-    module = select_entity(entity)
-
-    states =
-      Data.list_ids(module)
+    states = entity
+      |> Data.list_ids()
       |> Enum.map(fn id -> read(id, entity) end)
 
     [Event.new([entity, :list, repp], %{out: states})]
