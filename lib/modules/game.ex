@@ -76,6 +76,9 @@ defmodule Metr.Modules.Game do
                 result_ids: result_ids,
                 ranking: is_ranked?(data),
                 match_id: match_id
+              }),
+              Event.new([:game, :created, repp], %{
+                out: id
               })
             ]
 
@@ -129,13 +132,11 @@ defmodule Metr.Modules.Game do
 
     case delete_conclusion do
       %Game{} = game ->
-        [Event.new([:game, :deleted, repp], %{id: game_id, results: game.results})]
+        [Event.new([:game, :deleted, nil], %{id: game_id, results: game.results}),
+        Event.new([:game, :deleted, repp], %{out: game_id})]
 
       {:error, reason} ->
         [Event.new([:game, :error, repp], %{msg: reason})]
-
-      _ ->
-        [Event.new([:game, :error, repp], %{msg: "unknown error"})]
     end
   end
 

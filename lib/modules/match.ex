@@ -43,11 +43,17 @@ defmodule Metr.Modules.Match do
           {:ok, _pid} ->
             [
               Event.new(
-                [:match, :created, repp],
+                [:match, :created, nil],
                 %{
                   id: id,
                   player_ids: [data.player_one, data.player_two],
                   deck_ids: [data.deck_one, data.deck_two]
+                }
+              ),
+              Event.new(
+                [:match, :created, repp],
+                %{
+                  out: id
                 }
               )
             ]

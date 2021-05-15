@@ -62,7 +62,8 @@ defmodule Metr.Modules.Deck do
         # Start genserver
         case GenServer.start(Metr.Modules.Deck, {id, data, event}, name: process_name) do
           {:ok, _pid} ->
-            [Event.new([:deck, :created, repp], %{id: id, player_id: data.player_id})]
+            [Event.new([:deck, :created, nil], %{id: id, player_id: data.player_id}),
+            Event.new([:deck, :created, repp], %{out: id})]
 
           {:error, error} ->
             [Event.new([:deck, :not, :created, repp], %{errors: [error]})]

@@ -18,7 +18,7 @@ defmodule DeckTest do
   test "create deck" do
     Player.feed(Event.new([:create, :player], %PlayerInput{name: "Decky"}), nil)
 
-    [resulting_event] =
+    [resulting_event, _created_response] =
       Deck.feed(
         Event.new([:create, :deck], %DeckInput{
           name:  "Create deck",
@@ -50,7 +50,7 @@ defmodule DeckTest do
     Player.feed(Event.new([:create, :player], %PlayerInput{name: "Ceasar Deck"}), nil)
     format = "pauper"
 
-    [create_event] =
+    [create_event, _created_response] =
       Deck.feed(
         Event.new([:create, :deck], %DeckInput{
           name:  "Charlie Deck",
@@ -74,7 +74,7 @@ defmodule DeckTest do
   test "create deck with colors" do
     Player.feed(Event.new([:create, :player], %PlayerInput{name: "Erik Deck"}), nil)
 
-    [create_event] =
+    [create_event, _created_response] =
       Deck.feed(
         Event.new([:create, :deck], %DeckInput{
           name:  "Echo Deck",
@@ -138,7 +138,7 @@ defmodule DeckTest do
     Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
     # Resolve game created
 
-    [game_created_event] =
+    [game_created_event, _game_created_response] =
       Game.feed(
         Event.new([:create, :game], %GameInput{
           player_one: player_1_id,
@@ -278,7 +278,7 @@ defmodule DeckTest do
     deck_name = "Golf Deck"
     format = "block"
 
-    [resulting_event] =
+    [resulting_event, _created_response] =
       Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: format}), nil)
 
     assert [:deck, :created, nil] == resulting_event.keys
@@ -307,7 +307,7 @@ defmodule DeckTest do
     Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
     deck_name = "Hotel Deck"
 
-    [resulting_event] =
+    [resulting_event, _created_response] =
       Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
 
     deck_id = resulting_event.data.id

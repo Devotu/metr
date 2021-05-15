@@ -22,7 +22,7 @@ defmodule MatchTest do
 
     player_id = player_created_event.data.out
 
-    [deck_created_event] =
+    [deck_created_event, deck_created_response] =
       Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Alpha Match", player_id: player_id, format: "standard"}), nil)
 
     deck_id = deck_created_event.data.id
@@ -63,12 +63,12 @@ defmodule MatchTest do
 
     player_id = player_created_event.data.out
 
-    [deck_1_created_event] =
+    [deck_1_created_event, deck_1_created_response] =
       Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Bravo Match", player_id: player_id, format: "standard"}), nil)
 
     deck_id_1 = deck_1_created_event.data.id
 
-    [deck_2_created_event] =
+    [deck_2_created_event, deck_2_created_response] =
       Deck.feed(
         Event.new([:create, :deck], %DeckInput{name: "Charlie Match", player_id: player_id, format: "standard"}),
         nil
@@ -103,7 +103,7 @@ defmodule MatchTest do
 
     player_id = player_created_event.data.out
 
-    [deck_created_event] =
+    [deck_created_event, deck_created_response] =
       Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Delta Match", player_id: player_id, format: "standard"}), nil)
 
     deck_id = deck_created_event.data.id
