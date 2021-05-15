@@ -163,7 +163,7 @@ defmodule MetrTest do
     |> Metr.create(:game)
 
     game = Game.read(game_id)
-    assert game_id == Metr.delete_game(game_id)
+    assert game_id == Metr.delete(game_id, :game)
 
     deck_1 = Metr.read(deck_1_id, :deck)
     assert 0 == Enum.count(deck_1.results)
@@ -172,7 +172,7 @@ defmodule MetrTest do
     assert 0 == Enum.count(player_1.results)
 
     assert {:error, "Game not an actual game id not found"} ==
-             Metr.delete_game("not an actual game id")
+             Metr.delete("not an actual game id", :game)
 
     results = Metr.list(:result)
 

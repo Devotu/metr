@@ -61,7 +61,6 @@ defmodule Metr do
   def list(:result, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:result, id) end)
 
   ### read
-
   def read(id, :deck), do: read_state(:deck, id)
   def read(id, :game), do: read_state(:game, id)
   def read(id, :match), do: read_state(:match, id)
@@ -78,21 +77,9 @@ defmodule Metr do
   def read_input_log(limit) when is_number(limit), do: read_log(limit);
 
   ### delete
-
-  def delete_game(game_id) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    # Fire ze missiles
-    Event.new([:delete, :game], %{game_id: game_id})
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
-  end
+  def delete(id, :game), do: delete_state(:game, id)
 
   ### functions
-
   @spec alter_rank(any, :down | :up) :: any
   def alter_rank(deck_id, :up) do
     Event.new([:alter, :rank], %{deck_id: deck_id, change: 1})
@@ -154,6 +141,12 @@ defmodule Metr do
 
   defp read_log(limit) when is_number(limit) do
     Event.new([:read, :log], %{limit: limit})
+    |> run()
+  end
+
+  defp delete_state(type, id) when is_atom(type) do
+    Map.put(%{}, Stately.module_id(type), id)
+    |> Event.new([:delete, type])
     |> run()
   end
 
