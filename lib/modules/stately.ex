@@ -325,7 +325,7 @@ defmodule Metr.Modules.Stately do
   end
 
   defp select_module_struct(module) when is_atom(module) do
-    case String.downcase(module) do
+    case module do
       :player -> %Player{}
       :deck -> %Deck{}
       :game -> %Game{}
