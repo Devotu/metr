@@ -207,6 +207,9 @@ defmodule Metr do
     Task.await(listening_task)
   end
 
+  @doc """
+  Runns an event and awaits response
+  """
   defp run(%Event{} = event) do
     # Start listener
     listening_task = Task.async(&listen/0)
@@ -218,6 +221,9 @@ defmodule Metr do
     Task.await(listening_task)
   end
 
+  @doc """
+  Creates a listening task that awaits the response from an event routed into the application
+  """
   defp listen() do
     receive do
       {:error, msg} ->
@@ -229,6 +235,9 @@ defmodule Metr do
     end
   end
 
+  @doc """
+  feed methods of Metr matches on events sent as respons to requests sent into the system and forwards the content to the running listening task
+  """
   ## feed ##
   # by type
   def feed(%Event{keys: [type, response_pid]} = event, _orepp)
