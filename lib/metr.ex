@@ -139,69 +139,31 @@ defmodule Metr do
   end
 
   ## runners ##
-
   defp list_of(type) when is_atom(type) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    # Fire ze missiles
     Event.new([:list, type])
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
+    |> run()
   end
 
   defp list_of(type, constraints) when is_map(constraints) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    # Fire ze missiles
     Event.new([:list, type], constraints)
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
+    |> run()
   end
 
   defp create_state(type, data) when is_atom(type) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    # Fire ze missiles
     Event.new([:create, type], data)
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
+    |> run()
   end
 
   defp read_state(type, id) when is_atom(type) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    data = Map.put(%{}, Stately.module_id(type), id)
-
-    # Fire ze missiles
-    Event.new([:read, type], data)
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
+    Map.put(%{}, Stately.module_id(type), id)
+    |> Event.new([:read, type])
+    |> run()
   end
 
   defp read_log_of(type, id) when is_atom(type) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    data = Map.put(%{}, Stately.module_id(type), id)
-
-    # Fire ze missiles
-    Event.new([:read, :log, type], data)
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
+    Map.put(%{}, Stately.module_id(type), id)
+    |> Event.new([:read, :log, type])
+    |> run()
   end
 
   @doc """

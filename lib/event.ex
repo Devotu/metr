@@ -19,9 +19,17 @@ defmodule Metr.Event do
     new(keys, merged_data)
   end
 
-  def new(keys, data \\ %{}) when is_list(keys) do
+  def new(keys, data \\ %{})
+  def new(keys, data) when is_list(keys) do
     %Event{id: Id.guid(), keys: keys, data: data, time: Time.timestamp()}
   end
+  def new(data, keys) when is_list(keys) and is_map(data) do
+    %Event{id: Id.guid(), keys: keys, data: data, time: Time.timestamp()}
+  end
+  def new(data, keys) when is_list(keys) and is_struct(data) do
+    %Event{id: Id.guid(), keys: keys, data: data, time: Time.timestamp()}
+  end
+
 
   def only_errors(events) when is_list(events) do
     Enum.filter(events, fn e ->
