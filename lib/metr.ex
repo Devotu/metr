@@ -179,46 +179,39 @@ defmodule Metr do
   """
   ## feed ##
   # by type
-  def feed(%Event{keys: [type, response_pid]} = event, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
+  def feed(%Event{keys: [type, response_pid]} = event, _orepp) when is_atom(type) and is_pid(response_pid) do
     send(response_pid, event.data[type])
     []
   end
 
   # by id
-  def feed(%Event{keys: [type, _status, response_pid], data: %{out: out}}, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
+  def feed(%Event{keys: [type, _status, response_pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(response_pid) do
     send(response_pid, out)
     []
   end
 
-  def feed(%Event{keys: [type, :log, _status, response_pid], data: %{out: out}}, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
+  def feed(%Event{keys: [type, :log, _status, response_pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(response_pid) do
     send(response_pid, out)
     []
   end
 
-  def feed(%Event{keys: [type, :error, response_pid], data: %{msg: msg}}, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
+  def feed(%Event{keys: [type, :error, response_pid], data: %{msg: msg}}, _orepp) when is_atom(type) and is_pid(response_pid) do
     send(response_pid, {:error, msg})
     []
   end
 
-  def feed(%Event{keys: [type, :error, response_pid], data: %{cause: cause}}, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
+  def feed(%Event{keys: [type, :error, response_pid], data: %{cause: cause}}, _orepp) when is_atom(type) and is_pid(response_pid) do
     send(response_pid, {:error, cause})
     []
   end
 
-  def feed(%Event{keys: [type, _status, response_pid]} = event, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
+  def feed(%Event{keys: [type, _status, response_pid]} = event, _orepp) when is_atom(type) and is_pid(response_pid) do
     send(response_pid, event.data.id)
     []
   end
 
   # by id failure
-  def feed(%Event{keys: [type, :not, _status, response_pid]}, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
+  def feed(%Event{keys: [type, :not, _status, response_pid]}, _orepp) when is_atom(type) and is_pid(response_pid) do
     send(response_pid, :error)
     []
   end

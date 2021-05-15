@@ -6,7 +6,6 @@ defmodule Metr.Router do
   """
 
   alias Metr.Event
-  alias Metr.Modules.CLI
   alias Metr.Data
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
@@ -46,7 +45,6 @@ defmodule Metr.Router do
     # IO.inspect(event, label: "routing")
     [
       # Module.feed(event),
-      # CLI.feed(event, response_pid),
       Player.feed(event, response_pid),
       Deck.feed(event, response_pid),
       Game.feed(event, response_pid),

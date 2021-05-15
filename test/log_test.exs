@@ -2,12 +2,7 @@ defmodule LogTest do
   use ExUnit.Case
 
   alias Metr.Modules.Log
-  alias Metr.Modules.CLI
   alias Metr.Event
-
-  test "input read log" do
-    assert :ok == CLI.process([{:log, 10}])
-  end
 
   test "read log" do
     limit_requested = 5
