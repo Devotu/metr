@@ -46,23 +46,23 @@ defmodule Metr do
 
   # specific
   def list(:game, limit: limit) when is_number(limit) do
-    constraints = Map.put(%{}, :limit, limit)
-    list_of(:game, constraints)
+    Map.put(%{}, :limit, limit)
+    |> list_of(:game)
   end
 
   def list(:game, by: {:deck, deck_id}) do
-    constraints = Map.put(%{}, :deck_id, deck_id)
-    list_of(:game, constraints)
+    Map.put(%{}, :deck_id, deck_id)
+    |> list_of(:game)
   end
 
   def list(:result, by: {:game, game_id}) do
-    constraints = Map.put(%{}, :game_id, game_id)
-    list_of(:result, constraints)
+    Map.put(%{}, :game_id, game_id)
+    |> list_of(:result)
   end
 
   def list(:result, by: {:deck, deck_id}) do
-    constraints = Map.put(%{}, :deck_id, deck_id)
-    list_of(:result, constraints)
+    Map.put(%{}, :deck_id, deck_id)
+    |> list_of(:result)
   end
 
   def list(:deck, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:deck, id) end)
@@ -138,13 +138,13 @@ defmodule Metr do
     |> run()
   end
 
-  ## runners ##
+  ## private core functions ##
   defp list_of(type) when is_atom(type) do
     Event.new([:list, type])
     |> run()
   end
 
-  defp list_of(type, constraints) when is_map(constraints) do
+  defp list_of(constraints, type) when is_atom(type) and is_map(constraints) do
     Event.new([:list, type], constraints)
     |> run()
   end
@@ -166,9 +166,7 @@ defmodule Metr do
     |> run()
   end
 
-  @doc """
-  Runns an event and awaits response
-  """
+  #Runns an event and awaits response
   defp run(%Event{} = event) do
     # Start listener
     listening_task = Task.async(&listen/0)
@@ -180,9 +178,7 @@ defmodule Metr do
     Task.await(listening_task)
   end
 
-  @doc """
-  Creates a listening task that awaits the response from an event routed into the application
-  """
+  #Creates a listening task that awaits the response from an event routed into the application
   defp listen() do
     receive do
       {:error, msg} ->
