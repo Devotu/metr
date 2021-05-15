@@ -87,7 +87,8 @@ defmodule Metr do
   def read_log(id, :result), do: read_log_of(:result, id)
 
   def read_input_log(limit) when is_number(limit) do
-    read_log(limit)
+      Event.new([:read, :log], %{limit: limit})
+      |> run()
   end
 
   ### delete
@@ -197,18 +198,6 @@ defmodule Metr do
 
     # Fire ze missiles
     Event.new([:read, :log, type], data)
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
-  end
-
-  defp read_log(limit) when is_number(limit) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    # Fire ze missiles
-    Event.new([:read, :log], %{limit: limit})
     |> Router.input(listening_task.pid)
 
     # Await response
