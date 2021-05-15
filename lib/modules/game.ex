@@ -82,8 +82,8 @@ defmodule Metr.Modules.Game do
               })
             ]
 
-          {:error, error} ->
-            [Event.new([:game, :not, :created, repp], %{errors: [error]})]
+          {:error, cause} ->
+            [Event.new([:game, :error, repp], %{cause: cause})]
 
           _ ->
             [Event.new([:game, :error, repp], %{cause: "Could not save game state"})]

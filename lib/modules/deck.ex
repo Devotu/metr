@@ -65,8 +65,8 @@ defmodule Metr.Modules.Deck do
             [Event.new([:deck, :created, nil], %{id: id, player_id: data.player_id}),
             Event.new([:deck, :created, repp], %{out: id})]
 
-          {:error, error} ->
-            [Event.new([:deck, :not, :created, repp], %{errors: [error]})]
+          {:error, cause} ->
+            [Event.new([:deck, :error, repp], %{cause: cause})]
         end
     end
   end

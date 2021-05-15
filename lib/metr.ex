@@ -228,13 +228,6 @@ defmodule Metr do
     []
   end
 
-  # by id failure
-  def feed(%Event{keys: [type, :not, _status, response_pid]}, _orepp) when is_atom(type) and is_pid(response_pid) do
-    IO.inspect type, label: "not"
-    send(response_pid, :error)
-    []
-  end
-
   def feed(_event, _orepp) do
     # IO.inspect event, label: "passed"
     []

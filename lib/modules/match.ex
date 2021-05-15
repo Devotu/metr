@@ -58,8 +58,8 @@ defmodule Metr.Modules.Match do
               )
             ]
 
-          {:error, error} ->
-            [Event.new([:match, :not, :created, repp], %{errors: [error]})]
+          {:error, cause} ->
+            [Event.new([:match, :error, repp], %{cause: cause})]
         end
     end
   end
