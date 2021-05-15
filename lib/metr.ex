@@ -1,4 +1,12 @@
 defmodule Metr do
+  @moduledoc """
+  API of the application
+  Basic structure is a number of public functions that
+  > takes structured input and create an event
+  > route thah input into the application
+  > awaits response (if requested)
+  """
+
   alias Metr.Event
   alias Metr.Router
   alias Metr.Modules.Stately

@@ -1,4 +1,10 @@
 defmodule Metr.Router do
+  @moduledoc """
+  Core of the application with two closely related tasks
+  > Takes input events from the API, stores them, and routes them through all modules
+  > Takes events generated from modules and routes the through all modules
+  """
+
   alias Metr.Event
   alias Metr.Modules.CLI
   alias Metr.Data
