@@ -82,11 +82,8 @@ defmodule Metr.Modules.Game do
       when is_number(limit) do
     games =
       Data.list_ids(@atom)
-      |> IO.inspect(label: "game - ids")
       |> Enum.map(&read/1)
-      |> IO.inspect(label: "game - read")
       |> Enum.sort(&(&1.time < &2.time))
-      |> IO.inspect(label: "game - sorted")
       |> Enum.take(limit)
 
     [Event.new([@atom, :list, repp], %{out: games})]

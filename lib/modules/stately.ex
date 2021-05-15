@@ -23,7 +23,7 @@ defmodule Metr.Modules.Stately do
   def feed(%Event{keys: [:read, :log]}, _repp), do: []
 
   def feed(%Event{keys: [:read, entity], data: data}, repp) when is_map(data) do
-    module = select_entity(entity)
+    module = select_module(entity)
     id_name = entity_id(entity)
     id = Map.get(data, id_name, {:error, "key not found"})
 
@@ -51,10 +51,10 @@ defmodule Metr.Modules.Stately do
         %Event{id: _event_id, keys: [:rerun, entity], data: %{id: id}},
         repp
       ) do
-    module = select_entity(entity)
+    module = select_module(entity)
 
     [
-      rerun(id, entity)
+      rerun(id, module)
       |> out_to_event(entity, [:reran, repp])
     ]
   end
@@ -162,8 +162,8 @@ defmodule Metr.Modules.Stately do
     |> String.replace("\"", "")
   end
 
-  def rerun(id, entity) do
-    {:ok, id, entity}
+  def rerun(id, module) do
+    {:ok, id, module}
     |> validate_entity()
     |> rerun_from_log()
   end
@@ -210,7 +210,7 @@ defmodule Metr.Modules.Stately do
       :match -> :match_id
       :result -> :result_id
       :tag -> :tag_id
-      _ -> {:error, "#{Kernel.inspect(entity)} is not a valid atom selecting id name"}
+      _ -> {:error, "#{Kernel.inspect(entity) |> String.capitalize()} is not a valid atom selecting id name"}
     end
   end
   def entity_id(entity) when is_atom(entity) do
@@ -219,7 +219,7 @@ defmodule Metr.Modules.Stately do
   end
 
   def apply_event(id, entity_qualifier, %Event{} = event) when is_bitstring(id) and is_atom(entity_qualifier) do
-    module = select_entity(entity_qualifier)
+    module = select_module(entity_qualifier)
     module.feed(event, nil)
   end
 
@@ -247,7 +247,7 @@ defmodule Metr.Modules.Stately do
   defp start_new({:ok, id, entity}, state) do
     process_name = Data.genserver_id(entity, id)
 
-    case GenServer.start(select_entity(entity), state, name: process_name) do
+    case GenServer.start(select_module(entity), state, name: process_name) do
       {:ok, _pid} ->
         {:ok, id, entity}
 
@@ -277,18 +277,18 @@ defmodule Metr.Modules.Stately do
 
   defp run_log({:error, e}), do: {:error, e}
 
-  defp run_log({:ok, id, entity}) do
-    module = select_entity(entity)
+  defp run_log({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
+    module = select_module(entity)
     stop(id, entity)
 
     case Data.read_log_by_id(id, entity) do
       {:error, :not_found} ->
-        {:error, "Log of #{entity} #{id} not found"}
+        {:error, "Log of #{entity |> Atom.to_string()} #{id} not found"}
 
       log ->
         log
         |> Util.uniq()
-        |> Enum.map(fn e -> entity.feed(e, nil) end)
+        |> Enum.map(fn e -> module.feed(e, nil) end)
     end
   end
 
@@ -309,7 +309,7 @@ defmodule Metr.Modules.Stately do
   defp return_result({:error, e}), do: {:error, e}
   defp return_result({:ok, _id, _entity}), do: :ok
 
-  defp select_entity(entity) when is_atom(entity) do
+  defp select_module(entity) when is_atom(entity) do
     case entity do
       :player -> Player
       :deck -> Deck
@@ -321,7 +321,7 @@ defmodule Metr.Modules.Stately do
     end
   end
 
-  defp select_module(entity) when is_atom(entity) do
+  defp select_module_struct(entity) when is_atom(entity) do
     case entity do
       :player -> %Player{}
       :deck -> %Deck{}
@@ -358,7 +358,7 @@ defmodule Metr.Modules.Stately do
   defp verified_id({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
     case entity_has_state({:ok, id, entity}) do
       true -> {:ok, id, entity}
-      false -> {:error, "#{entity} #{id} not found"}
+      false -> {:error, "#{entity |> Atom.to_string |> String.capitalize()} #{id} not found"}
     end
   end
 
@@ -390,9 +390,9 @@ defmodule Metr.Modules.Stately do
   defp start_process({:ok, id, entity}) do
     # Get state
     current_state =
-      Map.merge(select_module(entity), Data.recall_state(entity, id))
+      Map.merge(select_module_struct(entity), Data.recall_state(entity, id))
 
-    case GenServer.start(select_entity(entity), current_state,
+    case GenServer.start(select_module(entity), current_state,
            name: Data.genserver_id(entity, id)
          ) do
       {:ok, _pid} -> {:ok, id, entity}
