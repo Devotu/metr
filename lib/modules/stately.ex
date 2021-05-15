@@ -23,7 +23,6 @@ defmodule Metr.Modules.Stately do
   def feed(%Event{keys: [:read, :log]}, _repp), do: []
 
   def feed(%Event{keys: [:read, entity], data: data}, repp) when is_map(data) do
-    module = select_module(entity)
     id_name = entity_id(entity)
     id = Map.get(data, id_name, {:error, "key not found"})
 
