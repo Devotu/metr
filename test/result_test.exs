@@ -61,9 +61,9 @@ defmodule ResultTest do
     assert result == Metr.read(result.id, :result)
     assert result == Metr.list(game.results, :result) |> List.first()
 
-    Data.wipe_test("Deck", id)
-    Data.wipe_test("Player", id)
-    Data.wipe_test("Game", game.id)
-    Data.wipe_test("Result", game.results)
+    Data.wipe_test(:deck, id)
+    Data.wipe_test(:player, id)
+    Data.wipe_test(:game, game.id)
+    Data.wipe_test(:result, game.results)
   end
 end

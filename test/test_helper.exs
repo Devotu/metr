@@ -37,11 +37,11 @@ defmodule TestHelper do
   def cleanup_single_states({player_id, deck_id, match_id, game_id}) do
     game = Game.read(game_id)
 
-    Data.wipe_test("Player", [player_id])
-    Data.wipe_test("Deck", [deck_id])
-    Data.wipe_test("Game", [game_id])
-    Data.wipe_test("Result", game.results)
-    Data.wipe_test("Match", match_id)
+    Data.wipe_test(:player, [player_id])
+    Data.wipe_test(:deck, [deck_id])
+    Data.wipe_test(:game, [game_id])
+    Data.wipe_test(:result, game.results)
+    Data.wipe_test(:match, match_id)
   end
 
   def init_double_state(player_one_name, deck_one_name, player_two_name, deck_two_name) do
@@ -75,10 +75,10 @@ defmodule TestHelper do
   def cleanup_double_states({player_1_id, deck_1_id, player_2_id, deck_2_id, match_id, game_id}) do
     game = Game.read(game_id)
 
-    Data.wipe_test("Player", [player_1_id, player_2_id])
-    Data.wipe_test("Deck", [deck_1_id, deck_2_id])
-    Data.wipe_test("Game", [game_id])
-    Data.wipe_test("Result", game.results)
-    Data.wipe_test("Match", match_id)
+    Data.wipe_test(:player, [player_1_id, player_2_id])
+    Data.wipe_test(:deck, [deck_1_id, deck_2_id])
+    Data.wipe_test(:game, [game_id])
+    Data.wipe_test(:result, game.results)
+    Data.wipe_test(:match, match_id)
   end
 end

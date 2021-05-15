@@ -45,8 +45,8 @@ defmodule GameTest do
 
     assert resulting_event.data.id == result_1.game_id
 
-    Data.wipe_test("Game", resulting_event.data.id)
-    Data.wipe_test("Result", resulting_event.data.result_ids)
+    Data.wipe_test(:game, resulting_event.data.id)
+    Data.wipe_test(:result, resulting_event.data.result_ids)
     TestHelper.cleanup_double_states(
       {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id}
     )
@@ -136,10 +136,10 @@ defmodule GameTest do
     assert 5 == Enum.count(deck_1.results)
     assert 3 == Enum.count(Metr.list(:game, limit: 3))
 
-    Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
-    Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
-    Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
-    Data.wipe_test("Result", deck_1.results ++ deck_2.results ++ deck_3.results)
+    Data.wipe_test(:player, [player_1_id, player_2_id, player_3_id])
+    Data.wipe_test(:deck, [deck_1_id, deck_2_id, deck_3_id])
+    Data.wipe_test(:game, [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
+    Data.wipe_test(:result, deck_1.results ++ deck_2.results ++ deck_3.results)
   end
 
   test "select games by deck" do
@@ -223,10 +223,10 @@ defmodule GameTest do
 
     results = Metr.list(:result)
 
-    Data.wipe_test("Player", [player_1_id, player_2_id, player_3_id])
-    Data.wipe_test("Deck", [deck_1_id, deck_2_id, deck_3_id])
-    Data.wipe_test("Game", [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
-    Data.wipe_test("Result", Enum.map(results, fn r -> r.id end))
+    Data.wipe_test(:player, [player_1_id, player_2_id, player_3_id])
+    Data.wipe_test(:deck, [deck_1_id, deck_2_id, deck_3_id])
+    Data.wipe_test(:game, [game_1_id, game_2_id, game_3_id, game_4_id, game_5_id])
+    Data.wipe_test(:result, Enum.map(results, fn r -> r.id end))
   end
 
   test "game with power" do
@@ -289,11 +289,11 @@ defmodule GameTest do
     assert -1 == result_31.power
     assert nil == result_32.power
 
-    Data.wipe_test("Player", [player_id])
-    Data.wipe_test("Deck", [deck_id])
-    Data.wipe_test("Game", [game_1.id, game_2.id, game_3.id])
+    Data.wipe_test(:player, [player_id])
+    Data.wipe_test(:deck, [deck_id])
+    Data.wipe_test(:game, [game_1.id, game_2.id, game_3.id])
 
-    Data.wipe_test("Result", [
+    Data.wipe_test(:result, [
       result_11_id,
       result_12_id,
       result_21_id,
@@ -335,8 +335,8 @@ defmodule GameTest do
 
     {:error, "invalid power input - power \"2\" not a number"} = Metr.create(game_2_input, :game)
 
-    Data.wipe_test("Player", [player_id])
-    Data.wipe_test("Deck", [deck_id])
+    Data.wipe_test(:player, [player_id])
+    Data.wipe_test(:deck, [deck_id])
   end
 
   test "game in match created" do
@@ -375,11 +375,11 @@ defmodule GameTest do
 
     assert match_id == game_1.match
 
-    Data.wipe_test("Player", [player_id])
-    Data.wipe_test("Deck", [deck_id])
-    Data.wipe_test("Game", [game_1.id])
-    Data.wipe_test("Result", game_1.results)
-    Data.wipe_test("Match", match_id)
+    Data.wipe_test(:player, [player_id])
+    Data.wipe_test(:deck, [deck_id])
+    Data.wipe_test(:game, [game_1.id])
+    Data.wipe_test(:result, game_1.results)
+    Data.wipe_test(:match, match_id)
   end
 
   test "game with turns" do
@@ -405,8 +405,8 @@ defmodule GameTest do
     assert game.turns == number_of_turns
 
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
-    Data.wipe_test("Game", [game.id])
-    Data.wipe_test("Result", game.results)
+    Data.wipe_test(:game, [game.id])
+    Data.wipe_test(:result, game.results)
   end
 
   test "draw game" do
@@ -432,7 +432,7 @@ defmodule GameTest do
     assert result_2.place == 0
 
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
-    Data.wipe_test("Game", [game.id])
-    Data.wipe_test("Result", game.results)
+    Data.wipe_test(:game, [game.id])
+    Data.wipe_test(:result, game.results)
   end
 end

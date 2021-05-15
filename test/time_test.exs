@@ -89,9 +89,9 @@ defmodule TimeTest do
     assert 0 != match.time
     assert 0 >= match.time - time_of_creation
 
-    Data.wipe_test("Deck", id)
-    Data.wipe_test("Player", id)
-    Data.wipe_test("Game", game.id)
-    Data.wipe_test("Match", match.id)
+    Data.wipe_test(:deck, id)
+    Data.wipe_test(:player, id)
+    Data.wipe_test(:game, game.id)
+    Data.wipe_test(:match, match.id)
   end
 end

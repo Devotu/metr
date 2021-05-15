@@ -52,9 +52,9 @@ defmodule MatchTest do
     assert false == match.ranking
     assert deck_id == match.deck_one
 
-    Data.wipe_test("Match", match_id)
-    Data.wipe_test("Player", player_id)
-    Data.wipe_test("Deck", deck_id)
+    Data.wipe_test(:match, match_id)
+    Data.wipe_test(:player, player_id)
+    Data.wipe_test(:deck, deck_id)
   end
 
   test "fail create match" do
@@ -93,8 +93,8 @@ defmodule MatchTest do
 
     assert [:match, :error, nil] == resulting_event.keys
     assert "ranks does not match" == resulting_event.data.cause
-    Data.wipe_test("Player", player_id)
-    Data.wipe_test("Deck", [deck_id_1, deck_id_2])
+    Data.wipe_test(:player, player_id)
+    Data.wipe_test(:deck, [deck_id_1, deck_id_2])
   end
 
   test "list matches" do
@@ -145,8 +145,8 @@ defmodule MatchTest do
     matches = match_list_event.data.out
     assert 3 = Enum.count(matches)
 
-    Data.wipe_test("Match", Enum.map(matches, fn m -> m.id end))
-    Data.wipe_test("Player", player_id)
-    Data.wipe_test("Deck", deck_id)
+    Data.wipe_test(:match, Enum.map(matches, fn m -> m.id end))
+    Data.wipe_test(:player, player_id)
+    Data.wipe_test(:deck, deck_id)
   end
 end

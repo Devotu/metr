@@ -31,8 +31,8 @@ defmodule DeckTest do
       )
 
     assert [:deck, :created, nil] == resulting_event.keys
-    Data.wipe_test("Deck", resulting_event.data.id)
-    Data.wipe_test("Player", resulting_event.data.player_id)
+    Data.wipe_test(:deck, resulting_event.data.id)
+    Data.wipe_test(:player, resulting_event.data.player_id)
   end
 
   test "fail create deck" do
@@ -67,8 +67,8 @@ defmodule DeckTest do
     [read_event] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_id}), nil)
     deck = read_event.data.out
     assert format == deck.format
-    Data.wipe_test("Deck", deck_id)
-    Data.wipe_test("Player", create_event.data.player_id)
+    Data.wipe_test(:deck, deck_id)
+    Data.wipe_test(:player, create_event.data.player_id)
   end
 
   test "create deck with colors" do
@@ -96,8 +96,8 @@ defmodule DeckTest do
     assert false == deck.green
     assert true == deck.blue
     assert false == deck.colorless
-    Data.wipe_test("Deck", deck_id)
-    Data.wipe_test("Player", create_event.data.player_id)
+    Data.wipe_test(:deck, deck_id)
+    Data.wipe_test(:player, create_event.data.player_id)
   end
 
   test "create deck with failed format" do
@@ -118,7 +118,7 @@ defmodule DeckTest do
 
     assert [:deck, :error, nil] == create_event.keys
     assert "format failingformat not vaild" == create_event.data.cause
-    Data.wipe_test("Player", "david_deck")
+    Data.wipe_test(:player, "david_deck")
   end
 
   test "deck created" do
@@ -157,7 +157,7 @@ defmodule DeckTest do
 
     resulting_events = Deck.feed(game_created_event, nil)
     first_resulting_event = List.first(resulting_events)
-    deck_log = Data.read_log_by_id(deck_1_id, "Deck")
+    deck_log = Data.read_log_by_id(deck_1_id, :deck)
     [first_result_id, _second_result_event] = game_created_event.data.result_ids
 
     # Assert
@@ -170,10 +170,10 @@ defmodule DeckTest do
     assert 2 == Enum.count(deck_log)
 
     # Cleanup
-    Data.wipe_test("Player", [player_1_id, player_2_id])
-    Data.wipe_test("Deck", [deck_1_id, deck_2_id])
-    Data.wipe_test("Game", [game_created_event.data.id])
-    Data.wipe_test("Result", game_created_event.data.result_ids)
+    Data.wipe_test(:player, [player_1_id, player_2_id])
+    Data.wipe_test(:deck, [deck_1_id, deck_2_id])
+    Data.wipe_test(:game, [game_created_event.data.id])
+    Data.wipe_test(:result, game_created_event.data.result_ids)
   end
 
   test "alter rank" do
@@ -267,8 +267,8 @@ defmodule DeckTest do
     [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
     assert deck.data.out.rank == {-2, 0}
 
-    Data.wipe_test("Deck", deck_1_id)
-    Data.wipe_test("Player", player_1_id)
+    Data.wipe_test(:deck, deck_1_id)
+    Data.wipe_test(:player, player_1_id)
   end
 
   test "create minimum deck" do
@@ -297,8 +297,8 @@ defmodule DeckTest do
     assert false == deck.blue
     assert false == deck.colorless
 
-    Data.wipe_test("Deck", resulting_event.data.id)
-    Data.wipe_test("Player", player_id)
+    Data.wipe_test(:deck, resulting_event.data.id)
+    Data.wipe_test(:player, player_id)
   end
 
   test "toggle deck active" do
@@ -322,8 +322,8 @@ defmodule DeckTest do
     reverted_deck = Deck.read(deck_id)
     assert true == reverted_deck.active
 
-    Data.wipe_test("Deck", deck_id)
-    Data.wipe_test("Player", player_id)
+    Data.wipe_test(:deck, deck_id)
+    Data.wipe_test(:player, player_id)
   end
 
   test "result order" do
@@ -359,9 +359,9 @@ defmodule DeckTest do
     player_one = Metr.read(player_one_id, :player)
     player_two = Metr.read(player_two_id, :player)
 
-    Data.wipe_test("Game", [second_game_id, third_game_id])
-    Data.wipe_test("Result", player_one.results)
-    Data.wipe_test("Result", player_two.results)
+    Data.wipe_test(:game, [second_game_id, third_game_id])
+    Data.wipe_test(:result, player_one.results)
+    Data.wipe_test(:result, player_two.results)
     TestHelper.cleanup_double_states(
       {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id}
     )
@@ -415,7 +415,7 @@ defmodule DeckTest do
 
     assert [:deck, :error, nil] == resulting_event.keys
 
-    Data.wipe_test("Player", player_id)
+    Data.wipe_test(:player, player_id)
   end
 
   test "create deck failed format" do
@@ -436,7 +436,7 @@ defmodule DeckTest do
       )
 
     assert [:deck, :error, nil] == resulting_event.keys
-    Data.wipe_test("Player", player_id)
+    Data.wipe_test(:player, player_id)
   end
 
   test "create deck failed player" do

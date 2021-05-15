@@ -21,6 +21,7 @@ defmodule Metr.Modules.Result do
   alias Metr.Modules.Input.ResultInput
 
   @name __ENV__.module |> Stately.module_to_name()
+  @atom :result
 
   def create(%ResultInput{} = data, %Event{} = event) do
     id = Id.guid()
@@ -32,7 +33,7 @@ defmodule Metr.Modules.Result do
   end
 
   defp init_process(id, %ResultInput{} = data, %Event{} = event) do
-    process_name = Data.genserver_id(__ENV__.module, id)
+    process_name = Data.genserver_id(@atom, id)
     # Start genserver
     case GenServer.start(Metr.Modules.Result, {id, data, event}, name: process_name) do
       {:ok, _pid} -> {:ok, id}
@@ -86,15 +87,15 @@ defmodule Metr.Modules.Result do
     }
   end
 
-  def feed(%Event{id: _event_id, keys: [:list, :result], data: %{ids: ids}}, repp)
+  def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{ids: ids}}, repp)
       when is_list(ids) do
     results = Enum.map(ids, &read/1)
-    [Event.new([:result, :list, repp], %{out: results})]
+    [Event.new([@atom, :list, repp], %{out: results})]
   end
 
-  def feed(%Event{id: _event_id, keys: [:read, :result], data: %{result_id: id}}, repp) do
+  def feed(%Event{id: _event_id, keys: [:read, @atom], data: %{result_id: id}}, repp) do
     result = read(id)
-    [Event.new([:result, :read, repp], %{out: result})]
+    [Event.new([@atom, :read, repp], %{out: result})]
   end
 
   def feed(_event, _orepp) do
@@ -102,19 +103,19 @@ defmodule Metr.Modules.Result do
   end
 
   def read(id) do
-    Stately.read(id, :result)
-    # Data.recall_state(__ENV__.module, id)
+    Stately.read(id, @atom)
+    # Data.recall_state(@atom, id)
   end
 
   def delete(id) do
-    Data.wipe_state(id, __ENV__.module)
+    Data.wipe_state(id, @atom)
   end
 
   ## gen
   @impl true
   def init({id, %ResultInput{} = data, %Event{} = event}) do
     state = from_input(data, id, event.time)
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(@atom, id, state, event)
     {:ok, state}
   end
 
@@ -123,7 +124,7 @@ defmodule Metr.Modules.Result do
   end
 
   @impl true
-  def handle_call(%{keys: [:read, :result]}, _from, state) do
+  def handle_call(%{keys: [:read, @atom]}, _from, state) do
     {:reply, state, state}
   end
 
@@ -134,7 +135,7 @@ defmodule Metr.Modules.Result do
         state
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    :ok = Data.save_state_with_log(@atom, id, state, event)
     {:reply, "#{@name} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end

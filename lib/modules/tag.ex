@@ -10,10 +10,11 @@ defmodule Metr.Modules.Tag do
   alias Metr.Modules.Tag
 
   @name __ENV__.module |> Stately.module_to_name()
+  @atom :tag
   @valid_tag_length 20
 
   def feed(
-        %Event{id: _event_id, keys: [:tag, module_atom], data: %{id: module_id, tag: tag}} =
+        %Event{id: _event_id, keys: [@atom, module_atom], data: %{id: module_id, tag: tag}} =
           event,
         repp
       ) do
@@ -31,7 +32,7 @@ defmodule Metr.Modules.Tag do
         propagating_event = Event.new([module_atom, :tagged], %{id: module_id, tag: tag})
 
         Stately.create(@name, state, event)
-        |> Stately.out_to_event(@name, [:created, repp])
+        |> Stately.out_to_event(@atom, [:created, repp])
         |> List.wrap()
         |> Enum.concat([propagating_event])
 
@@ -39,7 +40,7 @@ defmodule Metr.Modules.Tag do
         propagating_event = Event.new([module_atom, :tagged], %{id: module_id, tag: tag})
 
         Stately.update(tag, @name, [:tagged], %{id: module_id}, event)
-        |> Stately.out_to_event(@name, [:altered, repp])
+        |> Stately.out_to_event(@atom, [:altered, repp])
         |> List.wrap()
         |> Enum.concat([propagating_event])
 
@@ -99,11 +100,11 @@ defmodule Metr.Modules.Tag do
 
   ## module
   def read(id) do
-    Stately.read(id, @name)
+    Stately.read(id, @atom)
   end
 
   def exist?(id) do
-    Stately.exist?(id, @name)
+    Stately.exist?(id, @atom)
   end
 
   def module_name() do
@@ -117,7 +118,7 @@ defmodule Metr.Modules.Tag do
   end
 
   @impl true
-  def handle_call(%{keys: [:read, :tag]}, _from, state) do
+  def handle_call(%{keys: [:read, @atom]}, _from, state) do
     {:reply, state, state}
   end
 

@@ -14,9 +14,10 @@ defmodule Metr.Modules.Player do
   alias Metr.Time
 
   @name __ENV__.module |> Stately.module_to_name()
+  @atom :player
 
   def feed(
-        %Event{id: _event_id, keys: [:create, :player], data: %PlayerInput{name: name}} = event,
+        %Event{id: _event_id, keys: [:create, @atom], data: %PlayerInput{name: name}} = event,
         repp
       ) do
     validation =
@@ -28,12 +29,12 @@ defmodule Metr.Modules.Player do
         id = Id.hrid(name)
         state = %Player{id: id, name: name, time: Time.timestamp()}
 
-        Stately.create("Player", state, event)
-        |> Stately.out_to_event(@name, [:created, repp])
+        Stately.create(@atom, state, event)
+        |> Stately.out_to_event(@atom, [:created, repp])
         |> List.wrap()
 
       {:error, e} ->
-        [Event.new([:player, :error, repp], %{cause: e})]
+        [Event.new([@atom, :error, repp], %{cause: e})]
     end
   end
 
@@ -46,8 +47,8 @@ defmodule Metr.Modules.Player do
         repp
       ) do
     [
-      Stately.update(id, @name, keys, %{id: deck_id, player_id: id}, event)
-      |> Stately.out_to_event(@name, [:altered, repp])
+      Stately.update(id, @atom, keys, %{id: deck_id, player_id: id}, event)
+      |> Stately.out_to_event(@atom, [:altered, repp])
     ]
   end
 
@@ -72,8 +73,8 @@ defmodule Metr.Modules.Player do
       fn {id, result_id}, acc ->
         acc ++
           [
-            Stately.update(id, @name, keys, %{id: result_id, player_id: id}, event)
-            |> Stately.out_to_event(@name, [:altered, repp])
+            Stately.update(id, @atom, keys, %{id: result_id, player_id: id}, event)
+            |> Stately.out_to_event(@atom, [:altered, repp])
           ]
       end
     )
@@ -89,7 +90,7 @@ defmodule Metr.Modules.Player do
       ) do
     # for each player find connections to this game
     player_result_ids =
-      Data.list_ids(__ENV__.module)
+      Data.list_ids(@atom)
       |> Enum.map(fn id -> read(id) end)
       |> Enum.filter(fn p -> Util.has_member?(p.results, result_ids) end)
       |> Enum.map(fn p -> {p.id, Util.find_first_common_member(p.results, result_ids)} end)
@@ -97,8 +98,8 @@ defmodule Metr.Modules.Player do
     # call update
     Enum.reduce(player_result_ids, [], fn {id, result_id}, acc ->
       (acc ++
-         Stately.update(id, @name, keys, %{id: result_id, player_id: id}, event))
-      |> Stately.out_to_event(@name, [:altered, repp])
+         Stately.update(id, @atom, keys, %{id: result_id, player_id: id}, event))
+      |> Stately.out_to_event(@atom, [:altered, repp])
       |> List.wrap()
     end)
   end
@@ -116,20 +117,20 @@ defmodule Metr.Modules.Player do
     Enum.reduce(player_ids, [], fn id, acc ->
       acc ++
         [
-          Stately.update(id, @name, keys, %{id: match_id, player_id: id}, event)
-          |> Stately.out_to_event(@name, [:altered, repp])
+          Stately.update(id, @atom, keys, %{id: match_id, player_id: id}, event)
+          |> Stately.out_to_event(@atom, [:altered, repp])
         ]
     end)
   end
 
-  def feed(%Event{id: _event_id, keys: [:read, :player], data: %{player_id: id}}, repp) do
+  def feed(%Event{id: _event_id, keys: [:read, @atom], data: %{player_id: id}}, repp) do
     player = read(id)
-    [Event.new([:player, :read, repp], %{out: player})]
+    [Event.new([@atom, :read, repp], %{out: player})]
   end
 
-  def feed(%Event{id: _event_id, keys: [:read, :log, :player], data: %{player_id: id}}, repp) do
-    events = Data.read_log_by_id(id, "Player")
-    [Event.new([:player, :read, repp], %{out: events})]
+  def feed(%Event{id: _event_id, keys: [:read, :log, @atom], data: %{player_id: id}}, repp) do
+    events = Data.read_log_by_id(id, @atom)
+    [Event.new([@atom, :read, repp], %{out: events})]
   end
 
   def feed(_event, _orepp) do
@@ -138,15 +139,15 @@ defmodule Metr.Modules.Player do
 
   ## module
   def read(id) do
-    Stately.read(id, @name)
+    Stately.read(id, @atom)
   end
 
   def exist?(id) do
-    Stately.exist?(id, @name)
+    Stately.exist?(id, @atom)
   end
 
   def module_name() do
-    @name
+    @atom
   end
 
   ## gen
@@ -162,7 +163,7 @@ defmodule Metr.Modules.Player do
         state
       ) do
     new_state = Map.update!(state, :decks, &(&1 ++ [deck_id]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
+    :ok = Data.save_state_with_log(@atom, id, new_state, event)
     {:reply, "Deck #{deck_id} added to player #{id}", new_state}
   end
 
@@ -173,7 +174,7 @@ defmodule Metr.Modules.Player do
         state
       ) do
     new_state = Map.update!(state, :results, &(&1 ++ [result_id]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
+    :ok = Data.save_state_with_log(@atom, id, new_state, event)
     {:reply, "Result #{result_id} added to player #{id}", new_state}
   end
 
@@ -184,7 +185,7 @@ defmodule Metr.Modules.Player do
         state
       ) do
     new_state = Map.update!(state, :matches, &(&1 ++ [match_id]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
+    :ok = Data.save_state_with_log(@atom, id, new_state, event)
     {:reply, "Match #{match_id} added to player #{id}", new_state}
   end
 
@@ -195,12 +196,12 @@ defmodule Metr.Modules.Player do
         state
       ) do
     new_state = Map.update!(state, :results, fn results -> List.delete(results, result_id) end)
-    :ok = Data.save_state_with_log(__ENV__.module, id, new_state, event)
+    :ok = Data.save_state_with_log(@atom, id, new_state, event)
     {:reply, "Game #{result_id} removed from player #{id}", new_state}
   end
 
   @impl true
-  def handle_call(%{keys: [:read, :player]}, _from, state) do
+  def handle_call(%{keys: [:read, @atom]}, _from, state) do
     {:reply, state, state}
   end
 
@@ -211,7 +212,7 @@ defmodule Metr.Modules.Player do
         state
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-    {:reply, "#{@name} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+    :ok = Data.save_state_with_log(@atom, id, state, event)
+    {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end
