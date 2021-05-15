@@ -33,7 +33,7 @@ defmodule Metr.Modules.Player do
         |> List.wrap()
 
       {:error, e} ->
-        [Event.new([:player, :error, repp], %{msg: e})]
+        [Event.new([:player, :error, repp], %{cause: e})]
     end
   end
 

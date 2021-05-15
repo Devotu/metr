@@ -13,7 +13,6 @@ defmodule LogTest do
     assert limit_requested == Enum.count(resulting_event.data.log)
 
     log_events = Metr.read_input_log(limit_requested)
-    IO.inspect log_events, label: "log test - events"
     assert limit_requested == Enum.count(log_events)
   end
 end

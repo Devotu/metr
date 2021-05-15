@@ -52,9 +52,9 @@ defmodule Metr.Modules.Deck do
   ## feed
   def feed(%Event{keys: [:create, :deck], data: %DeckInput{} = data} = event, repp) do
     case verify_new_deck_input(data) do
-      {:error, reason} ->
+      {:error, cause} ->
         # Return
-        [Event.new([:deck, :error, repp], %{cause: reason, data: data})]
+        [Event.new([:deck, :error, repp], %{cause: cause, data: data})]
 
       {:ok} ->
         id = Id.hrid(data.name)

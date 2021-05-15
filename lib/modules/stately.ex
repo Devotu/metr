@@ -462,7 +462,7 @@ defmodule Metr.Modules.Stately do
            name: Data.genserver_id(module_name, id)
          ) do
       {:ok, _pid} -> {:ok, id, module_name}
-      {:error, reason} -> {:error, reason}
+      {:error, cause} -> {:error, cause}
       x -> {:error, inspect(x)}
     end
   end

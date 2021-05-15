@@ -55,7 +55,7 @@ defmodule PlayerTest do
       TestHelper.init_double_state(player_one_name, deck_one_name, player_two_name, deck_two_name)
 
     # Resolve game created
-    [game_created_event, game_created_return] =
+    [game_created_event, _game_created_return] =
       Game.feed(
         Event.new([:create, :game], %GameInput{
           player_one: player_one_id,

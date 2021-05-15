@@ -165,9 +165,9 @@ defmodule Metr do
   #Creates a listening task that awaits the response from an event routed into the application
   defp listen() do
     receive do
-      {:error, msg} ->
-        IO.puts("\n!! Error -- #{msg} !!")
-        {:error, msg}
+      {:error, cause} ->
+        IO.puts("\n!! Error -- #{cause} !!")
+        {:error, cause}
 
       msg ->
         msg
@@ -180,56 +180,50 @@ defmodule Metr do
   ## feed ##
   # by type
   def feed(%Event{keys: [type, response_pid]} = event, _orepp) when is_atom(type) and is_pid(response_pid) do
-    IO.inspect event, label: "type"
+    # IO.inspect event, label: "type"
     send(response_pid, event.data[type])
     []
   end
 
-  def feed(%Event{keys: [type, :error, response_pid], data: %{msg: msg}}, _orepp) when is_atom(type) and is_pid(response_pid) do
-    IO.inspect type, label: "error"
-    send(response_pid, {:error, msg})
-    []
-  end
-
   def feed(%Event{keys: [type, :error, response_pid], data: %{cause: cause}}, _orepp) when is_atom(type) and is_pid(response_pid) do
-    IO.inspect type, label: "cause"
+    # IO.inspect cause, label: "error - cause"
     send(response_pid, {:error, cause})
     []
   end
 
   # single
   def feed(%Event{keys: [type, :read, response_pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(response_pid) do
-    IO.inspect out, label: "read"
+    # IO.inspect out, label: "read"
     send(response_pid, out)
     []
   end
 
   def feed(%Event{keys: [type, :created, response_pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(response_pid) do
-    IO.inspect out, label: "created"
+    # IO.inspect out, label: "created"
     send(response_pid, out)
     []
   end
 
   def feed(%Event{keys: [type, :altered, response_pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(response_pid) do
-    IO.inspect out, label: "altered"
+    # IO.inspect out, label: "altered"
     send(response_pid, out)
     []
   end
 
   def feed(%Event{keys: [type, :reran, response_pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(response_pid) do
-    IO.inspect out, label: "reran"
+    # IO.inspect out, label: "reran"
     send(response_pid, out)
     []
   end
 
-  def feed(%Event{keys: [type, :deleted, response_pid], data: %{out: out}}, _orepp) when is_pid(response_pid) do
-    IO.inspect out, label: "deleted"
+  def feed(%Event{keys: [type, :deleted, response_pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(response_pid) do
+    # IO.inspect out, label: "deleted"
     send(response_pid, out)
     []
   end
 
   def feed(%Event{keys: [:match, :ended, response_pid], data: %{out: out}}, _orepp) when is_pid(response_pid) do
-    IO.inspect out, label: "match ended"
+    # IO.inspect out, label: "match ended"
     send(response_pid, out)
     []
   end
@@ -248,8 +242,8 @@ defmodule Metr do
     []
   end
 
-  def feed(event, _orepp) do
-    IO.inspect event, label: "passed"
+  def feed(_event, _orepp) do
+    # IO.inspect event, label: "passed"
     []
   end
 end

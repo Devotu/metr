@@ -86,7 +86,7 @@ defmodule Metr.Modules.Game do
             [Event.new([:game, :not, :created, repp], %{errors: [error]})]
 
           _ ->
-            [Event.new([:game, :error, repp], %{msg: "Could not save game state"})]
+            [Event.new([:game, :error, repp], %{cause: "Could not save game state"})]
         end
     end
   end
@@ -135,8 +135,8 @@ defmodule Metr.Modules.Game do
         [Event.new([:game, :deleted, nil], %{id: game_id, results: game.results}),
         Event.new([:game, :deleted, repp], %{out: game_id})]
 
-      {:error, reason} ->
-        [Event.new([:game, :error, repp], %{msg: reason})]
+      {:error, cause} ->
+        [Event.new([:game, :error, repp], %{cause: cause})]
     end
   end
 
@@ -247,7 +247,7 @@ defmodule Metr.Modules.Game do
   defp is_ranked?(%{ranked: ranked}) when is_boolean(ranked), do: ranked
   defp is_ranked?(_), do: false
 
-  defp delete_game_results({:error, reason}), do: {:error, reason}
+  defp delete_game_results({:error, cause}), do: {:error, cause}
 
   defp delete_game_results(%Game{} = game) do
     all_deleted? =
@@ -261,7 +261,7 @@ defmodule Metr.Modules.Game do
     end
   end
 
-  defp delete_game({:error, reason}), do: {:error, reason}
+  defp delete_game({:error, cause}), do: {:error, cause}
 
   defp delete_game(%Game{} = game) do
     case Data.wipe_state(game.id, __ENV__.module) do

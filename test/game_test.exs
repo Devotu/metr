@@ -33,7 +33,7 @@ defmodule GameTest do
       winner: 2
     }
 
-    [resulting_event, created_response] = Game.feed(Event.new([:create, :game], game_input), nil)
+    [resulting_event, _created_response] = Game.feed(Event.new([:create, :game], game_input), nil)
     assert [:game, :created, nil] == resulting_event.keys
     assert is_bitstring(resulting_event.id)
     Data.wipe_test("Game", resulting_event.data.id)
@@ -339,7 +339,7 @@ defmodule GameTest do
     Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
     Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
 
-    [match_created_event, match_created_response] =
+    [match_created_event, _match_created_response] =
       Match.feed(
         Event.new([:create, :match], %MatchInput{
           player_one: player_id,

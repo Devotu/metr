@@ -142,14 +142,14 @@ defmodule Metr.Modules.Match do
   defp close(id, keys, data, event, repp) do
     Stately.ready(id, @name)
 
-    msg =
+    cause =
       GenServer.call(Data.genserver_id(__ENV__.module, id), %{
         keys: keys,
         data: data,
         event: event
       })
 
-    [Event.new([:match, :ended, repp], %{out: msg})]
+    [Event.new([:match, :ended, repp], %{out: cause})]
   end
 
   defp verify_input_data(%MatchInput{} = data) do
@@ -203,7 +203,7 @@ defmodule Metr.Modules.Match do
       true ->
         rank_decks(state)
       false ->
-        [Event.new([:match, :error], %{msg: "ranks does not match"})]
+        [Event.new([:match, :error], %{cause: "ranks does not match"})]
     end
   end
 
