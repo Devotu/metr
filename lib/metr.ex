@@ -96,17 +96,12 @@ defmodule Metr do
     |> run()
   end
 
-  def rerun(type_name, id) when is_bitstring(type_name) and is_bitstring(id) do
-    type = Stately.select_module_atom(type_name)
-
+  def rerun(type, id) when is_atom(type) and is_bitstring(id) do
     Event.new([:rerun, type], %{id: id})
     |> run()
   end
 
-  def add_tag(tag, type_name, id)
-      when is_bitstring(tag) and is_bitstring(type_name) and is_bitstring(id) do
-    type = Stately.select_module_atom(type_name)
-
+  def add_tag(tag, type, id) when is_bitstring(tag) and is_atom(type) and is_bitstring(id) do
     Event.new([:tag, type], %{id: id, tag: tag})
     |> run()
   end

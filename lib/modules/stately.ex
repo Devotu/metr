@@ -51,10 +51,8 @@ defmodule Metr.Modules.Stately do
         %Event{id: _event_id, keys: [:rerun, entity], data: %{id: id}},
         repp
       ) do
-    module = select_module(entity)
-
     [
-      rerun(id, module)
+      rerun(id, entity)
       |> out_to_event(entity, [:reran, repp])
     ]
   end
@@ -162,9 +160,8 @@ defmodule Metr.Modules.Stately do
     |> String.replace("\"", "")
   end
 
-  def rerun(id, module) do
-    {:ok, id, module}
-    |> validate_entity()
+  def rerun(id, entity) do
+    {:ok, id, entity}
     |> rerun_from_log()
   end
 
@@ -259,6 +256,7 @@ defmodule Metr.Modules.Stately do
   defp rerun_from_log({:error, e}), do: {:error, e}
 
   defp rerun_from_log({:ok, id, entity}) do
+    IO.inspect(entity, label: "stately rerun entity")
     {:ok, id, entity}
     |> wipe_state()
     |> run_log()
@@ -278,6 +276,7 @@ defmodule Metr.Modules.Stately do
   defp run_log({:error, e}), do: {:error, e}
 
   defp run_log({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
+    IO.inspect(entity, label: "stately entity")
     module = select_module(entity)
     stop(id, entity)
 
