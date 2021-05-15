@@ -18,35 +18,6 @@ defmodule Metr.Modules.Game do
 
   ## feed
   def feed(%Event{id: _event_id, keys: [:create, :game], data: %GameInput{} = data} = event, repp) do
-
-
-    # data = %{
-    #   winner: input.winner,
-    #   ranking: input.ranking,
-    #   match: input.match,
-    #   parts: [
-    #     %{
-    #       part: 1,
-    #       details: %{
-    #         deck_id: input.deck_one,
-    #         player_id: input.player_one,
-    #         power: input.power_one,
-    #         fun: input.fun_one
-    #       }
-    #     },
-    #     %{
-    #       part: 2,
-    #       details: %{
-    #         deck_id: input.deck_two,
-    #         player_id: input.player_two,
-    #         power: input.power_two,
-    #         fun: input.fun_two
-    #       }
-    #     }
-    #   ],
-    #   turns: input.turns
-    # }
-
     case verify_input_data(data) do
       {:error, error} ->
         [Event.new([:game, :error, repp], %{cause: error, data: data})]
