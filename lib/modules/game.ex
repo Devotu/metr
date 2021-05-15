@@ -42,7 +42,7 @@ defmodule Metr.Modules.Game do
           {:ok, _pid} ->
             match_id = Map.get(data, :match, nil)
             [
-              Event.new([:game, :created, repp], %{
+              Event.new([:game, :created, nil], %{
                 id: id,
                 result_ids: result_ids,
                 ranking: is_ranked?(data),

@@ -9,6 +9,7 @@ defmodule GameTest do
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.Stately
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.MatchInput
@@ -35,7 +36,15 @@ defmodule GameTest do
 
     [resulting_event, _created_response] = Game.feed(Event.new([:create, :game], game_input), nil)
     assert [:game, :created, nil] == resulting_event.keys
-    assert is_bitstring(resulting_event.id)
+    assert is_bitstring(resulting_event.data.id)
+
+    [result_1_id, _result_2_id] = resulting_event.data.result_ids
+
+    result_1 = Metr.read(result_1_id, :result)
+    assert true == Stately.exist?(result_1_id, :result)
+
+    assert resulting_event.data.id == result_1.game_id
+
     Data.wipe_test("Game", resulting_event.data.id)
     Data.wipe_test("Result", resulting_event.data.result_ids)
     TestHelper.cleanup_double_states(
@@ -394,6 +403,33 @@ defmodule GameTest do
     |> Metr.read(:game)
 
     assert game.turns == number_of_turns
+
+    TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
+    Data.wipe_test("Game", [game.id])
+    Data.wipe_test("Result", game.results)
+  end
+
+  test "draw game" do
+    player_name = "Quintus Game"
+    deck_name = "Qubec Game"
+
+    {player_id, deck_id, match_id, game_id} =
+      TestHelper.init_single_states(player_name, deck_name)
+
+    game = %GameInput{
+      player_one: player_id,
+      player_two: player_id,
+      deck_one: deck_id,
+      deck_two: deck_id,
+      winner: 0,
+      match: match_id
+    }
+    |> Metr.create(:game)
+    |> Metr.read(:game)
+
+    [result_1, result_2] = Metr.list(game.results, :result)
+    assert result_1.place == 0
+    assert result_2.place == 0
 
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
     Data.wipe_test("Game", [game.id])

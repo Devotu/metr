@@ -436,7 +436,7 @@ defmodule MetrTest do
     |> Metr.create(:game)
     |> Metr.read(:game)
 
-    results = Metr.list(:result, game.results)
+    results = Metr.list(game.results, :result)
     assert 2 == Enum.count(results)
     first_result = List.first(results)
     assert deck_id == first_result.deck_id

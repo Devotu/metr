@@ -54,11 +54,11 @@ defmodule Metr do
     |> list_of(:result)
   end
 
-  def list(:deck, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:deck, id) end)
-  def list(:game, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:game, id) end)
-  def list(:match, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:match, id) end)
-  def list(:player, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:player, id) end)
-  def list(:result, ids) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:result, id) end)
+  def list(ids, :deck) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:deck, id) end)
+  def list(ids, :game) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:game, id) end)
+  def list(ids, :match) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:match, id) end)
+  def list(ids, :player) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:player, id) end)
+  def list(ids, :result) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:result, id) end)
 
   ### read
   def read(id, :deck), do: read_state(:deck, id)
