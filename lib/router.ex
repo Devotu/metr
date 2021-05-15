@@ -1,6 +1,11 @@
 defmodule Metr.Router do
+  @moduledoc """
+  Core of the application with two closely related tasks
+  > Takes input events from the API, stores them, and routes them through all modules
+  > Takes events generated from modules and routes the through all modules
+  """
+
   alias Metr.Event
-  alias Metr.Modules.CLI
   alias Metr.Data
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
@@ -40,7 +45,6 @@ defmodule Metr.Router do
     # IO.inspect(event, label: "routing")
     [
       # Module.feed(event),
-      # CLI.feed(event, response_pid),
       Player.feed(event, response_pid),
       Deck.feed(event, response_pid),
       Game.feed(event, response_pid),

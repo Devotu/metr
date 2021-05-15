@@ -22,13 +22,14 @@ defmodule Metr.Modules.Match do
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.Input.MatchInput
   alias Metr.Rank
   alias Metr.Time
 
   @name __ENV__.module |> Stately.module_to_name()
 
   ## feed
-  def feed(%Event{id: _event_id, keys: [:create, :match], data: data} = event, repp) do
+  def feed(%Event{id: _event_id, keys: [:create, :match], data: %MatchInput{} = data} = event, repp) do
     case verify_input_data(data) do
       {:error, error} ->
         # Return
@@ -42,17 +43,23 @@ defmodule Metr.Modules.Match do
           {:ok, _pid} ->
             [
               Event.new(
-                [:match, :created, repp],
+                [:match, :created, nil],
                 %{
                   id: id,
-                  player_ids: [data.player_1_id, data.player_2_id],
-                  deck_ids: [data.deck_1_id, data.deck_2_id]
+                  player_ids: [data.player_one, data.player_two],
+                  deck_ids: [data.deck_one, data.deck_two]
+                }
+              ),
+              Event.new(
+                [:match, :created, repp],
+                %{
+                  out: id
                 }
               )
             ]
 
-          {:error, error} ->
-            [Event.new([:match, :not, :created, repp], %{errors: [error]})]
+          {:error, cause} ->
+            [Event.new([:match, :error, repp], %{cause: cause})]
         end
     end
   end
@@ -80,13 +87,13 @@ defmodule Metr.Modules.Match do
 
   def feed(%Event{id: _event_id, keys: [:read, :log, :match], data: %{match_id: id}}, repp) do
     events = Data.read_log_by_id(id, "Match")
-    [Event.new([:match, :log, :read, repp], %{out: events})]
+    [Event.new([:match, :read, repp], %{out: events})]
   end
 
   def feed(%Event{id: _event_id, keys: [:list, :match], data: %{ids: ids}}, repp)
       when is_list(ids) do
     matches = Enum.map(ids, &read/1)
-    [Event.new([:matches, repp], %{matches: matches})]
+    [Event.new([:matches, repp], %{out: matches})]
   end
 
   def feed(
@@ -135,54 +142,49 @@ defmodule Metr.Modules.Match do
   defp close(id, keys, data, event, repp) do
     Stately.ready(id, @name)
 
-    msg =
+    cause =
       GenServer.call(Data.genserver_id(__ENV__.module, id), %{
         keys: keys,
         data: data,
         event: event
       })
 
-    [Event.new([:match, :ended, repp], %{out: msg})]
+    [Event.new([:match, :ended, repp], %{out: cause})]
   end
 
-  defp verify_input_data(%{
-         deck_1_id: deck_1_id,
-         deck_2_id: deck_2_id,
-         player_1_id: player_1_id,
-         player_2_id: player_2_id,
-         ranking: ranking
-       }) do
-    {:ok}
-    |> verify_player(player_1_id)
-    |> verify_player(player_2_id)
-    |> verify_deck(deck_1_id)
-    |> verify_deck(deck_2_id)
-    |> verify_rank(deck_1_id, deck_2_id, ranking)
-  end
+  defp verify_input_data(%MatchInput{} = data) do
+    p1 = verify_player(data.player_one)
+    p2 = verify_player(data.player_two)
+    d1 = verify_deck(data.deck_one)
+    d2 = verify_deck(data.deck_two)
+    r = verify_rank(data.deck_one, data.deck_two, data.ranking)
 
-  defp verify_player({:error, _cause} = error, _id), do: error
-
-  defp verify_player({:ok}, id) do
-    case Player.read(id) do
-      nil -> {:error, "player #{id} not found"}
-      {:error, reason} -> {:error, reason}
+    case [p1, p2, d1, d2, r] do
+      [{:error, e}, _, _, _, _] -> {:error, e}
+      [_, {:error, e}, _, _, _] -> {:error, e}
+      [_, _, {:error, e}, _, _] -> {:error, e}
+      [_, _, _, {:error, e}, _] -> {:error, e}
+      [_, _, _, _, {:error, e}] -> {:error, e}
       _ -> {:ok}
     end
   end
 
-  defp verify_deck({:error, _cause} = error, _id), do: error
-
-  defp verify_deck({:ok}, id) do
-    case Deck.read(id) do
-      nil -> {:error, "deck #{id} not found"}
-      {:error, reason} -> {:error, reason}
-      _ -> {:ok}
+  defp verify_player(player_id) do
+    case Player.exist?(player_id) do
+      true -> {:ok}
+      false -> {:error, "player #{player_id} not found"}
     end
   end
 
-  defp verify_rank({:error, _cause} = error, _deck_id_1, _deck_id_2, _ranking), do: error
-  defp verify_rank({:ok}, _deck_id_1, _deck_id_2, false), do: {:ok}
-  defp verify_rank({:ok}, deck_id_1, deck_id_2, true) do
+  defp verify_deck(deck_id) do
+    case Deck.exist?(deck_id) do
+      true -> {:ok}
+      false -> {:error, "deck #{deck_id} not found"}
+    end
+  end
+
+  defp verify_rank(_deck_id_1, _deck_id_2, false), do: {:ok}
+  defp verify_rank(deck_id_1, deck_id_2, true) do
     deck_1 = Deck.read(deck_id_1)
     deck_2 = Deck.read(deck_id_2)
 
@@ -201,7 +203,7 @@ defmodule Metr.Modules.Match do
       true ->
         rank_decks(state)
       false ->
-        [Event.new([:match, :error], %{msg: "ranks does not match"})]
+        [Event.new([:match, :error], %{cause: "ranks does not match"})]
     end
   end
 
@@ -253,15 +255,15 @@ defmodule Metr.Modules.Match do
   ## gen
   @impl true
 
-  def init({id, data, event}) do
+  def init({id, %MatchInput{} = data, event}) do
     data = Map.put_new(data, :status, :initialized)
 
     state = %Match{
       id: id,
-      player_one: data.player_1_id,
-      player_two: data.player_2_id,
-      deck_one: data.deck_1_id,
-      deck_two: data.deck_2_id,
+      player_one: data.player_one,
+      player_two: data.player_two,
+      deck_one: data.deck_one,
+      deck_two: data.deck_two,
       ranking: data.ranking,
       status: :initialized,
       time: Time.timestamp()
@@ -271,8 +273,8 @@ defmodule Metr.Modules.Match do
     {:ok, state}
   end
 
-  def init(recalled_state) do
-    {:ok, recalled_state}
+  def init(%Match{} = state) do
+    {:ok, state}
   end
 
   @impl true

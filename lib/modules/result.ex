@@ -14,48 +14,82 @@ defmodule Metr.Modules.Result do
   alias Metr.Data
   alias Metr.Id
   alias Metr.Event
+  alias Metr.Modules.Deck
+  alias Metr.Modules.Player
   alias Metr.Modules.Result
   alias Metr.Modules.Stately
-  alias Metr.Time
+  alias Metr.Modules.Input.ResultInput
 
   @name __ENV__.module |> Stately.module_to_name()
 
-  def create(%Result{} = result, event) do
+  def create(%ResultInput{} = data, %Event{} = event) do
     id = Id.guid()
 
-    state =
-      result
-      |> Map.put(:id, id)
-      |> Map.put(:time, Time.timestamp())
-      |> verify_data()
-
-    case state do
-      {:error, error} -> {:error, error}
-      _ -> {Data.save_state_with_log(__ENV__.module, id, state, event), state}
+    case verify_input(data) do
+      {:error, e} -> {:error, e}
+      {:ok} -> init_process(id, data, event)
     end
   end
 
-  defp verify_data(%Result{} = r) do
-    case data_is_valid(r) do
-      true -> r
-      false -> {:error, "Invalid results data"}
+  defp init_process(id, %ResultInput{} = data, %Event{} = event) do
+    process_name = Data.genserver_id(__ENV__.module, id)
+    # Start genserver
+    case GenServer.start(Metr.Modules.Result, {id, data, event}, name: process_name) do
+      {:ok, _pid} -> {:ok, id}
+      {:error, e} -> {:error, e}
     end
   end
 
-  defp data_is_valid(%Result{} = r) do
-    valid_id(r.id) and
-      valid_id(r.deck_id) and
-      valid_id(r.player_id) and
-      valid_number(r.power) and
-      valid_number(r.place) and
-      valid_number(r.fun) and
-      valid_time(r.time)
+
+  defp verify_input(%ResultInput{} = data) do
+    p = verify_player(data.player_id)
+    d = verify_deck(data.deck_id)
+    g = verify_game(data.game_id)
+
+    case [p,d,g] do
+      [{:error, e}, _, _] -> {:error, e}
+      [_, {:error, e}, _] -> {:error, e}
+      [_, _, {:error, e}] -> {:error, e}
+      _ -> {:ok}
+    end
+  end
+
+  defp verify_player(player_id) do
+    case Player.exist?(player_id) do
+      true -> {:ok}
+      false -> {:error, "player #{player_id} not found"}
+    end
+  end
+
+  defp verify_deck(deck_id) do
+    case Deck.exist?(deck_id) do
+      true -> {:ok}
+      false -> {:error, "deck #{deck_id} not found"}
+    end
+  end
+
+  defp verify_game(game_id) when is_bitstring(game_id) , do: {:ok}
+  defp verify_game(nil), do: {:error, "game id cannot be nil"}
+  defp verify_game(game_id), do: {:error, "game id #{game_id} is not valid"}
+
+  defp from_input(%ResultInput{} = data, id, created_time) do
+    %Result{
+      id: id,
+      time: created_time,
+      player_id: data.player_id,
+      deck_id: data.deck_id,
+      game_id: data.game_id,
+      place: data.place,
+      power: data.power,
+      fun: data.fun,
+      tags: data.tags
+    }
   end
 
   def feed(%Event{id: _event_id, keys: [:list, :result], data: %{ids: ids}}, repp)
       when is_list(ids) do
     results = Enum.map(ids, &read/1)
-    [Event.new([:results, repp], %{results: results})]
+    [Event.new([:result, :list, repp], %{out: results})]
   end
 
   def feed(%Event{id: _event_id, keys: [:read, :result], data: %{result_id: id}}, repp) do
@@ -68,28 +102,22 @@ defmodule Metr.Modules.Result do
   end
 
   def read(id) do
-    Data.recall_state(__ENV__.module, id)
+    Stately.read(id, :result)
+    # Data.recall_state(__ENV__.module, id)
   end
 
   def delete(id) do
     Data.wipe_state(id, __ENV__.module)
   end
 
-  defp valid_id(nil), do: false
-  defp valid_id(x) when is_bitstring(x), do: true
-  defp valid_id(_), do: false
-
-  defp valid_number(nil), do: true
-  defp valid_number(x) when is_number(x), do: true
-  defp valid_number(_), do: false
-
-  defp valid_time(nil), do: false
-  defp valid_time(0), do: false
-  defp valid_time(x) when is_number(x), do: true
-  defp valid_time(_), do: false
-
   ## gen
   @impl true
+  def init({id, %ResultInput{} = data, %Event{} = event}) do
+    state = from_input(data, id, event.time)
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:ok, state}
+  end
+
   def init(%Result{} = state) do
     {:ok, state}
   end

@@ -8,6 +8,10 @@ defmodule TimeTest do
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.Input.DeckInput
+  alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.MatchInput
+  alias Metr.Modules.Input.PlayerInput
   alias Metr.Time
 
   test "state timestamps" do
@@ -20,7 +24,7 @@ defmodule TimeTest do
     Player.feed(
       Event.new(
         [:create, :player],
-        %{
+        %PlayerInput{
           name: name
         }
       ),
@@ -34,9 +38,10 @@ defmodule TimeTest do
     Deck.feed(
       Event.new(
         [:create, :deck],
-        %{
+        %DeckInput{
           name: name,
-          player_id: id
+          player_id: id,
+          format: "standard"
         }
       ),
       nil
@@ -46,15 +51,15 @@ defmodule TimeTest do
     assert 0 != deck.time
     assert 0 >= deck.time - time_of_creation
 
-    game =
-      Metr.create_game(%{
-        :deck_1 => id,
-        :deck_2 => id,
-        :player_1 => id,
-        :player_2 => id,
-        :winner => 1
-      })
-      |> Metr.read_state(:game)
+    game = %GameInput{
+      deck_one: id,
+      deck_two: id,
+      player_one: id,
+      player_two: id,
+      winner: 1
+    }
+    |> Metr.create(:game)
+    |> Metr.read(:game)
 
     assert 0 != game.time
     assert 0 >= game.time - time_of_creation
@@ -66,11 +71,11 @@ defmodule TimeTest do
     Match.feed(
       Event.new(
         [:create, :match],
-        %{
-          player_1_id: id,
-          deck_1_id: id,
-          player_2_id: id,
-          deck_2_id: id,
+        %MatchInput{
+          player_one: id,
+          deck_one: id,
+          player_two: id,
+          deck_two: id,
           ranking: false
         }
       ),
@@ -78,7 +83,7 @@ defmodule TimeTest do
     )
 
     match =
-      Metr.list_states("Match")
+      Metr.list(:match)
       |> List.first()
 
     assert 0 != match.time

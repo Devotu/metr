@@ -1,240 +1,86 @@
 defmodule Metr do
+  @moduledoc """
+  API of the application
+  Basic structure is a number of public functions that
+  > takes structured input and create an event
+  > route thah input into the application
+  > awaits response (if requested)
+  """
+
   alias Metr.Event
-  alias Metr.History
   alias Metr.Router
   alias Metr.Modules.Stately
-
-  @default_game %{
-    fun_1: nil,
-    fun_2: nil,
-    power_1: nil,
-    power_2: nil,
-    winner: 0,
-    rank: false,
-    match: nil,
-    turns: nil
-  }
+  alias Metr.Modules.Input.DeckInput
+  alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.MatchInput
+  alias Metr.Modules.Input.PlayerInput
 
   ## api
-  def list_players() do
-    list(:player)
+
+  ### create
+  def create(%PlayerInput{} = data, :player), do: create_state(:player, data)
+  def create(%DeckInput{} = data, :deck), do: create_state(:deck, data)
+  def create(%GameInput{} = data, :game), do: create_state(:game, data)
+  def create(%MatchInput{} = data, :match), do: create_state(:match, data)
+
+  ### list
+  # all
+  def list(:deck), do: list_of(:deck)
+  def list(:format), do: list_of(:format)
+  def list(:game), do: list_of(:game)
+  def list(:match), do: list_of(:match)
+  def list(:player), do: list_of(:player)
+  def list(:result), do: list_of(:result)
+  def list(:tag), do: list_of(:tag)
+
+  # specific
+  def list(:game, limit: limit) when is_number(limit) do
+    Map.put(%{}, :limit, limit)
+    |> list_of(:game)
   end
 
-  def list_decks() do
-    list(:deck)
+  def list(:game, by: {:deck, deck_id}) do
+    Map.put(%{}, :deck_id, deck_id)
+    |> list_of(:game)
   end
 
-  def list_games(limit) when is_number(limit) do
-    constraints = Map.put(%{}, :limit, limit)
-    list(:game, constraints)
+  def list(:result, by: {:game, game_id}) do
+    Map.put(%{}, :game_id, game_id)
+    |> list_of(:result)
   end
 
-  def list_games(type, id) when is_atom(type) do
-    constraints = Map.put(%{}, Stately.module_id(type), id)
-    list(:game, constraints)
+  def list(:result, by: {:deck, deck_id}) do
+    Map.put(%{}, :deck_id, deck_id)
+    |> list_of(:result)
   end
 
-  def list_games(game_ids) when is_list(game_ids) do
-    game_ids
-    |> Enum.map(fn gid -> read_game(gid) end)
-  end
+  def list(ids, :deck) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:deck, id) end)
+  def list(ids, :game) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:game, id) end)
+  def list(ids, :match) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:match, id) end)
+  def list(ids, :player) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:player, id) end)
+  def list(ids, :result) when is_list(ids), do: ids |> Enum.map(fn id -> read_state(:result, id) end)
 
-  def list_games() do
-    list(:game)
-  end
+  ### read
+  def read(id, :deck), do: read_state(:deck, id)
+  def read(id, :game), do: read_state(:game, id)
+  def read(id, :match), do: read_state(:match, id)
+  def read(id, :player), do: read_state(:player, id)
+  def read(id, :result), do: read_state(:result, id)
+  def read(id, :tag), do: read_state(:tag, id)
 
-  def list_results() do
-    list(:result)
-  end
+  def read_log(id, :deck), do: read_log_of(:deck, id)
+  def read_log(id, :game), do: read_log_of(:game, id)
+  def read_log(id, :match), do: read_log_of(:match, id)
+  def read_log(id, :player), do: read_log_of(:player, id)
+  def read_log(id, :result), do: read_log_of(:result, id)
 
-  def list_matches() do
-    list(:match)
-  end
+  def read_input_log(limit) when is_number(limit), do: read_log(limit);
 
-  def list_formats() do
-    list(:format)
-  end
+  ### delete
+  def delete(id, :game), do: delete_state(:game, id)
 
-  def list_states(type, ids) when is_atom(type) do
-    Enum.map(ids, fn id -> read(type, id) end)
-  end
-
-  def list_states(ids, type) when is_atom(type) do
-    Enum.map(ids, fn id -> read(type, id) end)
-  end
-
-  def list_states(state_type, by_type, id) when is_atom(state_type) and is_atom(by_type) do
-    constraints = Map.put(%{}, Stately.module_id(by_type), id)
-    list(state_type, constraints)
-  end
-
-  def list_states(type) when is_bitstring(type) do
-    type
-    |> Stately.select_module_atom()
-    |> list()
-  end
-
-  def read_player(id) do
-    read(:player, id)
-  end
-
-  def read_deck(id) do
-    read(:deck, id)
-  end
-
-  def read_game(id) do
-    read(:game, id)
-  end
-
-  def read_match(id) do
-    read(:match, id)
-  end
-
-  @spec read_entity_log(:deck | :game | :match | :player | :result, any) :: any
-  def read_entity_log(type, id) when is_atom(type) do
-    read_log(type, id)
-  end
-
-  def read_entity_log(type, id) when is_bitstring(type) do
-    type
-    |> Stately.select_module_atom()
-    |> read_log(id)
-  end
-
-  def read_entity_history(id, type) when is_bitstring(type) do
-    History.of_entity id, Stately.select_module_atom(type)
-  end
-
-  def read_global_log(limit) when is_number(limit) do
-    read_log(limit)
-  end
-
-  def read_state(id, type) when is_atom(type) and is_bitstring(id) do
-    read(type, id)
-  end
-
-  def read_state(type, id) when is_atom(type) and is_bitstring(id) do
-    read(type, id)
-  end
-
-  def read_state(type, id) when is_bitstring(type) and is_bitstring(id) do
-    type
-    |> Stately.select_module_atom()
-    |> read(id)
-  end
-
-  def read_state(_type, _id) do
-    {:error, "Bad argument(s)"}
-  end
-
-  def create_game(%{
-        :deck_1 => d1,
-        :deck_2 => d2,
-        :fun_1 => f1,
-        :fun_2 => f2,
-        :player_1 => p1,
-        :player_2 => p2,
-        :power_1 => s1,
-        :power_2 => s2,
-        :winner => w,
-        rank: r,
-        match: m,
-        turns: turns
-      }) when is_number(turns) or is_nil(turns) do
-    data = %{
-      winner: w,
-      rank: r,
-      match: m,
-      parts: [
-        %{part: 1, details: %{deck_id: d1, player_id: p1, power: s1, fun: f1}},
-        %{part: 2, details: %{deck_id: d2, player_id: p2, power: s2, fun: f2}}
-      ],
-      turns: turns
-    }
-
-    create(:game, data)
-  end
-
-  def create_game(%{
-        :deck_1 => d1,
-        :deck_2 => d2,
-        :fun_1 => f1,
-        :fun_2 => f2,
-        :player_1 => p1,
-        :player_2 => p2,
-        :power_1 => s1,
-        :power_2 => s2,
-        :winner => w,
-        rank: r,
-        match: m
-      }) do
-    data = %{
-      winner: w,
-      rank: r,
-      match: m,
-      parts: [
-        %{part: 1, details: %{deck_id: d1, player_id: p1, power: s1, fun: f1}},
-        %{part: 2, details: %{deck_id: d2, player_id: p2, power: s2, fun: f2}}
-      ],
-      turns: nil
-    }
-
-    create_game(data)
-  end
-
-  def create_game(%{balance: b} = game_data) do
-    case parse_balance(b) do
-      {:error, msg} ->
-        {:error, msg}
-
-      {pw1, pw2} ->
-        Map.merge(@default_game, game_data)
-        |> Map.put(:power_1, pw1)
-        |> Map.put(:power_2, pw2)
-        |> create_game()
-    end
-  end
-
-  def create_game(
-        %{
-          :deck_1 => _d1,
-          :deck_2 => _d2,
-          :player_1 => _p1,
-          :player_2 => _p2
-        } = game_data
-      )
-      when is_map(game_data) do
-    Map.merge(@default_game, game_data)
-    |> create_game()
-  end
-
-  def delete_game(game_id) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    # Fire ze missiles
-    Event.new([:delete, :game], %{game_id: game_id})
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
-  end
-
-  def create_player(%{name: _n} = data) do
-    create(:player, data)
-  end
-
-  def create_deck(%{rank: r, advantage: a} = data) do
-    data
-    |> Map.delete(:advantage)
-    |> Map.put(:rank, {r, a})
-    |> create_deck()
-  end
-
-  def create_deck(%{name: _n, player_id: _p} = data) do
-    create(:deck, data)
-  end
-
+  ### functions
+  @spec alter_rank(any, :down | :up) :: any
   def alter_rank(deck_id, :up) do
     Event.new([:alter, :rank], %{deck_id: deck_id, change: 1})
     |> run()
@@ -243,17 +89,6 @@ defmodule Metr do
   def alter_rank(deck_id, :down) do
     Event.new([:alter, :rank], %{deck_id: deck_id, change: -1})
     |> run()
-  end
-
-  def create_match(
-        %{
-          :deck_1_id => _deck_1_id,
-          :deck_2_id => _deck_2_id,
-          :player_1_id => _player_1_id,
-          :player_2_id => _player_2_id
-        } = data
-      ) do
-    create(:match, data)
   end
 
   def end_match(match_id) do
@@ -276,83 +111,46 @@ defmodule Metr do
     |> run()
   end
 
-  ## private
-  defp list(type) when is_atom(type) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    # Fire ze missiles
+  ## private core functions ##
+  defp list_of(type) when is_atom(type) do
     Event.new([:list, type])
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
+    |> run()
   end
 
-  defp list(type, constraints) when is_map(constraints) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    # Fire ze missiles
+  defp list_of(constraints, type) when is_atom(type) and is_map(constraints) do
     Event.new([:list, type], constraints)
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
+    |> run()
   end
 
-  defp create(type, data) when is_atom(type) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    # Fire ze missiles
+  defp create_state(type, data) when is_atom(type) do
     Event.new([:create, type], data)
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
+    |> run()
   end
 
-  defp read(type, id) when is_atom(type) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    data = Map.put(%{}, Stately.module_id(type), id)
-
-    # Fire ze missiles
-    Event.new([:read, type], data)
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
+  defp read_state(type, id) when is_atom(type) do
+    Map.put(%{}, Stately.module_id(type), id)
+    |> Event.new([:read, type])
+    |> run()
   end
 
-  defp read_log(type, id) when is_atom(type) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    data = Map.put(%{}, Stately.module_id(type), id)
-
-    # Fire ze missiles
-    Event.new([:read, :log, type], data)
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
+  defp read_log_of(type, id) when is_atom(type) do
+    Map.put(%{}, Stately.module_id(type), id)
+    |> Event.new([:read, :log, type])
+    |> run()
   end
 
   defp read_log(limit) when is_number(limit) do
-    # Start listener
-    listening_task = Task.async(&listen/0)
-
-    # Fire ze missiles
     Event.new([:read, :log], %{limit: limit})
-    |> Router.input(listening_task.pid)
-
-    # Await response
-    Task.await(listening_task)
+    |> run()
   end
 
+  defp delete_state(type, id) when is_atom(type) do
+    Map.put(%{}, Stately.module_id(type), id)
+    |> Event.new([:delete, type])
+    |> run()
+  end
+
+  #Runns an event and awaits response
   defp run(%Event{} = event) do
     # Start listener
     listening_task = Task.async(&listen/0)
@@ -364,73 +162,33 @@ defmodule Metr do
     Task.await(listening_task)
   end
 
+  #Creates a listening task that awaits the response from an event routed into the application
   defp listen() do
     receive do
-      {:error, msg} ->
-        IO.puts("\n!! Error -- #{msg} !!")
-        {:error, msg}
+      {:error, cause} ->
+        IO.puts("\n!! Error -- #{cause} !!")
+        {:error, cause}
 
       msg ->
         msg
     end
   end
 
-  defp parse_balance(0, 0), do: {0, 0}
-  defp parse_balance(1, 1), do: {1, -1}
-  defp parse_balance(1, 2), do: {2, -2}
-  defp parse_balance(2, 1), do: {-1, 1}
-  defp parse_balance(2, 2), do: {-2, 2}
-  defp parse_balance(nil), do: {nil, nil}
-  defp parse_balance({advantage, level}), do: parse_balance(advantage, level)
-  defp parse_balance(_), do: {:error, "invalid input balance"}
+  @doc """
+  feed methods of Metr matches on events sent as respons to requests sent into the system and forwards the content to the running listening task
+  """
+  def feed(%Event{keys: [:match,  :ended,     pid], data: %{out: out}}, _orepp) when is_pid(pid), do: respond(pid, out)
+  def feed(%Event{keys: [type,    :error,     pid], data: %{cause: cause}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, {:error, cause})
+  def feed(%Event{keys: [type,    :altered,   pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
+  def feed(%Event{keys: [type,    :created,   pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
+  def feed(%Event{keys: [type,    :deleted,   pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
+  def feed(%Event{keys: [type,    :list,      pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
+  def feed(%Event{keys: [type,    :read,      pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
+  def feed(%Event{keys: [type,    :reran,     pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
+  def feed(_event, _orepp), do: []
 
-  ## feed
-  # by type
-  def feed(%Event{keys: [type, response_pid]} = event, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
-    send(response_pid, event.data[type])
-    []
-  end
-
-  # by id
-  def feed(%Event{keys: [type, _status, response_pid], data: %{out: out}}, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
-    send(response_pid, out)
-    []
-  end
-
-  def feed(%Event{keys: [type, :log, _status, response_pid], data: %{out: out}}, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
-    send(response_pid, out)
-    []
-  end
-
-  def feed(%Event{keys: [type, :error, response_pid], data: %{msg: msg}}, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
-    send(response_pid, {:error, msg})
-    []
-  end
-
-  def feed(%Event{keys: [type, :error, response_pid], data: %{cause: cause}}, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
-    send(response_pid, {:error, cause})
-    []
-  end
-
-  def feed(%Event{keys: [type, _status, response_pid]} = event, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
-    send(response_pid, event.data.id)
-    []
-  end
-
-  # by id failure
-  def feed(%Event{keys: [type, :not, _status, response_pid]}, _orepp)
-      when is_atom(type) and is_pid(response_pid) do
-    send(response_pid, :error)
-    []
-  end
-
-  def feed(_event, _orepp) do
+  defp respond(pid, out) do
+    send(pid, out)
     []
   end
 end

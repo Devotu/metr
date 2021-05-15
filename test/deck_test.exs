@@ -7,20 +7,25 @@ defmodule DeckTest do
   alias Metr.Modules.Game
   alias Metr.Id
   alias Metr.Modules.Player
+  alias Metr.Modules.Input.DeckInput
+  alias Metr.Modules.Input.GameInput
+  alias Metr.Modules.Input.PlayerInput
 
   test "basic feed" do
     assert [] == Deck.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
   end
 
   test "create deck" do
-    Player.feed(Event.new([:create, :player], %{name: "Decky"}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Decky"}), nil)
 
-    [resulting_event] =
+    [resulting_event, _created_response] =
       Deck.feed(
-        Event.new([:create, :deck], %{
-          name: "Create deck",
+        Event.new([:create, :deck], %DeckInput{
+          name:  "Create deck",
           player_id: "decky",
-          colors: [:black, :red]
+          black: true,
+          red: true,
+          format: "standard"
         }),
         nil
       )
@@ -35,39 +40,23 @@ defmodule DeckTest do
     name = "Fail create deck"
 
     [resulting_event] =
-      Deck.feed(Event.new([:create, :deck], %{name: name, player_id: player_id}), "repp")
-
-    assert [:deck, :error, "repp"] == resulting_event.keys
-    assert "player faily not found" == resulting_event.data.cause
-
-    [resulting_event] = Deck.feed(Event.new([:create, :deck], %{name: name}), nil)
-    assert [:deck, :error, nil] == resulting_event.keys
-    assert "missing player_id parameter" == resulting_event.data.cause
-
-    [resulting_event] = Deck.feed(Event.new([:create, :deck], %{player_id: player_id}), nil)
-    assert [:deck, :error, nil] == resulting_event.keys
-    assert "missing name parameter" == resulting_event.data.cause
-
-    [resulting_event] =
-      Deck.feed(
-        Event.new([:create, :deck], %{name: name, player_id: player_id, excess_field: "xs"}),
-        "repp"
-      )
+      Deck.feed(Event.new([:create, :deck], %DeckInput{name: name, player_id: player_id, format: "standard"}), "repp")
 
     assert [:deck, :error, "repp"] == resulting_event.keys
     assert "player faily not found" == resulting_event.data.cause
   end
 
   test "create deck with format" do
-    Player.feed(Event.new([:create, :player], %{name: "Ceasar Deck"}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Ceasar Deck"}), nil)
     format = "pauper"
 
-    [create_event] =
+    [create_event, _created_response] =
       Deck.feed(
-        Event.new([:create, :deck], %{
-          name: "Charlie Deck",
+        Event.new([:create, :deck], %DeckInput{
+          name:  "Charlie Deck",
           player_id: "ceasar_deck",
-          colors: [:green, :blue],
+          green: true,
+          blue: true,
           format: format
         }),
         nil
@@ -83,14 +72,16 @@ defmodule DeckTest do
   end
 
   test "create deck with colors" do
-    Player.feed(Event.new([:create, :player], %{name: "Erik Deck"}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Erik Deck"}), nil)
 
-    [create_event] =
+    [create_event, _created_response] =
       Deck.feed(
-        Event.new([:create, :deck], %{
-          name: "Echo Deck",
+        Event.new([:create, :deck], %DeckInput{
+          name:  "Echo Deck",
           player_id: "erik_deck",
-          colors: [:red, :blue]
+          red: true,
+          blue: true,
+          format: "standard"
         }),
         nil
       )
@@ -110,22 +101,23 @@ defmodule DeckTest do
   end
 
   test "create deck with failed format" do
-    Player.feed(Event.new([:create, :player], %{name: "David Deck"}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: "David Deck"}), nil)
     format = "failingformat"
 
     [create_event] =
       Deck.feed(
-        Event.new([:create, :deck], %{
-          name: "Delta Deck",
+        Event.new([:create, :deck], %DeckInput{
+          name:  "Delta Deck",
           player_id: "david_deck",
-          colors: [:green, :blue],
+          green: true,
+          blue: true,
           format: format
         }),
         nil
       )
 
-    assert [:deck, :not, :created, nil] == create_event.keys
-    assert [:invalid_format] == create_event.data.errors
+    assert [:deck, :error, nil] == create_event.keys
+    assert "format failingformat not vaild" == create_event.data.cause
     Data.wipe_test("Player", "david_deck")
   end
 
@@ -133,31 +125,32 @@ defmodule DeckTest do
     # Players to participate
     player_1_name = "Helge"
     player_1_id = Id.hrid(player_1_name)
-    Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_1_name}), nil)
     player_2_name = "Ivar"
     player_2_id = Id.hrid(player_2_name)
-    Player.feed(Event.new([:create, :player], %{name: player_2_name}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_2_name}), nil)
     # Decks to participate
     deck_1_name = "Haste"
     deck_1_id = Id.hrid(deck_1_name)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
     deck_2_name = "Imprint"
     deck_2_id = Id.hrid(deck_2_name)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_2_name, player_id: player_2_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
     # Resolve game created
 
-    [game_created_event] =
+    [game_created_event, _game_created_response] =
       Game.feed(
-        Event.new([:create, :game], %{
-          parts: [
-            %{
-              details: %{deck_id: deck_1_id, power: -1, fun: -2, player_id: player_1_id},
-              part: 1
-            },
-            %{details: %{deck_id: deck_2_id, power: 1, fun: 2, player_id: player_2_id}, part: 2}
-          ],
+        Event.new([:create, :game], %GameInput{
+          player_one: player_1_id,
+          player_two: player_2_id,
+          deck_one: deck_1_id,
+          deck_two: deck_2_id,
+          power_one: -1,
+          power_two: 1,
+          fun_one: -2,
+          fun_two: 2,
           winner: 1,
-          rank: false
+          ranking: false
         }),
         nil
       )
@@ -186,10 +179,10 @@ defmodule DeckTest do
   test "alter rank" do
     player_1_name = "Adam Deck"
     player_1_id = Id.hrid(player_1_name)
-    Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_1_name}), nil)
     deck_1_name = "Alpha Deck"
     deck_1_id = Id.hrid(deck_1_name)
-    Deck.feed(Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id}), nil)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
 
     [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id, change: 1}), nil)
     assert deck.data.out.rank == nil
@@ -278,55 +271,20 @@ defmodule DeckTest do
     Data.wipe_test("Player", player_1_id)
   end
 
-  test "create game with specified rank" do
-    player_1_name = "Bertil Deck"
-    player_1_id = Id.hrid(player_1_name)
-    Player.feed(Event.new([:create, :player], %{name: player_1_name}), nil)
-    deck_1_name = "Bravo Deck"
-    deck_1_id = Id.hrid(deck_1_name)
-
-    Deck.feed(
-      Event.new([:create, :deck], %{name: deck_1_name, player_id: player_1_id, rank: {1, -1}}),
-      nil
-    )
-
-    [deck_1] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id, change: 1}), nil)
-    assert deck_1.data.out.rank == {1, -1}
-
-    Data.wipe_test("Deck", deck_1_id)
-    Data.wipe_test("Player", player_1_id)
-  end
-
-  test "fail create deck - excess data" do
-    player_name = "Fredrik Deck"
-    player_id = Id.hrid(player_name)
-    Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
-    deck_name = "Fail create deck"
-
-    [resulting_event] =
-      Deck.feed(
-        Event.new([:create, :deck], %{name: deck_name, player_id: player_id, excess_field: "xs"}),
-        "repp"
-      )
-
-    assert [:deck, :error, "repp"] == resulting_event.keys
-    assert "excess params given" == resulting_event.data.cause
-    Data.wipe_test("Player", player_id)
-  end
-
   test "create minimum deck" do
     player_name = "Gustav Deck"
     player_id = Id.hrid(player_name)
-    Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
     deck_name = "Golf Deck"
+    format = "block"
 
-    [resulting_event] =
-      Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
+    [resulting_event, _created_response] =
+      Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: format}), nil)
 
     assert [:deck, :created, nil] == resulting_event.keys
 
     deck = Deck.read(resulting_event.data.id)
-    assert "" == deck.format
+    assert format == deck.format
     assert "" == deck.theme
     assert nil == deck.rank
     assert nil == deck.price
@@ -346,11 +304,11 @@ defmodule DeckTest do
   test "toggle deck active" do
     player_name = "Helge Deck"
     player_id = Id.hrid(player_name)
-    Player.feed(Event.new([:create, :player], %{name: player_name}), nil)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
     deck_name = "Hotel Deck"
 
-    [resulting_event] =
-      Deck.feed(Event.new([:create, :deck], %{name: deck_name, player_id: player_id}), nil)
+    [resulting_event, _created_response] =
+      Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
 
     deck_id = resulting_event.data.id
     created_deck = Deck.read(deck_id)
@@ -374,33 +332,126 @@ defmodule DeckTest do
     player_two_name = "Johan Deck"
     deck_two_name = "Juliet Deck"
 
-    {player_id, deck_id, player_two_id, deck_two_id, match_id, game_id} =
+    {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id} =
       TestHelper.init_double_state(player_name, deck_name, player_two_name, deck_two_name)
 
-    original_deck = Deck.read(deck_id)
+    original_deck = Deck.read(deck_one_id)
     [first_result_id] = original_deck.results
 
-    create_game_data = %{
-      deck_1: deck_id,
-      deck_2: deck_two_id,
-      player_1: player_id,
-      player_2: player_two_id,
+    create_game_data = %GameInput{
+      deck_one: deck_one_id,
+      deck_two: deck_two_id,
+      player_one: player_one_id,
+      player_two: player_two_id,
       winner: 1
     }
 
-    second_game_id = Metr.create_game(create_game_data)
+    second_game_id = Metr.create(create_game_data, :game)
 
-    updated_deck = Deck.read(deck_id)
+    updated_deck = Deck.read(deck_one_id)
     [^first_result_id, second_result_id] = updated_deck.results
 
-    third_game_id = Metr.create_game(create_game_data)
+    third_game_id = Metr.create(create_game_data, :game)
 
-    updated_deck = Deck.read(deck_id)
+    updated_deck = Deck.read(deck_one_id)
     [^first_result_id, ^second_result_id, _third_result_id] = updated_deck.results
 
+    player_one = Metr.read(player_one_id, :player)
+    player_two = Metr.read(player_two_id, :player)
+
     Data.wipe_test("Game", [second_game_id, third_game_id])
+    Data.wipe_test("Result", player_one.results)
+    Data.wipe_test("Result", player_two.results)
     TestHelper.cleanup_double_states(
-      {player_id, deck_id, player_two_id, deck_two_id, match_id, game_id}
+      {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id}
     )
+  end
+
+
+  test "create deck failed name" do
+    player_name = "Kalle Deck"
+    player_id = Id.hrid(player_name)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
+
+    [resulting_event] =
+      Deck.feed(
+        Event.new([:create, :deck], %DeckInput{
+          name:  "",
+          player_id: player_id,
+          black: true,
+          red: true,
+          format: "standard"
+        }),
+        nil
+      )
+
+    assert [:deck, :error, nil] == resulting_event.keys
+
+    [resulting_event] =
+      Deck.feed(
+        Event.new([:create, :deck], %DeckInput{
+          name:  nil,
+          player_id: nil,
+          black: true,
+          red: true,
+          format: "standard"
+        }),
+        nil
+      )
+
+    assert [:deck, :error, nil] == resulting_event.keys
+
+    [resulting_event] =
+      Deck.feed(
+        Event.new([:create, :deck], %DeckInput{
+          name:  "a name with more than 32 codepoints",
+          player_id: nil,
+          black: true,
+          red: true,
+          format: "standard"
+        }),
+        nil
+      )
+
+    assert [:deck, :error, nil] == resulting_event.keys
+
+    Data.wipe_test("Player", player_id)
+  end
+
+  test "create deck failed format" do
+    player_name = "Kalle Deck"
+    player_id = Id.hrid(player_name)
+    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
+
+    [resulting_event] =
+      Deck.feed(
+        Event.new([:create, :deck], %DeckInput{
+          name:  "",
+          player_id: player_id,
+          black: true,
+          red: true,
+          format: "not something we have"
+        }),
+        nil
+      )
+
+    assert [:deck, :error, nil] == resulting_event.keys
+    Data.wipe_test("Player", player_id)
+  end
+
+  test "create deck failed player" do
+    [resulting_event] =
+      Deck.feed(
+        Event.new([:create, :deck], %DeckInput{
+          name:  "",
+          player_id: nil,
+          black: true,
+          red: true,
+          format: "standard"
+        }),
+        nil
+      )
+
+    assert [:deck, :error, nil] == resulting_event.keys
   end
 end

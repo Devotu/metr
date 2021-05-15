@@ -44,16 +44,17 @@ defmodule Metr.Modules.Deck do
   alias Metr.Modules.Player
   alias Metr.Rank
   alias Metr.Modules.Result
+  alias Metr.Modules.Input.DeckInput
   alias Metr.Util
 
   @name __ENV__.module |> Stately.module_to_name()
 
   ## feed
-  def feed(%Event{keys: [:create, :deck], data: data} = event, repp) do
-    case verify_creation_data(data) do
-      {:error, reason} ->
+  def feed(%Event{keys: [:create, :deck], data: %DeckInput{} = data} = event, repp) do
+    case verify_new_deck_input(data) do
+      {:error, cause} ->
         # Return
-        [Event.new([:deck, :error, repp], %{cause: reason, data: data})]
+        [Event.new([:deck, :error, repp], %{cause: cause, data: data})]
 
       {:ok} ->
         id = Id.hrid(data.name)
@@ -61,10 +62,11 @@ defmodule Metr.Modules.Deck do
         # Start genserver
         case GenServer.start(Metr.Modules.Deck, {id, data, event}, name: process_name) do
           {:ok, _pid} ->
-            [Event.new([:deck, :created, repp], %{id: id, player_id: data.player_id})]
+            [Event.new([:deck, :created, nil], %{id: id, player_id: data.player_id}),
+            Event.new([:deck, :created, repp], %{out: id})]
 
-          {:error, error} ->
-            [Event.new([:deck, :not, :created, repp], %{errors: [error]})]
+          {:error, cause} ->
+            [Event.new([:deck, :error, repp], %{cause: cause})]
         end
     end
   end
@@ -122,7 +124,7 @@ defmodule Metr.Modules.Deck do
 
   def feed(%Event{keys: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
     events = Data.read_log_by_id(id, "Deck")
-    [Event.new([:deck, :log, :read, repp], %{out: events})]
+    [Event.new([:deck, :read, repp], %{out: events})]
   end
 
   def feed(
@@ -167,7 +169,7 @@ defmodule Metr.Modules.Deck do
       |> Enum.map(fn rid -> Result.read(rid) end)
       |> Enum.map(fn r -> Game.read(r.game_id) end)
 
-    [{Event.new([:games, repp], %{games: games}), repp}]
+    [{Event.new([:game, :list, repp], %{out: games}), repp}]
   end
 
   def feed(%Event{keys: [:list, :result], data: %{deck_id: id}}, repp) do
@@ -187,7 +189,7 @@ defmodule Metr.Modules.Deck do
   end
 
   def feed(%Event{keys: [:list, :format]}, repp) do
-    [Event.new([:formats, repp], %{formats: @formats})]
+    [Event.new([:format, :list, repp], %{out: @formats})]
   end
 
   def feed(_event, _orepp) do
@@ -207,138 +209,36 @@ defmodule Metr.Modules.Deck do
     @name
   end
 
-  defp verify_creation_data(%{name: name, player_id: player_id} = data) do
-    {:ok}
-    |> verify_name(name)
-    |> verify_player(player_id)
-    |> verify_input_content(data)
+  defp verify_new_deck_input(%DeckInput{} = data) do
+    case {verify_name(data.name), verify_player(data.player_id), verify_format(data.format)} do
+      {{:error, e}, _, _} -> {:error, e}
+      {_, {:error, e}, _} -> {:error, e}
+      {_, _, {:error, e}} -> {:error, e}
+      _ -> {:ok}
+    end
   end
 
-  defp verify_creation_data(%{player_id: _player_id}), do: {:error, "missing name parameter"}
-  defp verify_creation_data(%{name: _name}), do: {:error, "missing player_id parameter"}
-
-  defp verify_name({:error, _cause} = error, _id), do: error
-
-  defp verify_name({:ok}, name) when is_bitstring(name) do
+  defp verify_name(nil), do: {:error, "a legal name must be assigned"}
+  defp verify_name(name) when is_bitstring(name) do
     case name do
-      nil -> {:error, "no name"}
       "" -> {:error, "name cannot be blank"}
       _ -> {:ok}
     end
   end
 
-  defp verify_player({:error, _cause} = error, _id), do: error
-
-  defp verify_player({:ok}, player_id) do
+  defp verify_player(nil), do: {:error, "a owner (player) must be assigned"}
+  defp verify_player(player_id) do
     case Player.exist?(player_id) do
       true -> {:ok}
       false -> {:error, "player #{player_id} not found"}
     end
   end
 
-  defp verify_input_content({:error, _error} = e, _data), do: e
-
-  defp verify_input_content({:ok}, data) do
-    valid_input_data = %{
-      name: "",
-      player_id: "",
-      format: "",
-      theme: "",
-      rank: 0,
-      advantage: 0,
-      price: 0,
-      black: false,
-      white: false,
-      red: true,
-      green: false,
-      blue: true,
-      colorless: false,
-      colors: %{},
-      parts: []
-    }
-
-    case Enum.empty?(Map.keys(data) -- Map.keys(valid_input_data)) do
+  defp verify_format(format) do
+    case Enum.member?(@formats, format) do
       true -> {:ok}
-      false -> {:error, "excess params given"}
+      false -> {:error, "format #{format} not vaild"}
     end
-  end
-
-  defp build_state(id, %{name: name} = data, time_of_creation) do
-    %Deck{id: id, name: name, time: time_of_creation}
-    |> apply_colors(data)
-    |> apply_format(data)
-    |> apply_rank(data)
-    |> stamp_deck()
-  end
-
-  defp apply_colors({:error, _error} = e, _data), do: {e}
-
-  defp apply_colors(%Deck{} = deck, data) when is_map(data) do
-    case color_data_type(data) do
-      :list ->
-        Enum.reduce(data.colors, deck, fn c, d -> apply_color(c, d) end)
-
-      :bool ->
-        Map.merge(deck, data)
-
-      _ ->
-        deck
-    end
-  end
-
-  defp color_data_type(%{colors: _colors}), do: :list
-
-  defp color_data_type(%{
-         black: _b,
-         white: _w,
-         red: _r,
-         green: _g,
-         blue: _bl,
-         colorless: _c
-       }),
-       do: :bool
-
-  defp color_data_type(_), do: :none
-
-  defp apply_color(color, %Deck{} = deck) when is_atom(color) do
-    Map.put(deck, color, true)
-  end
-
-  defp apply_format({:error, _error} = e, _data), do: e
-
-  defp apply_format(%Deck{} = deck, data) when is_map(data) do
-    case Map.has_key?(data, :format) do
-      true ->
-        apply_format(deck, data.format)
-
-      false ->
-        deck
-    end
-  end
-
-  defp apply_format(deck, format_descriptor) when is_bitstring(format_descriptor) do
-    case String.downcase(format_descriptor) do
-      f when f in @formats -> Map.put(deck, :format, format_descriptor)
-      _ -> {:error, :invalid_format}
-    end
-  end
-
-  defp apply_rank({:error, _error} = e, _data), do: e
-
-  defp apply_rank(%Deck{} = deck, data) do
-    case Map.has_key?(data, :rank) and is_tuple(data.rank) do
-      true ->
-        Map.update!(deck, :rank, fn _r -> Rank.uniform_rank(data.rank) end)
-
-      false ->
-        deck
-    end
-  end
-
-  defp stamp_deck({:error, _error} = e), do: e
-
-  defp stamp_deck(data) when is_map(data) do
-    Map.take(data, Map.keys(%Deck{}))
   end
 
   defp find_original_rank(%Event{data: %{rank: rank}}), do: Rank.uniform_rank(rank)
@@ -347,7 +247,7 @@ defmodule Metr.Modules.Deck do
   defp recalculate_rank(state, base_rank) do
     rank =
       state.results
-      |> Enum.map(fn game_id -> Metr.read_game(game_id) end)
+      |> Enum.map(fn game_id -> Metr.read(game_id, :game) end)
       |> Enum.filter(fn g -> g.ranking end)
       |> Enum.reduce([], fn g, acc -> acc ++ g.results end)
       |> Enum.filter(fn p -> state.id == p.deck_id end)
@@ -356,17 +256,31 @@ defmodule Metr.Modules.Deck do
     Map.put(state, :rank, rank)
   end
 
+
+  defp from_input(%DeckInput{} = data, id, created_time) do
+    %Deck{
+      id: id,
+      name: data.name,
+      format: data.format,
+      theme: data.theme,
+      black: data.black,
+      white: data.white,
+      red: data.red,
+      green: data.green,
+      blue: data.blue,
+      colorless: data.colorless,
+      rank: nil,
+      price: data.price,
+      time: created_time
+    }
+  end
+
   ## gen
   @impl true
-  def init({id, data, event}) do
-    case build_state(id, data, event.time) do
-      {:error, error} ->
-        {:stop, error}
-
-      %Deck{} = state ->
-        :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
-        {:ok, state}
-    end
+  def init({id, %DeckInput{} = data, event}) do
+    state = from_input(data, id, event.time)
+    :ok = Data.save_state_with_log(__ENV__.module, id, state, event)
+    {:ok, state}
   end
 
   def init(%Deck{} = state) do

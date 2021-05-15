@@ -36,7 +36,7 @@ defmodule Metr.Rank do
   def uniform_rank({r, a}) do
     {as_number(r), as_number(a)}
   end
-
+  def uniform_rank(0), do: nil
   def uniform_rank(nil), do: nil
 
   defp as_number(r) when is_number(r), do: r

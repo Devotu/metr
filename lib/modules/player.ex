@@ -9,13 +9,14 @@ defmodule Metr.Modules.Player do
   alias Metr.Data
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.Input.PlayerInput
   alias Metr.Util
   alias Metr.Time
 
   @name __ENV__.module |> Stately.module_to_name()
 
   def feed(
-        %Event{id: _event_id, keys: [:create, :player], data: %{name: name}} = event,
+        %Event{id: _event_id, keys: [:create, :player], data: %PlayerInput{name: name}} = event,
         repp
       ) do
     validation =
@@ -32,7 +33,7 @@ defmodule Metr.Modules.Player do
         |> List.wrap()
 
       {:error, e} ->
-        [Event.new([:player, :error, repp], %{msg: e})]
+        [Event.new([:player, :error, repp], %{cause: e})]
     end
   end
 
@@ -128,7 +129,7 @@ defmodule Metr.Modules.Player do
 
   def feed(%Event{id: _event_id, keys: [:read, :log, :player], data: %{player_id: id}}, repp) do
     events = Data.read_log_by_id(id, "Player")
-    [Event.new([:player, :log, :read, repp], %{out: events})]
+    [Event.new([:player, :read, repp], %{out: events})]
   end
 
   def feed(_event, _orepp) do

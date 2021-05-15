@@ -8,6 +8,9 @@ defmodule MatchTest do
   alias Metr.Modules.Player
   alias Metr.Modules.Stately
   alias Metr.Router
+  alias Metr.Modules.Input.DeckInput
+  alias Metr.Modules.Input.MatchInput
+  alias Metr.Modules.Input.PlayerInput
 
   test "basic feed" do
     assert [] == Match.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
@@ -15,21 +18,21 @@ defmodule MatchTest do
 
   test "create match" do
     [player_created_event] =
-      Player.feed(Event.new([:create, :player], %{name: "Adam Match"}), nil)
+      Player.feed(Event.new([:create, :player], %PlayerInput{name: "Adam Match"}), nil)
 
     player_id = player_created_event.data.out
 
-    [deck_created_event] =
-      Deck.feed(Event.new([:create, :deck], %{name: "Alpha Match", player_id: player_id}), nil)
+    [deck_created_event, _deck_created_response] =
+      Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Alpha Match", player_id: player_id, format: "standard"}), nil)
 
     deck_id = deck_created_event.data.id
 
     Router.input(
-      Event.new([:create, :match], %{
-        player_1_id: player_id,
-        deck_1_id: deck_id,
-        player_2_id: player_id,
-        deck_2_id: deck_id,
+      Event.new([:create, :match], %MatchInput{
+        player_one: player_id,
+        deck_one: deck_id,
+        player_two: player_id,
+        deck_two: deck_id,
         ranking: false
       })
     )
@@ -56,30 +59,33 @@ defmodule MatchTest do
 
   test "fail create match" do
     [player_created_event] =
-      Player.feed(Event.new([:create, :player], %{name: "Bertil Match"}), nil)
+      Player.feed(Event.new([:create, :player], %PlayerInput{name: "Bertil Match"}), nil)
 
     player_id = player_created_event.data.out
 
-    [deck_1_created_event] =
-      Deck.feed(Event.new([:create, :deck], %{name: "Bravo Match", player_id: player_id}), nil)
+    [deck_1_created_event, _deck_1_created_response] =
+      Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Bravo Match", player_id: player_id, format: "standard"}), nil)
 
     deck_id_1 = deck_1_created_event.data.id
 
-    [deck_2_created_event] =
+    [deck_2_created_event, _deck_2_created_response] =
       Deck.feed(
-        Event.new([:create, :deck], %{name: "Charlie Match", player_id: player_id, rank: {1, 0}}),
+        Event.new([:create, :deck], %DeckInput{name: "Charlie Match", player_id: player_id, format: "standard"}),
         nil
       )
 
     deck_id_2 = deck_2_created_event.data.id
 
+    Metr.alter_rank(deck_id_2, :up)
+    Metr.alter_rank(deck_id_2, :up)
+
     [resulting_event] =
       Match.feed(
-        Event.new([:create, :match], %{
-          player_1_id: player_id,
-          deck_1_id: deck_id_1,
-          player_2_id: player_id,
-          deck_2_id: deck_id_2,
+        Event.new([:create, :match], %MatchInput{
+          player_one: player_id,
+          player_two: player_id,
+          deck_one: deck_id_1,
+          deck_two: deck_id_2,
           ranking: true
         }),
         nil
@@ -93,50 +99,50 @@ defmodule MatchTest do
 
   test "list matches" do
     [player_created_event] =
-      Player.feed(Event.new([:create, :player], %{name: "David Match"}), nil)
+      Player.feed(Event.new([:create, :player], %PlayerInput{name: "David Match"}), nil)
 
     player_id = player_created_event.data.out
 
-    [deck_created_event] =
-      Deck.feed(Event.new([:create, :deck], %{name: "Delta Match", player_id: player_id}), nil)
+    [deck_created_event, _deck_created_response] =
+      Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Delta Match", player_id: player_id, format: "standard"}), nil)
 
     deck_id = deck_created_event.data.id
 
     Match.feed(
-      Event.new([:create, :match], %{
-        player_1_id: player_id,
-        deck_1_id: deck_id,
-        player_2_id: player_id,
-        deck_2_id: deck_id,
+      Event.new([:create, :match], %MatchInput{
+        player_one: player_id,
+        deck_one: deck_id,
+        player_two: player_id,
+        deck_two: deck_id,
         ranking: false
       }),
       nil
     )
 
     Match.feed(
-      Event.new([:create, :match], %{
-        player_1_id: player_id,
-        deck_1_id: deck_id,
-        player_2_id: player_id,
-        deck_2_id: deck_id,
+      Event.new([:create, :match], %MatchInput{
+        player_one: player_id,
+        deck_one: deck_id,
+        player_two: player_id,
+        deck_two: deck_id,
         ranking: true
       }),
       nil
     )
 
     Match.feed(
-      Event.new([:create, :match], %{
-        player_1_id: player_id,
-        deck_1_id: deck_id,
-        player_2_id: player_id,
-        deck_2_id: deck_id,
+      Event.new([:create, :match], %MatchInput{
+        player_one: player_id,
+        deck_one: deck_id,
+        player_two: player_id,
+        deck_two: deck_id,
         ranking: false
       }),
       nil
     )
 
     [match_list_event] = Stately.feed(Event.new([:list, :match], %{}), nil)
-    matches = match_list_event.data.matches
+    matches = match_list_event.data.out
     assert 3 = Enum.count(matches)
 
     Data.wipe_test("Match", Enum.map(matches, fn m -> m.id end))

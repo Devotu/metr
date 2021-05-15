@@ -54,8 +54,8 @@ defmodule Metr.Data do
       {:ok, binary} ->
         binary
 
-      {:error, reason} ->
-        {:error, reason}
+      {:error, cause} ->
+        {:error, cause}
     end
   end
 
