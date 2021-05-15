@@ -123,7 +123,7 @@ defmodule Metr.Modules.Deck do
 
   def feed(%Event{keys: [:read, :log, :deck], data: %{deck_id: id}}, repp) do
     events = Data.read_log_by_id(id, "Deck")
-    [Event.new([:deck, :log, :read, repp], %{out: events})]
+    [Event.new([:deck, :read, repp], %{out: events})]
   end
 
   def feed(

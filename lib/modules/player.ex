@@ -129,7 +129,7 @@ defmodule Metr.Modules.Player do
 
   def feed(%Event{id: _event_id, keys: [:read, :log, :player], data: %{player_id: id}}, repp) do
     events = Data.read_log_by_id(id, "Player")
-    [Event.new([:player, :log, :read, repp], %{out: events})]
+    [Event.new([:player, :read, repp], %{out: events})]
   end
 
   def feed(_event, _orepp) do

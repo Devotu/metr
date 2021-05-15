@@ -2,14 +2,10 @@ defmodule Metr.Modules.Log do
   alias Metr.Event
   alias Metr.Data
 
-  def feed(%Event{id: event_id, keys: [:read, :log], data: %{limit: limit}}, nil) do
-    # Return
-    [Event.new([:list, :log, event_id], %{entries: Data.read_input_log_tail(limit)})]
-  end
-
+  def feed(event, repp \\ nil)
   def feed(%Event{id: _event_id, keys: [:read, :log], data: %{limit: limit}}, repp) do
     # Return
-    [Event.new([:list, :log, repp], %{out: Data.read_input_log_tail(limit)})]
+    [Event.new([:log, repp], %{log: Data.read_input_log_tail(limit)})]
   end
 
   def feed(_event, _orepp) do
