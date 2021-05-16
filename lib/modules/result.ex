@@ -114,7 +114,10 @@ defmodule Metr.Modules.Result do
   @impl true
   def init({id, %ResultInput{} = data, %Event{} = event}) do
     state = from_input(data, id, event.time)
-    :ok = Data.save_state_with_log(@atom, id, state, event)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, state}
+    end
     {:ok, state}
   end
 
@@ -134,7 +137,10 @@ defmodule Metr.Modules.Result do
         state
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    :ok = Data.save_state_with_log(@atom, id, state, event)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, state}
+    end
     {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end

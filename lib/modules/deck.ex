@@ -279,8 +279,10 @@ defmodule Metr.Modules.Deck do
   @impl true
   def init({id, %DeckInput{} = data, event}) do
     state = from_input(data, id, event.time)
-    :ok = Data.save_state_with_log(@atom, id, state, event)
-    {:ok, state}
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, state}
+    end
   end
 
   def init(%Deck{} = state) do
@@ -300,7 +302,10 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :results, &(&1 ++ [result_id]))
-    :ok = Data.save_state_with_log(@atom, id, new_state, event)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, new_state}
+    end
     {:reply, "Result #{result_id} added to deck #{id}", new_state}
   end
 
@@ -311,7 +316,10 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :matches, &(&1 ++ [match_id]))
-    :ok = Data.save_state_with_log(@atom, id, new_state, event)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, new_state}
+    end
     {:reply, "Match #{match_id} added to deck #{id}", new_state}
   end
 
@@ -332,7 +340,10 @@ defmodule Metr.Modules.Deck do
       |> Map.update!(:results, fn results -> List.delete(results, result_id) end)
       |> recalculate_rank(original_rank)
 
-    :ok = Data.save_state_with_log(@atom, id, new_state, event)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, new_state}
+    end
     {:reply, "Result #{result_id} removed from deck #{id}", new_state}
   end
 
@@ -343,7 +354,10 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :rank, fn rank -> Rank.apply_change(rank, change) end)
-    :ok = Data.save_state_with_log(@atom, id, new_state, event)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, new_state}
+    end
     {:reply, "Deck #{id} rank altered to #{Kernel.inspect(new_state.rank)}", new_state}
   end
 
@@ -354,7 +368,10 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :active, fn active -> not active end)
-    :ok = Data.save_state_with_log(@atom, id, new_state, event)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, new_state}
+    end
     {:reply, "Deck #{id} active altered to #{Kernel.inspect(new_state.active)}", new_state}
   end
 
@@ -365,7 +382,10 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    :ok = Data.save_state_with_log(@atom, id, new_state, event)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, new_state}
+    end
     {:reply, "Deck #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end

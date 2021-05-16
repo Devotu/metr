@@ -16,8 +16,11 @@ defmodule Metr.Data do
   end
 
   def save_state_with_log(module, id, state, event) when is_atom(module) and is_bitstring(id)  do
-    save_state(module, id, state)
-    log_by_id(module, id, event)
+    # save_state(module, id, state)
+    # log_by_id(module, id, event)
+
+    entity_id(module, id)
+    |> Trail.store(state, event)
   end
 
   def log_by_id(module, id, event) when is_atom(module) and is_bitstring(id) do
@@ -27,6 +30,7 @@ defmodule Metr.Data do
     File.write!(path, del, [:append])
   end
 
+  @spec read_log_by_id(bitstring, atom) :: list | {:error, :not_found}
   def read_log_by_id(id, module) when is_atom(module) and is_bitstring(id)  do
     event_path(module, id)
     |> read_binary_from_path

@@ -269,7 +269,10 @@ defmodule Metr.Modules.Match do
       time: Time.timestamp()
     }
 
-    :ok = Data.save_state_with_log(@atom, id, state, event)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, state}
+    end
     {:ok, state}
   end
 
@@ -290,7 +293,10 @@ defmodule Metr.Modules.Match do
       |> Map.put(:winner, find_winner(state))
       |> Map.put(:status, :closed)
 
-    :ok = Data.save_state_with_log(@atom, id, new_state, event)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, new_state}
+    end
     # Reply
     {:reply, :ok, new_state}
   end
@@ -306,7 +312,10 @@ defmodule Metr.Modules.Match do
       |> Map.update!(:games, &(&1 ++ [game_id]))
       |> Map.put(:status, :open)
 
-    :ok = Data.save_state_with_log(@atom, id, new_state, event)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, new_state}
+    end
     # Reply
     {:reply, "Game #{game_id} added to match #{id}", new_state}
   end
@@ -318,7 +327,10 @@ defmodule Metr.Modules.Match do
         state
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    :ok = Data.save_state_with_log(@atom, id, state, event)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, state}
+    end
     {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end

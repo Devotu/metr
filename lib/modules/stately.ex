@@ -230,7 +230,7 @@ defmodule Metr.Modules.Stately do
 
   defp store_state({:ok, id, entity}, state, %Event{} = event) do
     case Data.save_state_with_log(entity, id, state, event) do
-      :ok -> {:ok, id, entity}
+      {:ok} -> {:ok, id, entity}
       _ -> {:error, "could not save state"}
     end
   end
