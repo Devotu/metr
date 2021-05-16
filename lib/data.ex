@@ -16,9 +16,6 @@ defmodule Metr.Data do
   end
 
   def save_state_with_log(module, id, state, event) when is_atom(module) and is_bitstring(id)  do
-    # save_state(module, id, state)
-    # log_by_id(module, id, event)
-
     entity_id(module, id)
     |> Trail.store(state, event)
   end
@@ -79,12 +76,6 @@ defmodule Metr.Data do
   defp state_dir(), do: data_dir() <> "/state"
   defp state_path(module, id) when is_atom(module) and is_bitstring(id) do
     state_dir() <> "/#{entity_id(module, id)}.state"
-  end
-
-  defp save_state(module, id, state) when is_atom(module) and is_bitstring(id) do
-    path = state_path(module, id)
-    bin = :erlang.term_to_binary(state)
-    File.write!(path, bin)
   end
 
   def recall_state(module, id) when is_atom(module) and is_bitstring(id)  do
