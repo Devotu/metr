@@ -20,13 +20,6 @@ defmodule Metr.Data do
     |> Trail.store(state, event)
   end
 
-  def log_by_id(module, id, event) when is_atom(module) and is_bitstring(id) do
-    path = event_path(module, id)
-    bin = :erlang.term_to_binary(event)
-    del = bin <> @delimiter
-    File.write!(path, del, [:append])
-  end
-
   @spec read_log_by_id(bitstring, atom) :: list | {:error, :not_found}
   def read_log_by_id(id, module) when is_atom(module) and is_bitstring(id)  do
     event_path(module, id)
