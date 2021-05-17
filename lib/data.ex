@@ -10,9 +10,7 @@ defmodule Metr.Data do
   end
 
   def log_external_input(event) do
-    bin = :erlang.term_to_binary(event)
-    del = bin <> @delimiter
-    File.write!(event_path_external_inputs(), del, [:append])
+    Trail.store("input", %{}, event)
   end
 
   def save_state_with_log(module, id, state, event) when is_atom(module) and is_bitstring(id)  do
