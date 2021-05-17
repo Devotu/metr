@@ -1,6 +1,4 @@
 defmodule Metr.Data do
-  @delimiter "*___*_*_*"
-
   defp data_dir(), do: File.cwd!() <> "/data"
 
   defp event_dir(), do: data_dir() <> "/event"
@@ -33,6 +31,11 @@ defmodule Metr.Data do
     |> Enum.reverse()
   end
 
+  def recall_state(module, id) when is_atom(module) and is_bitstring(id)  do
+    entity_id(module, id)
+    |> Trail.recall()
+  end
+
   ####  All functions above are migrated to Trail ####
 
   def wipe_log(module, ids)  when is_atom(module) and is_list(ids) do
@@ -49,11 +52,7 @@ defmodule Metr.Data do
     state_dir() <> "/#{entity_id(module, id)}.state"
   end
 
-  def recall_state(module, id) when is_atom(module) and is_bitstring(id)  do
-    state_path(module, id)
-    |> File.read!()
-    |> :erlang.binary_to_term()
-  end
+
 
   def state_exists?(module, id) when is_atom(module) and is_bitstring(id)  do
     File.exists?(state_path(module, id))
