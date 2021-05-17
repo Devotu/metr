@@ -9,8 +9,10 @@ defmodule Metr.Data do
     event_dir() <> "/#{entity_id(module, id)}.log"
   end
 
+  @id_input "input"
+
   def log_external_input(event) do
-    Trail.store("input", %{}, event)
+    Trail.store(@id_input, %{}, event)
   end
 
   def save_state_with_log(module, id, state, event) when is_atom(module) and is_bitstring(id)  do
@@ -24,6 +26,16 @@ defmodule Metr.Data do
     |> Trail.trace()
   end
 
+  def read_input_log_tail(limit \\ 100) do
+    @id_input
+    |> Trail.trace()
+    |> Enum.reverse()
+    |> Enum.take(limit)
+    |> Enum.reverse()
+  end
+
+  ####  All functions above are migrated to Trail ####
+
   def wipe_log(module, ids)  when is_atom(module) and is_list(ids) do
     Enum.each(ids, fn id -> wipe_log(module, id) end)
   end
@@ -33,14 +45,7 @@ defmodule Metr.Data do
     File.rm(path)
   end
 
-  def read_input_log_tail(limit \\ 100) do
-    event_path_external_inputs()
-    |> read_binary_from_path
-    |> parse_delimited_binary
-    |> Enum.reverse()
-    |> Enum.take(limit)
-    |> Enum.reverse()
-  end
+
 
   defp read_binary_from_path(path) do
     case File.read(path) do
