@@ -31,9 +31,14 @@ defmodule Metr.Data do
     |> Enum.reverse()
   end
 
-  def recall_state(module, id) when is_atom(module) and is_bitstring(id)  do
+  def recall_state(module, id) when is_atom(module) and is_bitstring(id) do
     entity_id(module, id)
     |> Trail.recall()
+  end
+
+  def state_exists?(module, id) when is_atom(module) and is_bitstring(id) do
+    entity_id(module, id)
+    |> Trail.has_state?()
   end
 
   ####  All functions above are migrated to Trail ####
@@ -54,9 +59,7 @@ defmodule Metr.Data do
 
 
 
-  def state_exists?(module, id) when is_atom(module) and is_bitstring(id)  do
-    File.exists?(state_path(module, id))
-  end
+
 
   def wipe_state(ids, module) when is_list(ids) do
     Enum.each(ids, fn id -> wipe_state(id, module) end)
