@@ -20,9 +20,8 @@ defmodule Metr.Data do
 
   @spec read_log_by_id(bitstring, atom) :: list | {:error, :not_found}
   def read_log_by_id(id, module) when is_atom(module) and is_bitstring(id)  do
-    event_path(module, id)
-    |> read_binary_from_path
-    |> parse_delimited_binary
+    entity_id(module, id)
+    |> Trail.trace()
   end
 
   def wipe_log(module, ids)  when is_atom(module) and is_list(ids) do

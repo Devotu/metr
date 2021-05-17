@@ -12,6 +12,7 @@ defmodule Metr.Util do
     |> List.first()
   end
 
+  def uniq({:error, e}), do: {:error, e}
   def uniq(list) do
     uniq(list, MapSet.new())
   end

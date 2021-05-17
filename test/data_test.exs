@@ -23,6 +23,6 @@ defmodule DataTest do
 
     Data.wipe_log(module, id)
 
-    {:error, :not_found} = Data.read_log_by_id(id, module)
+    {:error, "log not found"} = Data.read_log_by_id(id, module)
   end
 end

@@ -260,7 +260,6 @@ defmodule Metr.Modules.Stately do
   end
 
   defp wipe_state({:error, e}), do: {:error, e}
-
   defp wipe_state({:ok, id, entity}) do
     case Data.wipe_state([id], entity) do
       :ok -> {:ok, id, entity}
@@ -269,14 +268,13 @@ defmodule Metr.Modules.Stately do
   end
 
   defp run_log({:error, e}), do: {:error, e}
-
   defp run_log({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
     module = select_module(entity)
     stop(id, entity)
 
     case Data.read_log_by_id(id, entity) do
-      {:error, :not_found} ->
-        {:error, "Log of #{entity |> Atom.to_string()} #{id} not found"}
+      {:error, e} ->
+        {:error, e}
 
       log ->
         log
@@ -286,7 +284,6 @@ defmodule Metr.Modules.Stately do
   end
 
   defp conclude_rerun({:error, e}), do: {:error, e}
-
   defp conclude_rerun(feedback_events) do
     feedback_events
     |> List.flatten()

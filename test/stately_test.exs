@@ -124,6 +124,6 @@ defmodule StatelyTest do
   test "rerun fail" do
     player_id = "fail_rerun_base"
     Stately.rerun(player_id, :player)
-    assert {:error, "Log of player #{player_id} not found"} == Stately.rerun(player_id, :player)
+    assert {:error, "log not found"} == Stately.rerun(player_id, :player)
   end
 end
