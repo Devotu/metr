@@ -493,9 +493,7 @@ defmodule MetrTest do
     Data.wipe_state([deck_id], :deck)
     assert {:error, "Deck #{deck_id} not found"} == Deck.read(deck_id)
 
-    assert_raise File.Error, fn ->
-      Data.recall_state(:deck, deck_id)
-    end
+    assert {:error, "not found"} == Data.recall_state(:deck, deck_id)
 
     assert :ok == Metr.rerun(:deck, deck_id)
 
