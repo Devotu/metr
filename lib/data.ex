@@ -4,7 +4,6 @@ defmodule Metr.Data do
   defp data_dir(), do: File.cwd!() <> "/data"
 
   defp event_dir(), do: data_dir() <> "/event"
-  defp event_path_external_inputs(), do: event_dir() <> "/input.log"
   defp event_path(module, id) when is_atom(module) and is_bitstring(id) do
     event_dir() <> "/#{entity_id(module, id)}.log"
   end
@@ -43,29 +42,6 @@ defmodule Metr.Data do
   def wipe_log(module, id) when is_atom(module) and is_bitstring(id)  do
     path = event_path(module, id)
     File.rm(path)
-  end
-
-
-
-  defp read_binary_from_path(path) do
-    case File.read(path) do
-      {:ok, binary} ->
-        binary
-
-      {:error, cause} ->
-        {:error, cause}
-    end
-  end
-
-  defp parse_delimited_binary({:error, :enoent}) do
-    {:error, :not_found}
-  end
-
-  defp parse_delimited_binary(binary) do
-    binary
-    |> String.slice(0..-String.length(@delimiter))
-    |> String.split(@delimiter)
-    |> Enum.map(fn b -> :erlang.binary_to_term(b) end)
   end
 
   defp state_dir(), do: data_dir() <> "/state"
