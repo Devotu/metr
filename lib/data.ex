@@ -43,14 +43,6 @@ defmodule Metr.Data do
 
   ####  All functions above are migrated to Trail ####
 
-  def wipe_log(module, ids)  when is_atom(module) and is_list(ids) do
-    Enum.each(ids, fn id -> wipe_log(module, id) end)
-  end
-
-  def wipe_log(module, id) when is_atom(module) and is_bitstring(id)  do
-    path = event_path(module, id)
-    File.rm(path)
-  end
 
   defp state_dir(), do: data_dir() <> "/state"
   defp state_path(module, id) when is_atom(module) and is_bitstring(id) do

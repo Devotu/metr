@@ -88,6 +88,16 @@ defmodule TestHelper do
 
   def wipe_test(module, id) when is_atom(module) and is_bitstring(id)  do
     Data.wipe_state(id, module)
-    Data.wipe_log(module, id)
+    wipe_log(module, id)
+  end
+
+
+  def wipe_log(module, ids)  when is_atom(module) and is_list(ids) do
+    Enum.each(ids, fn id -> wipe_log(module, id) end)
+  end
+
+  def wipe_log(module, id) when is_atom(module) and is_bitstring(id)  do
+    "/event/#{Data.entity_id(module, id)}.log"
+    |> File.rm()
   end
 end
