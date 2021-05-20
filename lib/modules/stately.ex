@@ -164,7 +164,6 @@ defmodule Metr.Modules.Stately do
       false -> {:error, "name to long"}
     end
   end
-
   def is_accepted_name(name) when is_nil(name), do: {:error, "name cannot be nil"}
   def is_accepted_name(_name), do: {:error, "name must be string"}
 
@@ -199,10 +198,6 @@ defmodule Metr.Modules.Stately do
       _ -> {:error, "#{Kernel.inspect(entity) |> String.capitalize()} is not a valid atom selecting id name"}
     end
   end
-  def module_specific_id(entity) when is_atom(entity) do
-    entity
-    |> module_specific_id()
-  end
 
   def apply_event(id, entity_qualifier, %Event{} = event) when is_bitstring(id) and is_atom(entity_qualifier) do
     module = select_module(entity_qualifier)
@@ -224,6 +219,7 @@ defmodule Metr.Modules.Stately do
   defp store_state({:ok, id, entity}, state, %Event{} = event) do
     case Data.save_state_with_log(entity, id, state, event) do
       {:ok} -> {:ok, id, entity}
+      {:error, e} -> {:error, e}
       _ -> {:error, "could not save state"}
     end
   end
