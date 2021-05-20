@@ -41,6 +41,15 @@ defmodule Metr.Data do
     |> Trail.has_state?()
   end
 
+  def wipe_state(ids, module) when is_atom(module) and is_list(ids) do
+    Enum.each(ids, fn id -> wipe_state(id, module) end)
+  end
+
+  def wipe_state(id, module) when is_atom(module) and is_bitstring(id)  do
+    module_specific_id(module, id)
+    |> Trail.clear()
+  end
+
   ####  All functions above are migrated to Trail ####
 
 
@@ -53,14 +62,8 @@ defmodule Metr.Data do
 
 
 
-  def wipe_state(ids, module) when is_list(ids) do
-    Enum.each(ids, fn id -> wipe_state(id, module) end)
-  end
 
-  def wipe_state(id, module) do
-    path = state_path(module, id)
-    File.rm(path)
-  end
+
 
   @spec module_specific_id(atom, bitstring()) :: <<_::8, _::_*8>>
   def module_specific_id(module, id) when is_atom(module) and is_bitstring(id) do

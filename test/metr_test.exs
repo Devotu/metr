@@ -163,7 +163,7 @@ defmodule MetrTest do
     |> Metr.create(:game)
 
     game = Game.read(game_id)
-    assert game_id == Metr.delete(game_id, :game)
+    assert "Game #{game_id} deleted" == Metr.delete(game_id, :game)
 
     deck_1 = Metr.read(deck_1_id, :deck)
     assert 0 == Enum.count(deck_1.results)

@@ -104,7 +104,7 @@ defmodule Metr.Modules.Game do
     case delete_conclusion do
       %Game{} = game ->
         [Event.new([@atom, :deleted, nil], %{id: game_id, results: game.results}),
-        Event.new([@atom, :deleted, repp], %{out: game_id})]
+        Event.new([@atom, :deleted, repp], %{out: "Game #{game_id} deleted"})]
 
       {:error, cause} ->
         [Event.new([@atom, :error, repp], %{cause: cause})]
@@ -225,7 +225,7 @@ defmodule Metr.Modules.Game do
     all_deleted? =
       game.results
       |> Enum.map(fn rid -> Result.delete(rid) end)
-      |> Enum.all?(fn x -> x == :ok end)
+      |> Enum.all?(fn x -> x == {:ok} end)
 
     case all_deleted? do
       true -> game
@@ -237,7 +237,7 @@ defmodule Metr.Modules.Game do
 
   defp delete_game(%Game{} = game) do
     case Data.wipe_state(game.id, @atom) do
-      :ok -> game
+      {:ok} -> game
       _ -> {:error, "Could not delete game state"}
     end
   end
