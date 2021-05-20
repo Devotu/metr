@@ -66,7 +66,6 @@ defmodule Metr.Modules.Stately do
   def init({id, entity}) do
     validation_result =
       {:ok, id, entity}
-      |> validate_entity()
       |> verified_id()
 
     case validation_result do
@@ -87,13 +86,11 @@ defmodule Metr.Modules.Stately do
   ## public
   def exist?(id, entity) when is_atom(entity) do
     {:ok, id, entity}
-    |> validate_entity()
     |> entity_has_state()
   end
 
   def read(id, entity) when is_atom(entity) and is_bitstring(id) do
     {:ok, id, entity}
-    |> validate_entity()
     |> verified_id()
     |> ready_process()
     |> recall()
@@ -102,7 +99,6 @@ defmodule Metr.Modules.Stately do
   def ready(id, entity) do
     result =
       {:ok, id, entity}
-      |> validate_entity()
       |> verified_id()
       |> ready_process()
 
@@ -124,7 +120,6 @@ defmodule Metr.Modules.Stately do
   def stop(id, entity) do
     result =
       {:ok, id, entity}
-      |> validate_entity()
       |> is_running?()
 
     case result do
@@ -136,7 +131,6 @@ defmodule Metr.Modules.Stately do
 
   def update(id, entity, keys, data, event) when is_atom(entity) and is_bitstring(id) do
     {:ok, id, entity}
-    |> validate_entity()
     |> verified_id()
     |> ready_process()
     |> alter(keys, data, event)
@@ -178,7 +172,6 @@ defmodule Metr.Modules.Stately do
       when is_atom(entity) and is_struct(state) do
     creation_result =
       {:ok, id, entity}
-      |> validate_entity()
       |> verify_unique()
       |> store_state(state, event)
       |> start_new(state)
@@ -320,20 +313,6 @@ defmodule Metr.Modules.Stately do
       :result -> %Result{}
       :tag -> %Tag{}
       _ -> {:error, "#{entity} is not a valid entity selecting struct"}
-    end
-  end
-
-  defp validate_entity({:error, e}), do: {:error, e}
-
-  defp validate_entity({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
-    case entity do
-      :player -> {:ok, id, entity}
-      :deck -> {:ok, id, entity}
-      :game -> {:ok, id, entity}
-      :match -> {:ok, id, entity}
-      :result -> {:ok, id, entity}
-      :tag -> {:ok, id, entity}
-      _ -> {:error, "#{entity} is not a valid entity name"}
     end
   end
 
