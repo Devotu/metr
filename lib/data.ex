@@ -1,11 +1,6 @@
 defmodule Metr.Data do
   defp data_dir(), do: File.cwd!() <> "/data"
 
-  defp event_dir(), do: data_dir() <> "/event"
-  defp event_path(module, id) when is_atom(module) and is_bitstring(id) do
-    event_dir() <> "/#{module_specific_id(module, id)}.log"
-  end
-
   @id_input "input"
 
   def log_external_input(event) do
@@ -51,17 +46,6 @@ defmodule Metr.Data do
   end
 
   ####  All functions above are migrated to Trail ####
-
-
-  defp state_dir(), do: data_dir() <> "/state"
-  defp state_path(module, id) when is_atom(module) and is_bitstring(id) do
-    state_dir() <> "/#{module_specific_id(module, id)}.state"
-  end
-
-
-
-
-
 
 
 
