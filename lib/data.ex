@@ -3,7 +3,7 @@ defmodule Metr.Data do
 
   defp event_dir(), do: data_dir() <> "/event"
   defp event_path(module, id) when is_atom(module) and is_bitstring(id) do
-    event_dir() <> "/#{entity_id(module, id)}.log"
+    event_dir() <> "/#{module_specific_id(module, id)}.log"
   end
 
   @id_input "input"
@@ -13,13 +13,13 @@ defmodule Metr.Data do
   end
 
   def save_state_with_log(module, id, state, event) when is_atom(module) and is_bitstring(id)  do
-    entity_id(module, id)
+    module_specific_id(module, id)
     |> Trail.store(state, event)
   end
 
   @spec read_log_by_id(bitstring, atom) :: list | {:error, :not_found}
   def read_log_by_id(id, module) when is_atom(module) and is_bitstring(id)  do
-    entity_id(module, id)
+    module_specific_id(module, id)
     |> Trail.trace()
   end
 
@@ -32,12 +32,12 @@ defmodule Metr.Data do
   end
 
   def recall_state(module, id) when is_atom(module) and is_bitstring(id) do
-    entity_id(module, id)
+    module_specific_id(module, id)
     |> Trail.recall()
   end
 
   def state_exists?(module, id) when is_atom(module) and is_bitstring(id) do
-    entity_id(module, id)
+    module_specific_id(module, id)
     |> Trail.has_state?()
   end
 
@@ -46,7 +46,7 @@ defmodule Metr.Data do
 
   defp state_dir(), do: data_dir() <> "/state"
   defp state_path(module, id) when is_atom(module) and is_bitstring(id) do
-    state_dir() <> "/#{entity_id(module, id)}.state"
+    state_dir() <> "/#{module_specific_id(module, id)}.state"
   end
 
 
@@ -62,8 +62,8 @@ defmodule Metr.Data do
     File.rm(path)
   end
 
-  @spec entity_id(atom, bitstring()) :: <<_::8, _::_*8>>
-  def entity_id(module, id) when is_atom(module) and is_bitstring(id) do
+  @spec module_specific_id(atom, bitstring()) :: <<_::8, _::_*8>>
+  def module_specific_id(module, id) when is_atom(module) and is_bitstring(id) do
     "#{to_module_name(module)}_#{id}"
   end
 
@@ -75,7 +75,7 @@ defmodule Metr.Data do
   end
 
   def genserver_id(module, id) when is_atom(module) and is_bitstring(id)  do
-    {:global, entity_id(module, id)}
+    {:global, module_specific_id(module, id)}
   end
 
   def list_ids(module) when is_atom(module) do

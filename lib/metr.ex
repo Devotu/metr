@@ -123,13 +123,13 @@ defmodule Metr do
   end
 
   defp read_state(type, id) when is_atom(type) do
-    Map.put(%{}, Stately.entity_id(type), id)
+    Map.put(%{}, Stately.module_specific_id(type), id)
     |> Event.new([:read, type])
     |> run()
   end
 
   defp read_log_of(type, id) when is_atom(type) do
-    Map.put(%{}, Stately.entity_id(type), id)
+    Map.put(%{}, Stately.module_specific_id(type), id)
     |> Event.new([:read, :log, type])
     |> run()
   end
@@ -140,7 +140,7 @@ defmodule Metr do
   end
 
   defp delete_state(type, id) when is_atom(type) do
-    Map.put(%{}, Stately.entity_id(type), id)
+    Map.put(%{}, Stately.module_specific_id(type), id)
     |> Event.new([:delete, type])
     |> run()
   end

@@ -23,7 +23,7 @@ defmodule Metr.Modules.Stately do
   def feed(%Event{keys: [:read, :log]}, _repp), do: []
 
   def feed(%Event{keys: [:read, entity], data: data}, repp) when is_map(data) do
-    id_name = entity_id(entity)
+    id_name = module_specific_id(entity)
     id = Map.get(data, id_name, {:error, "key not found"})
 
     case id do
@@ -195,7 +195,7 @@ defmodule Metr.Modules.Stately do
   def create(entity, _state) when is_bitstring(entity),
     do: {:error, "state must be struct"}
 
-  def entity_id(entity) when is_atom(entity) do
+  def module_specific_id(entity) when is_atom(entity) do
     case entity do
       :player -> :player_id
       :deck -> :deck_id
@@ -206,9 +206,9 @@ defmodule Metr.Modules.Stately do
       _ -> {:error, "#{Kernel.inspect(entity) |> String.capitalize()} is not a valid atom selecting id name"}
     end
   end
-  def entity_id(entity) when is_atom(entity) do
+  def module_specific_id(entity) when is_atom(entity) do
     entity
-    |> entity_id()
+    |> module_specific_id()
   end
 
   def apply_event(id, entity_qualifier, %Event{} = event) when is_bitstring(id) and is_atom(entity_qualifier) do
