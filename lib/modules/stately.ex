@@ -23,7 +23,7 @@ defmodule Metr.Modules.Stately do
   def feed(%Event{keys: [:read, :log]}, _repp), do: []
 
   def feed(%Event{keys: [:read, entity], data: data}, repp) when is_map(data) do
-    id_name = entity_id(entity)
+    id_name = module_specific_id(entity)
     id = Map.get(data, id_name, {:error, "key not found"})
 
     case id do
@@ -195,7 +195,7 @@ defmodule Metr.Modules.Stately do
   def create(entity, _state) when is_bitstring(entity),
     do: {:error, "state must be struct"}
 
-  def entity_id(entity) when is_atom(entity) do
+  def module_specific_id(entity) when is_atom(entity) do
     case entity do
       :player -> :player_id
       :deck -> :deck_id
@@ -206,9 +206,9 @@ defmodule Metr.Modules.Stately do
       _ -> {:error, "#{Kernel.inspect(entity) |> String.capitalize()} is not a valid atom selecting id name"}
     end
   end
-  def entity_id(entity) when is_atom(entity) do
+  def module_specific_id(entity) when is_atom(entity) do
     entity
-    |> entity_id()
+    |> module_specific_id()
   end
 
   def apply_event(id, entity_qualifier, %Event{} = event) when is_bitstring(id) and is_atom(entity_qualifier) do
@@ -230,7 +230,7 @@ defmodule Metr.Modules.Stately do
 
   defp store_state({:ok, id, entity}, state, %Event{} = event) do
     case Data.save_state_with_log(entity, id, state, event) do
-      :ok -> {:ok, id, entity}
+      {:ok} -> {:ok, id, entity}
       _ -> {:error, "could not save state"}
     end
   end
@@ -260,7 +260,6 @@ defmodule Metr.Modules.Stately do
   end
 
   defp wipe_state({:error, e}), do: {:error, e}
-
   defp wipe_state({:ok, id, entity}) do
     case Data.wipe_state([id], entity) do
       :ok -> {:ok, id, entity}
@@ -269,14 +268,13 @@ defmodule Metr.Modules.Stately do
   end
 
   defp run_log({:error, e}), do: {:error, e}
-
   defp run_log({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
     module = select_module(entity)
     stop(id, entity)
 
     case Data.read_log_by_id(id, entity) do
-      {:error, :not_found} ->
-        {:error, "Log of #{entity |> Atom.to_string()} #{id} not found"}
+      {:error, e} ->
+        {:error, e}
 
       log ->
         log
@@ -286,7 +284,6 @@ defmodule Metr.Modules.Stately do
   end
 
   defp conclude_rerun({:error, e}), do: {:error, e}
-
   defp conclude_rerun(feedback_events) do
     feedback_events
     |> List.flatten()
