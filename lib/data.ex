@@ -1,5 +1,15 @@
 defmodule Metr.Data do
-  defp data_dir(), do: File.cwd!() <> "/data"
+  @moduledoc """
+  A thin layer on top of Trail in order to provide functions that cannot be eliminated
+  as the current live data contains dependencies on this logic.
+  The core of the problem is that each state is saved with id in the format [module]_[id]
+  but only refered to as [id] within saved logs.
+  The origin is the ide to have each module as its own namespace in storage (which is good)
+  but it should have been handled the other way around.
+  Id should always include its namespace throughout the application and data.
+
+  Hard lesson to be learned!
+  """
 
   @id_input "input"
 
@@ -52,10 +62,7 @@ defmodule Metr.Data do
     |> Enum.map(fn module_id -> extract_id(module_id, module) end)
   end
 
-  ####  All functions above are migrated to Trail ####
-
-
-
+  ## Hard to get rid of id functions
   @spec module_specific_id(atom, bitstring()) :: <<_::8, _::_*8>>
   def module_specific_id(module, id) when is_atom(module) and is_bitstring(id) do
     "#{to_module_name(module)}_#{id}"
@@ -71,7 +78,6 @@ defmodule Metr.Data do
   def genserver_id(module, id) when is_atom(module) and is_bitstring(id)  do
     {:global, module_specific_id(module, id)}
   end
-
 
   defp to_module_name(module) when is_atom(module) do
     module
