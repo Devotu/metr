@@ -206,7 +206,6 @@ defmodule Metr.Modules.Stately do
 
   ## private {:ok, id, entity} / {:error, e}
   defp verify_unique({:error, e}), do: {:error, e}
-
   defp verify_unique({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
     case exist?(id, entity) do
       false -> {:ok, id, entity}
@@ -215,7 +214,6 @@ defmodule Metr.Modules.Stately do
   end
 
   defp store_state({:error, e}), do: {:error, e}
-
   defp store_state({:ok, id, entity}, state, %Event{} = event) do
     case Data.save_state_with_log(entity, id, state, event) do
       {:ok} -> {:ok, id, entity}
@@ -225,7 +223,6 @@ defmodule Metr.Modules.Stately do
   end
 
   defp start_new({:error, e}), do: {:error, e}
-
   defp start_new({:ok, id, entity}, state) do
     process_name = Data.genserver_id(entity, id)
 
@@ -239,7 +236,6 @@ defmodule Metr.Modules.Stately do
   end
 
   defp rerun_from_log({:error, e}), do: {:error, e}
-
   defp rerun_from_log({:ok, id, entity}) do
     {:ok, id, entity}
     |> wipe_state()
@@ -281,7 +277,6 @@ defmodule Metr.Modules.Stately do
 
   defp select_rerun_return({:error, e}), do: {:error, e}
   defp select_rerun_return([]), do: :ok
-
   defp select_rerun_return(error_events) when is_list(error_events),
     do: {:error, Kernel.inspect(error_events)}
 
@@ -313,13 +308,11 @@ defmodule Metr.Modules.Stately do
   end
 
   defp entity_has_state({:error, e}), do: {:error, e}
-
   defp entity_has_state({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
     Data.state_exists?(entity, id)
   end
 
   defp verified_id({:error, e}), do: {:error, e}
-
   defp verified_id({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
     case entity_has_state({:ok, id, entity}) do
       true -> {:ok, id, entity}
@@ -328,7 +321,6 @@ defmodule Metr.Modules.Stately do
   end
 
   defp recall({:error, e}), do: {:error, e}
-
   defp recall({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
     GenServer.call(Data.genserver_id(entity, id), %{
       keys: [:read, entity]
@@ -336,7 +328,6 @@ defmodule Metr.Modules.Stately do
   end
 
   defp ready_process({:error, e}), do: {:error, e}
-
   defp ready_process({:ok, id, entity}) do
     # Is running?
     case {GenServer.whereis(Data.genserver_id(entity, id)),
@@ -367,7 +358,6 @@ defmodule Metr.Modules.Stately do
   end
 
   defp alter({:error, e}, _keys, _data, _event), do: {:error, e}
-
   defp alter({:ok, id, entity}, keys, data, event) do
     # Call update
     GenServer.call(Data.genserver_id(entity, id), %{keys: keys, data: data, event: event})
