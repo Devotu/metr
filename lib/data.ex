@@ -45,6 +45,13 @@ defmodule Metr.Data do
     |> Trail.clear()
   end
 
+  def list_ids(module) when is_atom(module) do
+    module
+    |> to_module_name()
+    |> Trail.list_contains()
+    |> Enum.map(fn module_id -> extract_id(module_id, module) end)
+  end
+
   ####  All functions above are migrated to Trail ####
 
 
@@ -65,12 +72,6 @@ defmodule Metr.Data do
     {:global, module_specific_id(module, id)}
   end
 
-  def list_ids(module) when is_atom(module) do
-    File.ls!(state_dir())
-    |> Enum.map(fn fp -> String.replace(fp, state_dir(), "") end)
-    |> Enum.filter(fn fp -> String.starts_with?(fp, to_module_name(module)) end)
-    |> Enum.map(fn fp -> extract_id(fp, module) end)
-  end
 
   defp to_module_name(module) when is_atom(module) do
     module
