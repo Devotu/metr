@@ -19,11 +19,7 @@ defmodule Metr.Modules.Player do
         %Event{id: _event_id, keys: [:create, @atom], data: %PlayerInput{name: name}} = event,
         repp
       ) do
-    validation =
-      :ok
-      |> Stately.is_accepted_name(name)
-
-    case validation do
+    case Stately.is_accepted_name(name) do
       :ok ->
         id = Id.hrid(name)
         state = %Player{id: id, name: name, time: Time.timestamp()}
@@ -162,10 +158,12 @@ defmodule Metr.Modules.Player do
         state
       ) do
     new_state = Map.update!(state, :decks, &(&1 ++ [deck_id]))
+
     case Data.save_state_with_log(@atom, id, state, event) do
       {:error, e} -> {:stop, e}
       _ -> {:ok, new_state}
     end
+
     {:reply, "Deck #{deck_id} added to player #{id}", new_state}
   end
 
@@ -176,10 +174,12 @@ defmodule Metr.Modules.Player do
         state
       ) do
     new_state = Map.update!(state, :results, &(&1 ++ [result_id]))
+
     case Data.save_state_with_log(@atom, id, state, event) do
       {:error, e} -> {:stop, e}
       _ -> {:ok, new_state}
     end
+
     {:reply, "Result #{result_id} added to player #{id}", new_state}
   end
 
@@ -190,10 +190,12 @@ defmodule Metr.Modules.Player do
         state
       ) do
     new_state = Map.update!(state, :matches, &(&1 ++ [match_id]))
+
     case Data.save_state_with_log(@atom, id, state, event) do
       {:error, e} -> {:stop, e}
       _ -> {:ok, new_state}
     end
+
     {:reply, "Match #{match_id} added to player #{id}", new_state}
   end
 
@@ -204,10 +206,12 @@ defmodule Metr.Modules.Player do
         state
       ) do
     new_state = Map.update!(state, :results, fn results -> List.delete(results, result_id) end)
+
     case Data.save_state_with_log(@atom, id, state, event) do
       {:error, e} -> {:stop, e}
       _ -> {:ok, new_state}
     end
+
     {:reply, "Game #{result_id} removed from player #{id}", new_state}
   end
 
@@ -223,10 +227,12 @@ defmodule Metr.Modules.Player do
         state
       ) do
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
+
     case Data.save_state_with_log(@atom, id, state, event) do
       {:error, e} -> {:stop, e}
       _ -> {:ok, state}
     end
+
     {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   end
 end
