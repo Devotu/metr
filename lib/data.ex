@@ -17,13 +17,13 @@ defmodule Metr.Data do
     Trail.store(@id_input, %{}, event)
   end
 
-  def save_state_with_log(module, id, state, event) when is_atom(module) and is_bitstring(id)  do
+  def save_state_with_log(module, id, state, event) when is_atom(module) and is_bitstring(id) do
     module_specific_id(module, id)
     |> Trail.store(state, event)
   end
 
   @spec read_log_by_id(bitstring, atom) :: list | {:error, :not_found}
-  def read_log_by_id(id, module) when is_atom(module) and is_bitstring(id)  do
+  def read_log_by_id(id, module) when is_atom(module) and is_bitstring(id) do
     module_specific_id(module, id)
     |> Trail.trace()
   end
@@ -50,7 +50,7 @@ defmodule Metr.Data do
     Enum.each(ids, fn id -> wipe_state(id, module) end)
   end
 
-  def wipe_state(id, module) when is_atom(module) and is_bitstring(id)  do
+  def wipe_state(id, module) when is_atom(module) and is_bitstring(id) do
     module_specific_id(module, id)
     |> Trail.clear()
   end
@@ -75,7 +75,7 @@ defmodule Metr.Data do
     |> String.replace_suffix(".state", "")
   end
 
-  def genserver_id(module, id) when is_atom(module) and is_bitstring(id)  do
+  def genserver_id(module, id) when is_atom(module) and is_bitstring(id) do
     {:global, module_specific_id(module, id)}
   end
 
