@@ -173,6 +173,7 @@ defmodule Metr do
   feed methods of Metr matches on events sent as respons to requests sent into the system and forwards the content to the running listening task
   """
   def feed(%Event{keys: [:match,  :ended,     pid], data: %{out: out}}, _orepp) when is_pid(pid), do: respond(pid, out)
+  def feed(%Event{keys: [:error,              pid], data: %{cause: cause}}, _orepp) when is_pid(pid), do: respond(pid, {:error, cause})
   def feed(%Event{keys: [type,    :error,     pid], data: %{cause: cause}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, {:error, cause})
   def feed(%Event{keys: [type,    :altered,   pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
   def feed(%Event{keys: [type,    :created,   pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)

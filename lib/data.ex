@@ -79,6 +79,10 @@ defmodule Metr.Data do
     {:global, module_specific_id(module, id)}
   end
 
+  def genserver_id(id, module) when is_atom(module) and is_bitstring(id) do
+    {:global, module_specific_id(module, id)}
+  end
+
   defp to_module_name(module) when is_atom(module) do
     module
     |> Atom.to_string()

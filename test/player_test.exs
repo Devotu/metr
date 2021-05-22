@@ -6,6 +6,7 @@ defmodule PlayerTest do
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
   alias Metr.Modules.Player
+  alias Metr.Modules.State
   alias Metr.Modules.Stately
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
@@ -16,11 +17,12 @@ defmodule PlayerTest do
   end
 
   test "create player" do
-    [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "Testy"}), nil)
+    [resulting_event] = State.feed(Event.new([:create, :player], %PlayerInput{name: "Testy"}), nil)
+    |> IO.inspect(label: "player test created")
     assert [:player, :created, nil] == resulting_event.keys
     log_entries = Data.read_log_by_id(resulting_event.data.out, :player)
     assert 1 = Enum.count(log_entries)
-    TestHelper.wipe_test(:player, resulting_event.data.out)
+    # TestHelper.wipe_test(:player, resulting_event.data.out)
   end
 
   test "deck created" do

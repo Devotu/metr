@@ -15,23 +15,23 @@ defmodule Metr.Modules.Player do
 
   @atom :player
 
-  def feed(
-        %Event{id: _event_id, keys: [:create, @atom], data: %PlayerInput{name: name}} = event,
-        repp
-      ) do
-    case Stately.is_accepted_name(name) do
-      :ok ->
-        id = Id.hrid(name)
-        state = %Player{id: id, name: name, time: Time.timestamp()}
+  # def feed(
+  #       %Event{id: _event_id, keys: [:create, @atom], data: %PlayerInput{name: name}} = event,
+  #       repp
+  #     ) do
+  #   case Stately.is_accepted_name(name) do
+  #     :ok ->
+  #       id = Id.hrid(name)
+  #       state = %Player{id: id, name: name, time: Time.timestamp()}
 
-        Stately.create(@atom, state, event)
-        |> Stately.out_to_event(@atom, [:created, repp])
-        |> List.wrap()
+  #       Stately.create(@atom, state, event)
+  #       |> Stately.out_to_event(@atom, [:created, repp])
+  #       |> List.wrap()
 
-      {:error, e} ->
-        [Event.new([@atom, :error, repp], %{cause: e})]
-    end
-  end
+  #     {:error, e} ->
+  #       [Event.new([@atom, :error, repp], %{cause: e})]
+  #   end
+  # end
 
   def feed(
         %Event{
@@ -147,8 +147,25 @@ defmodule Metr.Modules.Player do
 
   ## gen
   @impl true
+  def init({id, %PlayerInput{} = data, %Event{} = event}) do
+    IO.inspect event, label: "player - init"
+    state = %Player{id: id, name: data.name, time: event.time}
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, state}
+    end
+    {:ok, state}
+  end
+
+  @impl true
   def init(%Player{} = state) do
     {:ok, state}
+  end
+
+  @impl true
+  def init(input) do
+    IO.inspect input, label: "player - general input"
+    {:ok, %{}}
   end
 
   @impl true
