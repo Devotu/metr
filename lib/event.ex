@@ -40,4 +40,7 @@ defmodule Metr.Event do
   def out_to_event(out, entity, repp) when is_atom(entity) and is_pid(repp) do
     Event.new([entity] ++ repp, %{out: out})
   end
+
+  def get_out(%Event{data: %{out: out}}), do: out
+  def get_out(%Event{}), do: nil
 end

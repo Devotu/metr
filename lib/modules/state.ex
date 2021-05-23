@@ -15,7 +15,6 @@ defmodule Metr.Modules.State do
 
     case GenServer.start(target_module, {id, input, event}, name: process_name) do
       {:ok, _pid} ->
-        [:player, :created, nil]
         [Event.new([module, :created, repp], %{out: id})]
       {:error, e} ->
         [Event.error_to_event(e, repp)]
