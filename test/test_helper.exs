@@ -2,7 +2,9 @@ ExUnit.start()
 
 defmodule TestHelper do
   alias Metr.Data
+  alias Metr.Event
   alias Metr.Modules.Game
+  alias Metr.Modules.State
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.MatchInput
@@ -99,5 +101,11 @@ defmodule TestHelper do
   def wipe_log(module, id) when is_atom(module) and is_bitstring(id)  do
     "data/event/#{Data.module_specific_id(module, id)}.log"
     |> File.rm()
+  end
+
+  def init_only_player(player_name) do
+    State.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
+    |> List.first()
+    |> Event.get_out()
   end
 end

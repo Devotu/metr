@@ -13,12 +13,11 @@ defmodule PlayerTest do
   alias Metr.Modules.Input.PlayerInput
 
   test "basic feed" do
-    assert [] == Player.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
+    assert [] == State.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
   end
 
   test "create player" do
-    [resulting_event] = State.feed(Event.new([:create, :player], %PlayerInput{name: "Testy"}), nil)
-    |> IO.inspect(label: "player test created")
+    [resulting_event] = State.feed(Event.new([:create, :player], %PlayerInput{name: "Adam Player"}), nil)
     assert [:player, :created, nil] == resulting_event.keys
     log_entries = Data.read_log_by_id(resulting_event.data.out, :player)
     assert 1 = Enum.count(log_entries)
@@ -27,11 +26,11 @@ defmodule PlayerTest do
 
   test "deck created" do
     # var
-    player_id = "deck_owner"
+    player_id = TestHelper.init_only_player "Bertil Player"
     deck_id = "player_deck"
     # Player to own the deck
     [player_created_event] =
-      Player.feed(Event.new([:create, :player], %PlayerInput{name: "Deck owner"}), nil)
+      State.feed(Event.new([:create, :player], %PlayerInput{name: "Deck owner"}), nil)
 
     # Resolve deck created
     [resulting_event] =
@@ -98,9 +97,9 @@ defmodule PlayerTest do
   end
 
   test "list players" do
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Adam List"}), nil)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Bertil List"}), nil)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Ceasar List"}), nil)
+    State.feed(Event.new([:create, :player], %PlayerInput{name: "Adam List"}), nil)
+    State.feed(Event.new([:create, :player], %PlayerInput{name: "Bertil List"}), nil)
+    State.feed(Event.new([:create, :player], %PlayerInput{name: "Ceasar List"}), nil)
     Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Alpha List", player_id: "adam_list", format: "standard"}), nil)
     Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Beta List", player_id: "bertil_list", format: "standard"}), nil)
     fake_pid = "#123"
@@ -122,7 +121,7 @@ defmodule PlayerTest do
       time: 0
     }
 
-    [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "David Player"}), nil)
+    [resulting_event] = State.feed(Event.new([:create, :player], %PlayerInput{name: "David Player"}), nil)
     player_id = resulting_event.data.out
     gen_id = Data.genserver_id(:player, player_id)
     assert :ok == GenServer.stop(gen_id)
@@ -130,7 +129,6 @@ defmodule PlayerTest do
 
     read_player = Player.read(player_id)
 
-    assert read_player.id == expected_player.id
     assert read_player.name == expected_player.name
     assert read_player.results == expected_player.results
     assert read_player.matches |> Enum.count() == 0
