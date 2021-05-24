@@ -5,6 +5,7 @@ defmodule MatchTest do
   alias Metr.Modules.Match
   alias Metr.Event
   alias Metr.Modules.Player
+  alias Metr.Modules.State
   alias Metr.Modules.Stately
   alias Metr.Router
   alias Metr.Modules.Input.DeckInput
@@ -17,7 +18,7 @@ defmodule MatchTest do
 
   test "create match" do
     [player_created_event] =
-      Player.feed(Event.new([:create, :player], %PlayerInput{name: "Adam Match"}), nil)
+      State.feed(Event.new([:create, :player], %PlayerInput{name: "Adam Match"}), nil)
 
     player_id = player_created_event.data.out
 
@@ -58,7 +59,7 @@ defmodule MatchTest do
 
   test "fail create match" do
     [player_created_event] =
-      Player.feed(Event.new([:create, :player], %PlayerInput{name: "Bertil Match"}), nil)
+      State.feed(Event.new([:create, :player], %PlayerInput{name: "Bertil Match"}), nil)
 
     player_id = player_created_event.data.out
 
@@ -98,7 +99,7 @@ defmodule MatchTest do
 
   test "list matches" do
     [player_created_event] =
-      Player.feed(Event.new([:create, :player], %PlayerInput{name: "David Match"}), nil)
+      State.feed(Event.new([:create, :player], %PlayerInput{name: "David Match"}), nil)
 
     player_id = player_created_event.data.out
 
