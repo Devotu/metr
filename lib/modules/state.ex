@@ -4,6 +4,10 @@ defmodule Metr.Modules.State do
   alias Metr.Id
   alias Metr.Modules.Player
 
+  @doc """
+  Passes the input to the appropriate module for creation.
+  The idea is to collect all boiler plate in one place and let each module focus on its specifics
+  """
   def feed(
         %Event{id: _event_id, keys: [:create, module], data: %{id: id, input: input}} = event,
         repp
@@ -23,6 +27,10 @@ defmodule Metr.Modules.State do
     end
   end
 
+
+  @doc """
+  Generates a guid and runs corresponding feed with it
+  """
   def feed(
         %Event{id: _event_id, keys: [:create, _module], data: input} = event,
         repp
@@ -38,16 +46,18 @@ defmodule Metr.Modules.State do
     []
   end
 
-
-  defp select_target_module(entity) when is_atom(entity) do
-    case entity do
+  @doc """
+  Fetches the actual corresponding module for use in further functions
+  """
+  defp select_target_module(module_atom) when is_atom(module_atom) do
+    case module_atom do
       :player -> Player
       :deck -> Deck
       :game -> Game
       :match -> Match
       :result -> Result
       :tag -> Tag
-      _ -> {:error, "#{Kernel.inspect(entity)} is not a valid atom selecting entity"}
+      _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting module"}
     end
   end
 end
