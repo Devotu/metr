@@ -3,6 +3,7 @@ defmodule ResultTest do
 
   alias Metr.Id
   alias Metr.Event
+  alias Metr.Modules.State
   alias Metr.Modules.Deck
   alias Metr.Modules.Player
   alias Metr.Modules.Result
@@ -11,37 +12,28 @@ defmodule ResultTest do
   alias Metr.Modules.Input.PlayerInput
 
   test "valid created" do
-    name = "Adam Result"
-    id = Id.hrid(name)
+    player_id = TestHelper.init_only_player "Adam Result"
 
-    Player.feed(
-      Event.new(
-        [:create, :player],
-        %PlayerInput{
-          name: name
-        }
-      ),
-      nil
-    )
-
-    Deck.feed(
+    [_prop, created_event] = Deck.feed(
       Event.new(
         [:create, :deck],
         %DeckInput{
-          name: name,
-          player_id: id,
+          name: "Alpha Result",
+          player_id: player_id,
           format: "standard"
         }
       ),
       nil
     )
 
+    deck_id = created_event.data.out
+
     game =
       Metr.create(%GameInput{
-        :player_one => id,
-        :player_two => id,
-        :deck_one => id,
-        :deck_two => id,
+        :player_one => player_id,
+        :player_two => player_id,
+        :deck_one => deck_id,
+        :deck_two => deck_id,
         :winner => 1,
         :fun_one => 1,
         :fun_two => -2,
@@ -60,8 +52,8 @@ defmodule ResultTest do
     assert result == Metr.read(result.id, :result)
     assert result == Metr.list(game.results, :result) |> List.first()
 
-    TestHelper.wipe_test(:deck, id)
-    TestHelper.wipe_test(:player, id)
+    TestHelper.wipe_test(:deck, player_id)
+    TestHelper.wipe_test(:player, deck_id)
     TestHelper.wipe_test(:game, game.id)
     TestHelper.wipe_test(:result, game.results)
   end

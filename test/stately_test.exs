@@ -1,6 +1,7 @@
 defmodule StatelyTest do
   use ExUnit.Case
 
+  alias Metr.Modules.State
   alias Metr.Modules.Stately
   alias Metr.Data
   alias Metr.Event
@@ -13,14 +14,14 @@ defmodule StatelyTest do
 
   test "exists" do
     assert false == Stately.exist?("not yet created", :player)
-    [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "Adam Stately"}), nil)
+    [resulting_event] = State.feed(Event.new([:create, :player], %PlayerInput{name: "Adam Stately"}), nil)
     player_id = resulting_event.data.out
     assert true == Stately.exist?(player_id, :player)
     TestHelper.wipe_test(:player, player_id)
   end
 
   test "read state" do
-    [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "Bertil Stately"}), nil)
+    [resulting_event] = State.feed(Event.new([:create, :player], %PlayerInput{name: "Bertil Stately"}), nil)
     player_id = resulting_event.data.out
     player = Stately.read(player_id, :player)
     assert player_id == player.id
@@ -31,7 +32,7 @@ defmodule StatelyTest do
     assert {:error, "Player not_yet_created not found"} ==
              Stately.ready("not_yet_created", :player)
 
-    [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "Ceasar Stately"}), nil)
+    [resulting_event] = State.feed(Event.new([:create, :player], %PlayerInput{name: "Ceasar Stately"}), nil)
     player_id = resulting_event.data.out
     assert {:ok} == Stately.ready(player_id, :player)
     TestHelper.wipe_test(:player, player_id)
@@ -41,7 +42,7 @@ defmodule StatelyTest do
     assert {:error, "Player not_yet_created not found"} ==
              Stately.update("not_yet_created", :player, [], %{}, %Event{})
 
-    [resulting_event] = Player.feed(Event.new([:create, :player], %PlayerInput{name: "David Stately"}), nil)
+    [resulting_event] = State.feed(Event.new([:create, :player], %PlayerInput{name: "David Stately"}), nil)
     player_id = resulting_event.data.out
     event = Event.new([:deck, :created, nil], %{id: "deck_id", player_id: player_id})
 

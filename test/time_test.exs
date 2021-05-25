@@ -7,6 +7,7 @@ defmodule TimeTest do
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.State
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.MatchInput
@@ -14,23 +15,14 @@ defmodule TimeTest do
   alias Metr.Time
 
   test "state timestamps" do
-    name = "Adam Time"
-    id = Id.hrid(name)
+
+    deck_name = "Alpha Time"
 
     # with one second interval the entire test should pass on the same timestamp or the next
     time_of_creation = Time.timestamp()
+    player_id = TestHelper.init_only_player "Adam Time"
 
-    Player.feed(
-      Event.new(
-        [:create, :player],
-        %PlayerInput{
-          name: name
-        }
-      ),
-      nil
-    )
-
-    player = Player.read(id)
+    player = Player.read(player_id)
     assert 0 != player.time
     assert 0 >= player.time - time_of_creation
 
@@ -38,23 +30,24 @@ defmodule TimeTest do
       Event.new(
         [:create, :deck],
         %DeckInput{
-          name: name,
-          player_id: id,
+          name: deck_name,
+          player_id: player_id,
           format: "standard"
         }
       ),
       nil
     )
 
-    deck = Deck.read(id)
+    deck_id = Id.hrid(deck_name)
+    deck = Deck.read(deck_id)
     assert 0 != deck.time
     assert 0 >= deck.time - time_of_creation
 
     game = %GameInput{
-      deck_one: id,
-      deck_two: id,
-      player_one: id,
-      player_two: id,
+      player_one: player_id,
+      player_two: player_id,
+      deck_one: deck_id,
+      deck_two: deck_id,
       winner: 1
     }
     |> Metr.create(:game)
@@ -71,10 +64,10 @@ defmodule TimeTest do
       Event.new(
         [:create, :match],
         %MatchInput{
-          player_one: id,
-          deck_one: id,
-          player_two: id,
-          deck_two: id,
+          player_one: player_id,
+          player_two: player_id,
+          deck_one: deck_id,
+          deck_two: deck_id,
           ranking: false
         }
       ),
@@ -88,8 +81,8 @@ defmodule TimeTest do
     assert 0 != match.time
     assert 0 >= match.time - time_of_creation
 
-    TestHelper.wipe_test(:deck, id)
-    TestHelper.wipe_test(:player, id)
+    TestHelper.wipe_test(:deck, deck_id)
+    TestHelper.wipe_test(:player, player_id)
     TestHelper.wipe_test(:game, game.id)
     TestHelper.wipe_test(:match, match.id)
   end

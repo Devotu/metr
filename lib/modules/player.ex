@@ -15,24 +15,6 @@ defmodule Metr.Modules.Player do
 
   @atom :player
 
-  # def feed(
-  #       %Event{id: _event_id, keys: [:create, @atom], data: %PlayerInput{name: name}} = event,
-  #       repp
-  #     ) do
-  #   case Stately.is_accepted_name(name) do
-  #     :ok ->
-  #       id = Id.hrid(name)
-  #       state = %Player{id: id, name: name, time: Time.timestamp()}
-
-  #       Stately.create(@atom, state, event)
-  #       |> Stately.out_to_event(@atom, [:created, repp])
-  #       |> List.wrap()
-
-  #     {:error, e} ->
-  #       [Event.new([@atom, :error, repp], %{cause: e})]
-  #   end
-  # end
-
   def feed(
         %Event{
           id: _event_id,
@@ -164,7 +146,6 @@ defmodule Metr.Modules.Player do
 
   @impl true
   def init(input) do
-    IO.inspect input, label: "player - general input"
     {:ok, %{}}
   end
 

@@ -5,6 +5,7 @@ defmodule Metr.Modules.Stately do
   alias Metr.Event
   alias Metr.Util
 
+  alias Metr.Modules.State
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
   alias Metr.Modules.Match
@@ -257,6 +258,8 @@ defmodule Metr.Modules.Stately do
     module = select_module(entity)
     stop(id, entity)
 
+    IO.inspect Data.read_log_by_id(id, entity), label: "Stately - run log - log"
+
     case Data.read_log_by_id(id, entity) do
       {:error, e} ->
         {:error, e}
@@ -264,7 +267,7 @@ defmodule Metr.Modules.Stately do
       log ->
         log
         |> Util.uniq()
-        |> Enum.map(fn e -> module.feed(e, nil) end)
+        |> Enum.map(fn e -> State.feed(e, nil) end)
     end
   end
 

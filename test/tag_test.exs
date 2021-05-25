@@ -28,7 +28,8 @@ defmodule TagTest do
       Tag.feed(Event.new([:tag, :player], %{id: player_id, tag: tag}), fake_pid)
 
     assert [:player, :error, fake_pid] == failure_response.keys
-    assert %{msg: "duplicate tag double found on player adam_tag"} = failure_response.data
+    expected_result = "duplicate tag double found on player #{player_id}"
+    assert %{msg: expected_result} = failure_response.data
 
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
     TestHelper.wipe_test(:tag, tag)

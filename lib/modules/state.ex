@@ -5,13 +5,15 @@ defmodule Metr.Modules.State do
   alias Metr.Modules.Player
 
   def feed(
-        %Event{id: _event_id, keys: [:create, module], data: input} = event,
+        %Event{id: _event_id, keys: [:create, module], data: %{id: id, input: input}} = event,
         repp
       ) do
 
-    id = Id.guid() |> IO.inspect(label: "state - id")
     process_name = Data.genserver_id(id, module) |> IO.inspect(label: "state - process name")
     target_module = select_target_module(module) |> IO.inspect(label: "state - process module")
+
+    IO.inspect id, label: "state - specified id"
+    IO.inspect input, label: "state - input"
 
     case GenServer.start(target_module, {id, input, event}, name: process_name) do
       {:ok, _pid} ->
@@ -19,6 +21,17 @@ defmodule Metr.Modules.State do
       {:error, e} ->
         [Event.error_to_event(e, repp)]
     end
+  end
+
+  def feed(
+        %Event{id: _event_id, keys: [:create, _module], data: input} = event,
+        repp
+      ) do
+
+    id = Id.guid() |> IO.inspect(label: "state - id")
+    id_input = %{id: id, input: input}
+    event_with_specific_id = Map.put(event, :data, id_input)
+    feed(event_with_specific_id, repp)
   end
 
   def feed(_event, _repp) do
