@@ -2,6 +2,7 @@ defmodule Metr.Modules.State do
   alias Metr.Data
   alias Metr.Event
   alias Metr.Id
+  alias Metr.Modules.Deck
   alias Metr.Modules.Player
 
   @doc """

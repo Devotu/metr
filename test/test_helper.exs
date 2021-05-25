@@ -103,8 +103,14 @@ defmodule TestHelper do
     |> File.rm()
   end
 
-  def init_only_player(player_name) do
-    State.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
+  def init_only_player(name) do
+    State.feed(Event.new([:create, :player], %PlayerInput{name: name}), nil)
+    |> List.first()
+    |> Event.get_out()
+  end
+
+  def init_only_deck(name, player_id, format \\ "standard") do
+    State.feed(Event.new([:create, :deck], %DeckInput{name: name, format: format, player_id: player_id}), nil)
     |> List.first()
     |> Event.get_out()
   end

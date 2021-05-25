@@ -417,4 +417,55 @@ defmodule GameTest do
     TestHelper.wipe_test(:game, [game.id])
     TestHelper.wipe_test(:result, game.results)
   end
+
+  test "deck created" do
+    # Players to participate
+    player_1_id = TestHelper.init_only_player "Rudolf Game"
+    player_2_id = TestHelper.init_only_player "Sigurd Game"
+    # Decks to participate
+    deck_1_name = "Romeo Game"
+    deck_1_id = Id.hrid(deck_1_name)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
+    deck_2_name = "Sierra Game"
+    deck_2_id = Id.hrid(deck_2_name)
+    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
+    # Resolve game created
+
+    [game_created_event, _game_created_response] =
+      Game.feed(
+        Event.new([:create, :game], %GameInput{
+          player_one: player_1_id,
+          player_two: player_2_id,
+          deck_one: deck_1_id,
+          deck_two: deck_2_id,
+          power_one: -1,
+          power_two: 1,
+          fun_one: -2,
+          fun_two: 2,
+          winner: 1,
+          ranking: false
+        }),
+        nil
+      )
+
+    resulting_events = Deck.feed(game_created_event, nil)
+    first_resulting_event = List.first(resulting_events)
+    deck_log = Data.read_log_by_id(deck_1_id, :deck)
+    [first_result_id, _second_result_event] = game_created_event.data.result_ids
+
+    # Assert
+    assert 2 == Enum.count(resulting_events)
+    assert [:deck, :altered, nil] == first_resulting_event.keys
+
+    assert "Result #{first_result_id} added to deck #{deck_1_id}" ==
+             first_resulting_event.data.out
+
+    assert 2 == Enum.count(deck_log)
+
+    # Cleanup
+    TestHelper.wipe_test(:player, [player_1_id, player_2_id])
+    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
+    TestHelper.wipe_test(:game, [game_created_event.data.id])
+    TestHelper.wipe_test(:result, game_created_event.data.result_ids)
+  end
 end

@@ -50,26 +50,26 @@ defmodule Metr.Modules.Deck do
   @atom :deck
 
   ## feed
-  def feed(%Event{keys: [:create, @atom], data: %DeckInput{} = data} = event, repp) do
-    case verify_new_deck_input(data) do
-      {:error, cause} ->
-        # Return
-        [Event.new([@atom, :error, repp], %{cause: cause, data: data})]
+  # def feed(%Event{keys: [:create, @atom], data: %DeckInput{} = data} = event, repp) do
+  #   case verify_new_deck_input(data) do
+  #     {:error, cause} ->
+  #       # Return
+  #       [Event.new([@atom, :error, repp], %{cause: cause, data: data})]
 
-      {:ok} ->
-        id = Id.hrid(data.name)
-        process_name = Data.genserver_id(@atom, id)
-        # Start genserver
-        case GenServer.start(Metr.Modules.Deck, {id, data, event}, name: process_name) do
-          {:ok, _pid} ->
-            [Event.new([@atom, :created, nil], %{id: id, player_id: data.player_id}),
-            Event.new([@atom, :created, repp], %{out: id})]
+  #     {:ok} ->
+  #       id = Id.hrid(data.name)
+  #       process_name = Data.genserver_id(@atom, id)
+  #       # Start genserver
+  #       case GenServer.start(Metr.Modules.Deck, {id, data, event}, name: process_name) do
+  #         {:ok, _pid} ->
+  #           [Event.new([@atom, :created, nil], %{id: id, player_id: data.player_id}),
+  #           Event.new([@atom, :created, repp], %{out: id})]
 
-          {:error, cause} ->
-            [Event.new([@atom, :error, repp], %{cause: cause})]
-        end
-    end
-  end
+  #         {:error, cause} ->
+  #           [Event.new([@atom, :error, repp], %{cause: cause})]
+  #       end
+  #   end
+  # end
 
   def feed(
         %Event{
@@ -275,13 +275,42 @@ defmodule Metr.Modules.Deck do
     }
   end
 
+
+    ## feed
+  # def feed(%Event{keys: [:create, @atom], data: %DeckInput{} = data} = event, repp) do
+  #   case verify_new_deck_input(data) do
+  #     {:error, cause} ->
+  #       # Return
+  #       [Event.new([@atom, :error, repp], %{cause: cause, data: data})]
+
+  #     {:ok} ->
+  #       id = Id.hrid(data.name)
+  #       process_name = Data.genserver_id(@atom, id)
+  #       # Start genserver
+  #       case GenServer.start(Metr.Modules.Deck, {id, data, event}, name: process_name) do
+  #         {:ok, _pid} ->
+  #           [Event.new([@atom, :created, nil], %{id: id, player_id: data.player_id}),
+  #           Event.new([@atom, :created, repp], %{out: id})]
+
+  #         {:error, cause} ->
+  #           [Event.new([@atom, :error, repp], %{cause: cause})]
+  #       end
+  #   end
+  # end
+
   ## gen
   @impl true
   def init({id, %DeckInput{} = data, event}) do
-    state = from_input(data, id, event.time)
-    case Data.save_state_with_log(@atom, id, state, event) do
-      {:error, e} -> {:stop, e}
-      _ -> {:ok, state}
+    IO.inspect event, label: "deck - init"
+    case verify_new_deck_input(data) do
+      {:error, e} ->
+        {:stop, e}
+      {:ok} ->
+        state = from_input(data, id, event.time)
+        case Data.save_state_with_log(@atom, id, state, event) do
+          {:error, e} -> {:stop, e}
+          _ -> {:ok, state}
+        end
     end
   end
 
