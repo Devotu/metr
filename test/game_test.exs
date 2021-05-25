@@ -1,10 +1,11 @@
 defmodule GameTest do
   use ExUnit.Case
 
-  alias Metr.Modules.Deck
+  alias Metr.Data
   alias Metr.Event
-  alias Metr.Modules.Game
   alias Metr.Id
+  alias Metr.Modules.Deck
+  alias Metr.Modules.Game
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
@@ -54,20 +55,13 @@ defmodule GameTest do
 
   test "select last x games" do
     player_1_id = TestHelper.init_only_player "Gustav Game"
-    deck_1_name = "Golf Game"
-    deck_1_id = Id.hrid(deck_1_name)
+    deck_1_id = TestHelper.init_only_deck "Golf Game", player_1_id
 
     player_2_id = TestHelper.init_only_player "Helge Game"
-    deck_2_name = "Hotel Game"
-    deck_2_id = Id.hrid(deck_2_name)
+    deck_2_id = TestHelper.init_only_deck "Hotel Game", player_2_id
 
     player_3_id =  TestHelper.init_only_player "Ivar Game"
-    deck_3_name = "India Game"
-    deck_3_id = Id.hrid(deck_3_name)
-
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_3_name, player_id: player_3_id, format: "standard"}), nil)
+    deck_3_id = TestHelper.init_only_deck "India Game", player_3_id
 
     # 1
     game_1_id = %GameInput{
@@ -138,20 +132,13 @@ defmodule GameTest do
 
   test "select games by deck" do
     player_1_id = TestHelper.init_only_player "Johan Game"
-    deck_1_name = "Juliet Game"
-    deck_1_id = Id.hrid(deck_1_name)
+    deck_1_id = TestHelper.init_only_deck "Juliet Game", player_1_id
 
     player_2_id = TestHelper.init_only_player "Kalle Game"
-    deck_2_name = "Kilo Game"
-    deck_2_id = Id.hrid(deck_2_name)
+    deck_2_id = TestHelper.init_only_deck "Kilo Game", player_2_id
 
     player_3_id = TestHelper.init_only_player "Ludvig Game"
-    deck_3_name = "Lima Game"
-    deck_3_id = Id.hrid(deck_3_name)
-
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_3_name, player_id: player_3_id, format: "standard"}), nil)
+    deck_3_id = TestHelper.init_only_deck "Lima Game", player_3_id
 
     # 1v2
     game_1_id = %GameInput{
@@ -218,11 +205,8 @@ defmodule GameTest do
   end
 
   test "game with power" do
-    deck_name = "Mike Game"
-    deck_id = Id.hrid(deck_name)
     player_id = TestHelper.init_only_player "Martin Game"
-
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
+    deck_id = TestHelper.init_only_deck "Mike Game", player_id
 
     game_1 = %GameInput{
       player_one: player_id,
@@ -290,11 +274,8 @@ defmodule GameTest do
   end
 
   test "game with failing power" do
-    deck_name = "November Game"
-    deck_id = Id.hrid(deck_name)
     player_id = TestHelper.init_only_player "Niklas Game"
-
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
+    deck_id = TestHelper.init_only_deck "November Game", player_id
 
     game_1_input = %GameInput{
       deck_one: deck_id,
@@ -325,10 +306,7 @@ defmodule GameTest do
 
   test "game in match created" do
     player_id = TestHelper.init_only_player "Olof Game"
-    deck_name = "Oscar Game"
-    deck_id = Id.hrid(deck_name)
-
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
+    deck_id = TestHelper.init_only_deck "Oscar Game", player_id
 
     [match_created_event, _match_created_response] =
       Match.feed(
@@ -419,17 +397,10 @@ defmodule GameTest do
   end
 
   test "deck created" do
-    # Players to participate
     player_1_id = TestHelper.init_only_player "Rudolf Game"
     player_2_id = TestHelper.init_only_player "Sigurd Game"
-    # Decks to participate
-    deck_1_name = "Romeo Game"
-    deck_1_id = Id.hrid(deck_1_name)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
-    deck_2_name = "Sierra Game"
-    deck_2_id = Id.hrid(deck_2_name)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
-    # Resolve game created
+    deck_1_id = TestHelper.init_only_deck "Romeo Game", player_1_id
+    deck_2_id = TestHelper.init_only_deck "Sierra Game", player_2_id
 
     [game_created_event, _game_created_response] =
       Game.feed(
