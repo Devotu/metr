@@ -69,16 +69,10 @@ defmodule MetrTest do
   end
 
   test "create game" do
-    deck_1_name = "Delta Metr"
-    deck_1_id = Id.hrid(deck_1_name)
-
-    deck_2_name = "Echo Metr"
-    deck_2_id = Id.hrid(deck_2_name)
-
     player_1_id = TestHelper.init_only_player "David Metr"
     player_2_id = TestHelper.init_only_player "Erik Metr"
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
+    deck_1_id = TestHelper.init_only_deck "Delta Metr", player_1_id
+    deck_2_id = TestHelper.init_only_deck "Echo Metr", player_2_id
 
     game_1_id = %GameInput{
       player_one: player_1_id,
@@ -135,16 +129,10 @@ defmodule MetrTest do
   end
 
   test "delete game" do
-    deck_1_name = "Foxtrot Metr"
-    deck_1_id = Id.hrid(deck_1_name)
-
-    deck_2_name = "Golf Metr"
-    deck_2_id = Id.hrid(deck_2_name)
-
     player_1_id = TestHelper.init_only_player "Filip Metr"
     player_2_id = TestHelper.init_only_player "Gustav Metr"
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
+    deck_1_id = TestHelper.init_only_deck "Foxtrot Metr", player_1_id
+    deck_2_id = TestHelper.init_only_deck "Golf Metr", player_2_id
 
     game_id = %GameInput{
       player_one: player_1_id,
@@ -179,21 +167,12 @@ defmodule MetrTest do
   end
 
   test "list results by deck" do
-    deck_1_name = "Hotel Metr"
-    deck_1_id = Id.hrid(deck_1_name)
-
-    deck_2_name = "India Metr"
-    deck_2_id = Id.hrid(deck_2_name)
-
-    deck_3_name = "Juliett Metr"
-    deck_3_id = Id.hrid(deck_3_name)
-
     player_1_id = TestHelper.init_only_player "Helge Metr"
     player_2_id = TestHelper.init_only_player "Ivar Metr"
     player_3_id = TestHelper.init_only_player "Johan Metr"
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_3_name, player_id: player_3_id, format: "standard"}), nil)
+    deck_1_id = TestHelper.init_only_deck "Hotel Metr", player_1_id
+    deck_2_id = TestHelper.init_only_deck "India Metr", player_2_id
+    deck_3_id = TestHelper.init_only_deck "Juliet Metr", player_3_id
 
     # 1 vs 2
     game_1_id = %GameInput{
@@ -233,18 +212,10 @@ defmodule MetrTest do
   end
 
   test "read log of x" do
-    deck_1_name = "Kilo Metr"
-    deck_1_id = Id.hrid(deck_1_name)
-
-    deck_2_name = "Lima Metr"
-    deck_2_id = Id.hrid(deck_2_name)
-
-
     player_1_id = TestHelper.init_only_player "Kalle Metr"
     player_2_id = TestHelper.init_only_player "Ludvig Metr"
-
-    Router.input(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}))
-    Router.input(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}))
+    deck_1_id = TestHelper.init_only_deck "Kilo Metr", player_1_id
+    deck_2_id = TestHelper.init_only_deck "Lima Metr", player_2_id
 
     # 1 vs 2
     game_1_id = %GameInput{
@@ -280,11 +251,8 @@ defmodule MetrTest do
   end
 
   test "adjust rank" do
-    deck_name = "Oscar Metr"
-    deck_id = Id.hrid(deck_name)
-
     player_id = TestHelper.init_only_player "Olof Metr"
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
+    deck_id = TestHelper.init_only_deck "Oscar Metr", player_id
 
     deck_initial = Metr.read(deck_id, :deck)
     assert nil == deck_initial.rank
@@ -330,17 +298,10 @@ defmodule MetrTest do
   end
 
   test "match lifecycle" do
-    deck_1_name = "Papa Metr"
-    deck_1_id = Id.hrid(deck_1_name)
-
-    deck_2_name = "Qubec Metr"
-    deck_2_id = Id.hrid(deck_2_name)
-
     player_1_id = TestHelper.init_only_player "Petter Metr"
     player_2_id = TestHelper.init_only_player "Quintus Metr"
-
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
+    deck_1_id = TestHelper.init_only_deck "Papa Metr", player_1_id
+    deck_2_id = TestHelper.init_only_deck "Qubec Metr", player_2_id
 
     match_data = %MatchInput{
       player_one: player_1_id,
@@ -398,11 +359,8 @@ defmodule MetrTest do
   end
 
   test "list results by ids" do
-    deck_name = "Romeo Metr"
-    deck_id = Id.hrid(deck_name)
-
     player_id = TestHelper.init_only_player "Rudolf Metr"
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
+    deck_id = TestHelper.init_only_deck "Romeo Metr", player_id
 
     game = %GameInput{
       player_one: player_id,
@@ -427,11 +385,8 @@ defmodule MetrTest do
   end
 
   test "read state of x" do
-    deck_1_name = "Sierra Metr"
-    deck_1_id = Id.hrid(deck_1_name)
-
     player_1_id = TestHelper.init_only_player "Sigurd Metr"
-    Router.input(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}))
+    deck_1_id = TestHelper.init_only_deck "Sierra Metr", player_1_id
 
     game_1_id = %GameInput{
       player_one: player_1_id,
