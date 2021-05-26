@@ -13,20 +13,7 @@ defmodule ResultTest do
 
   test "valid created" do
     player_id = TestHelper.init_only_player "Adam Result"
-
-    [_prop, created_event] = Deck.feed(
-      Event.new(
-        [:create, :deck],
-        %DeckInput{
-          name: "Alpha Result",
-          player_id: player_id,
-          format: "standard"
-        }
-      ),
-      nil
-    )
-
-    deck_id = created_event.data.out
+    deck_id = TestHelper.init_only_deck "Alpha Result", player_id
 
     game =
       Metr.create(%GameInput{
