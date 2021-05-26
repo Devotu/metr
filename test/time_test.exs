@@ -15,9 +15,6 @@ defmodule TimeTest do
   alias Metr.Time
 
   test "state timestamps" do
-
-    deck_name = "Alpha Time"
-
     # with one second interval the entire test should pass on the same timestamp or the next
     time_of_creation = Time.timestamp()
     player_id = TestHelper.init_only_player "Adam Time"
@@ -26,19 +23,7 @@ defmodule TimeTest do
     assert 0 != player.time
     assert 0 >= player.time - time_of_creation
 
-    Deck.feed(
-      Event.new(
-        [:create, :deck],
-        %DeckInput{
-          name: deck_name,
-          player_id: player_id,
-          format: "standard"
-        }
-      ),
-      nil
-    )
-
-    deck_id = Id.hrid(deck_name)
+    deck_id = TestHelper.init_only_deck "Alpha Time", player_id
     deck = Deck.read(deck_id)
     assert 0 != deck.time
     assert 0 >= deck.time - time_of_creation
