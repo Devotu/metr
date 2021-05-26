@@ -258,8 +258,6 @@ defmodule Metr.Modules.Stately do
     module = select_module(entity)
     stop(id, entity)
 
-    IO.inspect Data.read_log_by_id(id, entity), label: "Stately - run log - log"
-
     case Data.read_log_by_id(id, entity) do
       {:error, e} ->
         {:error, e}

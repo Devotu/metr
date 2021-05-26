@@ -130,7 +130,6 @@ defmodule Metr.Modules.Player do
   ## gen
   @impl true
   def init({id, %PlayerInput{} = data, %Event{} = event}) do
-    IO.inspect event, label: "player - init"
     state = %Player{id: id, name: data.name, time: event.time}
     case Data.save_state_with_log(@atom, id, state, event) do
       {:error, e} -> {:stop, e}

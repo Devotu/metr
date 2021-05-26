@@ -256,7 +256,6 @@ defmodule Metr.Modules.Deck do
   ## gen
   @impl true
   def init({id, %DeckInput{} = data, event}) do
-    IO.inspect event, label: "deck - init"
     case verify_new_deck_input(data) do
       {:error, e} ->
         {:stop, e}
