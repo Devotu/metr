@@ -17,15 +17,8 @@ defmodule MatchTest do
   end
 
   test "create match" do
-    [player_created_event] =
-      State.feed(Event.new([:create, :player], %PlayerInput{name: "Adam Match"}), nil)
-
-    player_id = player_created_event.data.out
-
-    [deck_created_event, _deck_created_response] =
-      Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Alpha Match", player_id: player_id, format: "standard"}), nil)
-
-    deck_id = deck_created_event.data.id
+    player_id = TestHelper.init_only_player "Adam Match"
+    deck_id = TestHelper.init_only_deck "Alpha Match", player_id
 
     Router.input(
       Event.new([:create, :match], %MatchInput{
@@ -58,34 +51,20 @@ defmodule MatchTest do
   end
 
   test "fail create match" do
-    [player_created_event] =
-      State.feed(Event.new([:create, :player], %PlayerInput{name: "Bertil Match"}), nil)
+    player_id = TestHelper.init_only_player "Bertil Match"
+    deck_1_id = TestHelper.init_only_deck "Bravo Match", player_id
+    deck_2_id = TestHelper.init_only_deck "Charlie Match", player_id
 
-    player_id = player_created_event.data.out
-
-    [deck_1_created_event, _deck_1_created_response] =
-      Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Bravo Match", player_id: player_id, format: "standard"}), nil)
-
-    deck_id_1 = deck_1_created_event.data.id
-
-    [deck_2_created_event, _deck_2_created_response] =
-      Deck.feed(
-        Event.new([:create, :deck], %DeckInput{name: "Charlie Match", player_id: player_id, format: "standard"}),
-        nil
-      )
-
-    deck_id_2 = deck_2_created_event.data.id
-
-    Metr.alter_rank(deck_id_2, :up)
-    Metr.alter_rank(deck_id_2, :up)
+    Metr.alter_rank(deck_2_id, :up)
+    Metr.alter_rank(deck_2_id, :up)
 
     [resulting_event] =
       Match.feed(
         Event.new([:create, :match], %MatchInput{
           player_one: player_id,
           player_two: player_id,
-          deck_one: deck_id_1,
-          deck_two: deck_id_2,
+          deck_one: deck_1_id,
+          deck_two: deck_2_id,
           ranking: true
         }),
         nil
@@ -94,19 +73,12 @@ defmodule MatchTest do
     assert [:match, :error, nil] == resulting_event.keys
     assert "ranks does not match" == resulting_event.data.cause
     TestHelper.wipe_test(:player, player_id)
-    TestHelper.wipe_test(:deck, [deck_id_1, deck_id_2])
+    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
   end
 
   test "list matches" do
-    [player_created_event] =
-      State.feed(Event.new([:create, :player], %PlayerInput{name: "David Match"}), nil)
-
-    player_id = player_created_event.data.out
-
-    [deck_created_event, _deck_created_response] =
-      Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Delta Match", player_id: player_id, format: "standard"}), nil)
-
-    deck_id = deck_created_event.data.id
+    player_id = TestHelper.init_only_player "David Match"
+    deck_id = TestHelper.init_only_deck "Delta Match", player_id
 
     Match.feed(
       Event.new([:create, :match], %MatchInput{
