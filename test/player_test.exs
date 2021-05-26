@@ -86,6 +86,7 @@ defmodule PlayerTest do
     assert "Result #{first_result_id} added to player #{player_one_id}" ==
              first_resulting_event.data.out
 
+    IO.inspect player_log, label: "player test - log"
     assert 3 + 2 == Enum.count(player_log) # init (3) + result added (2)
 
     # Cleanup

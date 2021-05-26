@@ -43,6 +43,7 @@ defmodule Metr.Modules.Deck do
   alias Metr.Modules.Game
   alias Metr.Modules.Player
   alias Metr.Rank
+  alias Metr.Router
   alias Metr.Modules.Result
   alias Metr.Modules.Input.DeckInput
   alias Metr.Util
@@ -309,7 +310,9 @@ defmodule Metr.Modules.Deck do
         state = from_input(data, id, event.time)
         case Data.save_state_with_log(@atom, id, state, event) do
           {:error, e} -> {:stop, e}
-          _ -> {:ok, state}
+          _ ->
+            Router.input([Event.new([@atom, :created, nil], %{id: id, player_id: data.player_id})])
+            {:ok, state}
         end
     end
   end
