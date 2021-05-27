@@ -49,32 +49,45 @@ defmodule Metr.Modules.Deck do
 
   @atom :deck
 
+  # def feed(
+  #       %Event{
+  #         keys: [:game, :created, _orepp] = keys,
+  #         data: %{result_ids: result_ids}
+  #       } = event,
+  #       repp
+  #     ) do
+  #   deck_result_ids =
+  #     result_ids
+  #     |> Enum.map(fn result_id -> Result.read(result_id) end)
+  #     |> Enum.map(fn r -> {r.deck_id, r.id} end)
+
+  #   # for each participant
+  #   # call update
+  #   Enum.reduce(
+  #     deck_result_ids,
+  #     [],
+  #     fn {id, result_id}, acc ->
+  #       acc ++
+  #         [
+  #           Stately.update(id, @atom, keys, %{id: result_id, deck_id: id}, event)
+  #           |> Stately.out_to_event(@atom, [:altered, repp])
+  #         ]
+  #     end
+  #   )
+  # end
+
   def feed(
         %Event{
-          keys: [:game, :created, _orepp] = keys,
-          data: %{result_ids: result_ids}
+          keys: [:result, :created, _orepp] = keys,
+          data: %{result_id: result_id, deck_id: id}
         } = event,
         repp
       ) do
-    deck_result_ids =
-      result_ids
-      |> Enum.map(fn result_id -> Result.read(result_id) end)
-      |> Enum.map(fn r -> {r.deck_id, r.id} end)
 
-    # for each participant
-    # call update
-    Enum.reduce(
-      deck_result_ids,
-      [],
-      fn {id, result_id}, acc ->
-        acc ++
-          [
-            Stately.update(id, @atom, keys, %{id: result_id, deck_id: id}, event)
-            |> Stately.out_to_event(@atom, [:altered, repp])
-          ]
-      end
-    )
+    Stately.update(id, @atom, keys, %{id: result_id, deck_id: id}, event)
+    |> Stately.out_to_event(@atom, [:altered, repp])
   end
+
 
   def feed(
         %Event{
@@ -283,6 +296,20 @@ defmodule Metr.Modules.Deck do
   @impl true
   def handle_call(
         %{keys: [:game, :created, _orepp], data: %{id: result_id, deck_id: id}, event: event},
+        _from,
+        state
+      ) do
+    new_state = Map.update!(state, :results, &(&1 ++ [result_id]))
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, new_state}
+    end
+    {:reply, "Result #{result_id} added to deck #{id}", new_state}
+  end
+
+  @impl true
+  def handle_call(
+        %{keys: [:result, :created, _orepp], data: %{id: result_id, deck_id: id}, event: event},
         _from,
         state
       ) do

@@ -14,6 +14,7 @@ defmodule Metr.Modules.Result do
   alias Metr.Data
   alias Metr.Id
   alias Metr.Event
+  alias Metr.Router
   alias Metr.Modules.Deck
   alias Metr.Modules.Player
   alias Metr.Modules.Result
@@ -22,14 +23,14 @@ defmodule Metr.Modules.Result do
 
   @atom :result
 
-  def create(%ResultInput{} = data, %Event{} = event) do
-    id = Id.guid()
+  # def create(%ResultInput{} = data, %Event{} = event) do
+  #   id = Id.guid()
 
-    case verify_input(data) do
-      {:error, e} -> {:error, e}
-      {:ok} -> init_process(id, data, event)
-    end
-  end
+  #   case verify_input(data) do
+  #     {:error, e} -> {:error, e}
+  #     {:ok} -> init_process(id, data, event)
+  #   end
+  # end
 
   defp init_process(id, %ResultInput{} = data, %Event{} = event) do
     process_name = Data.genserver_id(@atom, id)
@@ -113,12 +114,24 @@ defmodule Metr.Modules.Result do
   ## gen
   @impl true
   def init({id, %ResultInput{} = data, %Event{} = event}) do
+    IO.inspect id, label: "result - init - id"
+    IO.inspect data, label: "result - init - data"
     state = from_input(data, id, event.time)
+    |> IO.inspect(label: "result - init - state")
+
+    Router.input(
+      Event.new([:result, :created, nil], %{
+        result_id: id,
+        player_id: state.player_id,
+        deck_id: state.deck_id
+      })
+      |> IO.inspect(label: "result - propagating")
+    )
+
     case Data.save_state_with_log(@atom, id, state, event) do
       {:error, e} -> {:stop, e}
       _ -> {:ok, state}
     end
-    {:ok, state}
   end
 
   def init(%Result{} = state) do

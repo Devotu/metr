@@ -3,7 +3,10 @@ defmodule Metr.Modules.State do
   alias Metr.Event
   alias Metr.Id
   alias Metr.Modules.Deck
+  alias Metr.Modules.Game
+  alias Metr.Modules.Match
   alias Metr.Modules.Player
+  alias Metr.Modules.Result
 
   @doc """
   Passes the input to the appropriate module for creation.
@@ -14,8 +17,8 @@ defmodule Metr.Modules.State do
         repp
       ) do
 
-    process_name = Data.genserver_id(id, module) |> IO.inspect(label: "state - process name")
-    target_module = select_target_module(module) |> IO.inspect(label: "state - process module")
+    process_name = Data.genserver_id(id, module) #|> IO.inspect(label: "state - process name")
+    target_module = select_target_module(module) #|> IO.inspect(label: "state - process module")
 
     IO.inspect id, label: "state - specified id"
     IO.inspect input, label: "state - input"
@@ -23,8 +26,10 @@ defmodule Metr.Modules.State do
     case GenServer.start(target_module, {id, input, event}, name: process_name) do
       {:ok, _pid} ->
         [Event.new([module, :created, repp], %{out: id})]
+        |> IO.inspect(label: "state - ok")
       {:error, e} ->
         [Event.error_to_event(e, repp)]
+        |> IO.inspect(label: "state - error")
     end
   end
 

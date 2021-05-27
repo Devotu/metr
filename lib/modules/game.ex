@@ -6,6 +6,7 @@ defmodule Metr.Modules.Game do
   alias Metr.Event
   alias Metr.Id
   alias Metr.Data
+  alias Metr.Router
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
   alias Metr.Modules.Player
@@ -17,50 +18,50 @@ defmodule Metr.Modules.Game do
   @atom :game
 
   ## feed
-  def feed(%Event{id: _event_id, keys: [:create, @atom], data: %GameInput{} = data} = event, repp) do
-    case verify_input_data(data) do
-      {:error, error} ->
-        [Event.new([@atom, :error, repp], %{cause: error, data: data})]
+  # def feed(%Event{id: _event_id, keys: [:create, @atom], data: %GameInput{} = data} = event, repp) do
+  #   case verify_input_data(data) do
+  #     {:error, error} ->
+  #       [Event.new([@atom, :error, repp], %{cause: error, data: data})]
 
-      {:ok} ->
-        id = Id.guid()
-        process_name = Data.genserver_id(@atom, id)
-        result_inputs = convert_to_result_inputs(data, id)
+  #     {:ok} ->
+  #       id = Id.guid()
+  #       process_name = Data.genserver_id(@atom, id)
+  #       result_inputs = convert_to_result_inputs(data, id)
 
-        result_ids =
-          result_inputs
-          |> Enum.map(fn r -> Result.create(r, event) end)
-          |> Enum.map(fn {:ok, result_id} -> result_id end)
+  #       result_ids =
+  #         result_inputs
+  #         |> Enum.map(fn r -> Result.create(r, event) end)
+  #         |> Enum.map(fn {:ok, result_id} -> result_id end)
 
 
-        data = Map.put(data, :results, result_ids)
+  #       data = Map.put(data, :results, result_ids)
 
-        case GenServer.start(Metr.Modules.Game, {id, data, event},
-               name: process_name
-             ) do
+  #       case GenServer.start(Metr.Modules.Game, {id, data, event},
+  #              name: process_name
+  #            ) do
 
-          {:ok, _pid} ->
-            match_id = Map.get(data, :match, nil)
-            [
-              Event.new([@atom, :created, nil], %{
-                id: id,
-                result_ids: result_ids,
-                ranking: is_ranked?(data),
-                match_id: match_id
-              }),
-              Event.new([@atom, :created, repp], %{
-                out: id
-              })
-            ]
+  #         {:ok, _pid} ->
+  #           match_id = Map.get(data, :match, nil)
+  #           [
+  #             Event.new([@atom, :created, nil], %{
+  #               id: id,
+  #               result_ids: result_ids,
+  #               ranking: is_ranked?(data),
+  #               match_id: match_id
+  #             }),
+  #             Event.new([@atom, :created, repp], %{
+  #               out: id
+  #             })
+  #           ]
 
-          {:error, cause} ->
-            [Event.new([@atom, :error, repp], %{cause: cause})]
+  #         {:error, cause} ->
+  #           [Event.new([@atom, :error, repp], %{cause: cause})]
 
-          _ ->
-            [Event.new([@atom, :error, repp], %{cause: "Could not save game state"})]
-        end
-    end
-  end
+  #         _ ->
+  #           [Event.new([@atom, :error, repp], %{cause: "Could not save game state"})]
+  #       end
+  #   end
+  # end
 
   def feed(%Event{id: _event_id, keys: [:read, @atom], data: %{game_id: id}}, repp) do
     game = read(id)
@@ -253,15 +254,87 @@ defmodule Metr.Modules.Game do
     }
   end
 
+
+  # def feed(%Event{id: _event_id, keys: [:create, @atom], data: %GameInput{} = data} = event, repp) do
+  #   case verify_input_data(data) do
+  #     {:error, error} ->
+  #       [Event.new([@atom, :error, repp], %{cause: error, data: data})]
+
+  #     {:ok} ->
+  #       id = Id.guid()
+  #       process_name = Data.genserver_id(@atom, id)
+  #       result_inputs = convert_to_result_inputs(data, id)
+
+  #       result_ids =
+  #         result_inputs
+  #         |> Enum.map(fn r -> Result.create(r, event) end)
+  #         |> Enum.map(fn {:ok, result_id} -> result_id end)
+
+
+  #       data = Map.put(data, :results, result_ids)
+
+  #       case GenServer.start(Metr.Modules.Game, {id, data, event},
+  #              name: process_name
+  #            ) do
+
+  #         {:ok, _pid} ->
+  #           match_id = Map.get(data, :match, nil)
+  #           [
+  #             Event.new([@atom, :created, nil], %{
+  #               id: id,
+  #               result_ids: result_ids,
+  #               ranking: is_ranked?(data),
+  #               match_id: match_id
+  #             }),
+  #             Event.new([@atom, :created, repp], %{
+  #               out: id
+  #             })
+  #           ]
+
+  #         {:error, cause} ->
+  #           [Event.new([@atom, :error, repp], %{cause: cause})]
+
+  #         _ ->
+  #           [Event.new([@atom, :error, repp], %{cause: "Could not save game state"})]
+  #       end
+  #   end
+  # end
+
   ## gen
   @impl true
   def init({id, %GameInput{} = data, event}) do
-    state = from_input(data, id, event.time)
-    case Data.save_state_with_log(@atom, id, state, event) do
+    case verify_input_data(data) do
       {:error, e} -> {:stop, e}
-      _ -> {:ok, state}
+      {:ok} ->
+        IO.inspect data, label: "game - init - data"
+        match_id = Map.get(data, :match, nil)
+
+        [result_1_input, result_2_input] = convert_to_result_inputs(data, id)
+        |> IO.inspect(label: "game init - result data")
+
+        result_1_id = Id.guid()
+        result_2_id = Id.guid()
+
+        Router.input([
+          Event.new([:create, :result], %{id: result_1_id, input: result_1_input}),
+          Event.new([:create, :result], %{id: result_2_id, input: result_2_input}),
+          # Event.new([@atom, :created, nil], %{
+          #             id: id,
+          #             result_ids: data.results,
+          #             ranking: is_ranked?(data),
+          #             match_id: match_id
+          #           })
+        ])
+
+        data = Map.put(data, :results, [result_1_id, result_2_id])
+        |> IO.inspect(label: "game - init - with results")
+
+        state = from_input(data, id, event.time)
+        case Data.save_state_with_log(@atom, id, state, event) do
+          {:error, e} -> {:stop, e}
+          _ -> {:ok, state}
+        end
     end
-    {:ok, state}
   end
 
   def init(%Game{} = state) do
