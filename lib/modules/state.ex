@@ -57,6 +57,14 @@ defmodule Metr.Modules.State do
     end
   end
 
+  def feed(%Event{keys: [:list, module], data: data}, repp) when %{} == data do
+    states = module
+      |> Data.list_ids()
+      |> Enum.map(fn id -> read(id, module) end)
+
+    [Event.new([module, :list, repp], %{out: states})]
+  end
+
   def feed(_event, _repp) do
     []
   end
@@ -122,10 +130,33 @@ defmodule Metr.Modules.State do
     end
   end
 
+  @doc """
+  Calls the corresponding process and asks it to return its state
+  """
   defp recall({:error, e}), do: {:error, e}
-  defp recall({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
-    GenServer.call(Data.genserver_id(entity, id), %{
-      keys: [:read, entity]
+  defp recall({:ok, id, module}) when is_atom(module) and is_bitstring(id) do
+    GenServer.call(Data.genserver_id(module, id), %{
+      keys: [:read, module]
     })
+  end
+
+  @doc """
+  Calls the corresponding process with a notice that it should concider the given change
+  """
+  def update(id, module, event) when is_atom(module) and is_bitstring(id) do
+    {:ok, id, module}
+    |> is_valid_id()
+    |> ready_process()
+    |> alter(event)
+  end
+
+  defp alter({:error, e},_event), do: {:error, e}
+  defp alter({:ok, id, entity}, event) do
+    # Call update
+    GenServer.call(Data.genserver_id(entity, id), event)
+  end
+
+  def exist?(id, module) when is_atom(module) do
+    Data.state_exists?(module, id)
   end
 end

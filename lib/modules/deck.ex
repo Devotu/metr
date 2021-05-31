@@ -1,6 +1,7 @@
 defmodule Metr.Modules.Deck do
   defstruct id: "",
             name: "",
+            player: nil,
             format: "",
             theme: "",
             black: false,
@@ -37,6 +38,7 @@ defmodule Metr.Modules.Deck do
 
   alias Metr.Event
   alias Metr.Data
+  alias Metr.Modules.State
   alias Metr.Modules.Stately
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
@@ -218,10 +220,10 @@ defmodule Metr.Modules.Deck do
   end
 
   defp verify_player(nil), do: {:error, "a owner (player) must be assigned"}
-  defp verify_player(player_id) do
-    case Player.exist?(player_id) do
+  defp verify_player(id) do
+    case State.exist?(id, :player) do
       true -> {:ok}
-      false -> {:error, "player #{player_id} not found"}
+      false -> {:error, "player #{id} not found"}
     end
   end
 
@@ -252,6 +254,7 @@ defmodule Metr.Modules.Deck do
     %Deck{
       id: id,
       name: data.name,
+      player: data.player_id,
       format: data.format,
       theme: data.theme,
       black: data.black,

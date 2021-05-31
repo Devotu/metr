@@ -3,6 +3,7 @@ defmodule Metr.Modules.Player do
 
   use GenServer
 
+  alias Metr.Modules.State
   alias Metr.Modules.Stately
   alias Metr.Event
   alias Metr.Id
@@ -17,44 +18,18 @@ defmodule Metr.Modules.Player do
 
   def feed(
         %Event{
-          id: _event_id,
-          keys: [:deck, :created, _orepp] = keys,
-          data: %{id: deck_id, player_id: id}
+          keys: [:deck, :created, _orepp],
+          data: %{out: deck_id}
         } = event,
         repp
       ) do
+
+    deck = State.read(deck_id, :deck)
+
     [
-      Stately.update(id, @atom, keys, %{id: deck_id, player_id: id}, event)
-      |> Stately.out_to_event(@atom, [:altered, repp])
+      State.update(deck.player, @atom, event)
+      |> Event.message_to_event([@atom, :altered, repp])
     ]
-  end
-
-  def feed(
-        %Event{
-          id: _event_id,
-          keys: [:game, :created, _orepp] = keys,
-          data: %{result_ids: result_ids}
-        } = event,
-        repp
-      ) do
-    player_result_ids =
-      result_ids
-      |> Enum.map(fn result_id -> Result.read(result_id) end)
-      |> Enum.map(fn r -> {r.player_id, r.id} end)
-
-    # for each participant
-    # call update
-    Enum.reduce(
-      player_result_ids,
-      [],
-      fn {id, result_id}, acc ->
-        acc ++
-          [
-            Stately.update(id, @atom, keys, %{id: result_id, player_id: id}, event)
-            |> Stately.out_to_event(@atom, [:altered, repp])
-          ]
-      end
-    )
   end
 
   def feed(
@@ -144,24 +119,27 @@ defmodule Metr.Modules.Player do
   end
 
   @impl true
-  def init(input) do
-    {:ok, %{}}
+  def handle_call(%{keys: [:read, @atom]}, _from, state) do
+    {:reply, state, state}
   end
 
   @impl true
   def handle_call(
-        %{keys: [:deck, :created, _orepp], data: %{id: deck_id, player_id: id}, event: event},
+        %Event{keys: [:deck, :created, _repp]} = event,
         _from,
         state
       ) do
-    new_state = Map.update!(state, :decks, &(&1 ++ [deck_id]))
 
-    case Data.save_state_with_log(@atom, id, state, event) do
-      {:error, e} -> {:stop, e}
-      _ -> {:ok, new_state}
+    deck = Metr.read(event.data.out, :deck)
+
+    new_state = Map.update!(state, :decks, &(&1 ++ [deck.id]))
+
+    case Data.save_state_with_log(@atom, deck.player, state, event) do
+      {:error, e} ->
+        {:stop, e}
+      _ ->
+        {:reply, "Deck #{deck.id} added to player #{deck.player}", new_state}
     end
-
-    {:reply, "Deck #{deck_id} added to player #{id}", new_state}
   end
 
   @impl true

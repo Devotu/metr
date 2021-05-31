@@ -36,6 +36,10 @@ defmodule Metr.Event do
     Event.new([:error, nil], %{cause: cause})
   end
 
+  def message_to_event(msg, keys) do
+    Event.new(keys, %{out: msg})
+  end
+
   def out_to_event({:ok, out}, entity, repp) when is_atom(entity) and is_pid(repp), do: out_to_event(out, entity, repp)
   def out_to_event(out, entity, repp) when is_atom(entity) and is_pid(repp) do
     Event.new([entity] ++ repp, %{out: out})
