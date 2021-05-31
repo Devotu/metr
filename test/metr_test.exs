@@ -86,10 +86,10 @@ defmodule MetrTest do
   end
 
   test "create game" do
-    player_1_id = TestHelper.init_only_player "David Metr"
-    player_2_id = TestHelper.init_only_player "Erik Metr"
-    deck_1_id = TestHelper.init_only_deck "Delta Metr", player_1_id
-    deck_2_id = TestHelper.init_only_deck "Echo Metr", player_2_id
+    player_1_id = TestHelper.init_only_player "Ceasar Metr"
+    player_2_id = TestHelper.init_only_player "David Metr"
+    deck_1_id = TestHelper.init_only_deck "Charlie Metr", player_1_id
+    deck_2_id = TestHelper.init_only_deck "Delta Metr", player_2_id
 
     game_1_id = %GameInput{
       player_one: player_1_id,
@@ -103,46 +103,49 @@ defmodule MetrTest do
     # assert :ok == status
     assert @id_length = String.length(game_1_id)
 
-    game_2 = %GameInput{
+    game_1 = Metr.read(game_1_id, :game)
       deck_one: deck_1_id,
-      deck_two: deck_2_id,
-      fun_one: 1,
-      fun_two: -2,
-      player_one: player_1_id,
-      player_two: player_2_id,
-      power_one: 2,
-      power_two: -2,
-      winner: 1
-    }
 
-    game_2_id = Metr.create(game_2, :game)
-    assert @id_length = String.length(game_2_id)
+    # game_2 = %GameInput{
+    #   deck_one: deck_1_id,
+    #   deck_two: deck_2_id,
+    #   fun_one: 1,
+    #   fun_two: -2,
+    #   player_one: player_1_id,
+    #   player_two: player_2_id,
+    #   power_one: 2,
+    #   power_two: -2,
+    #   winner: 1
+    # }
 
-    results = Metr.list(:result)
+    # game_2_id = Metr.create(game_2, :game)
+    # assert @id_length = String.length(game_2_id)
 
-    assert 2 ==
-             Enum.filter(results, fn r -> String.equivalent?(r.game_id, game_2_id) end)
-             |> Enum.count()
+    # results = Metr.list(:result)
 
-    [deck_1] = Metr.list(:deck) |> Enum.filter(fn d -> String.equivalent?(d.id, deck_1_id) end)
+    # assert 2 ==
+    #          Enum.filter(results, fn r -> String.equivalent?(r.game_id, game_2_id) end)
+    #          |> Enum.count()
 
-    [player_2] =
-      Metr.list(:player) |> Enum.filter(fn p -> String.equivalent?(p.id, player_2_id) end)
+    # [deck_1] = Metr.list(:deck) |> Enum.filter(fn d -> String.equivalent?(d.id, deck_1_id) end)
 
-    assert 2 == Enum.count(deck_1.results)
-    [_player_2_result_1, player_2_result_2] = player_2.results
+    # [player_2] =
+    #   Metr.list(:player) |> Enum.filter(fn p -> String.equivalent?(p.id, player_2_id) end)
 
-    result_1 = Metr.read(player_2_result_2, :result)
-    assert game_2_id == result_1.game_id
-    assert player_2_id == result_1.player_id
-    assert deck_2_id == result_1.deck_id
-    assert 2 == result_1.place
+    # assert 2 == Enum.count(deck_1.results)
+    # [_player_2_result_1, player_2_result_2] = player_2.results
+
+    # result_1 = Metr.read(player_2_result_2, :result)
+    # assert game_2_id == result_1.game_id
+    # assert player_2_id == result_1.player_id
+    # assert deck_2_id == result_1.deck_id
+    # assert 2 == result_1.place
 
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
-    TestHelper.wipe_test(:game, [game_1_id, game_2_id])
-    TestHelper.wipe_test(:result, deck_1.results)
-    TestHelper.wipe_test(:result, player_2.results)
+    TestHelper.wipe_test(:game, [game_1_id])
+    # TestHelper.wipe_test(:result, deck_1.results)
+    # TestHelper.wipe_test(:result, player_2.results)
   end
 
   test "delete game" do
