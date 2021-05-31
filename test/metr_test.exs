@@ -36,12 +36,11 @@ defmodule MetrTest do
   end
 
   test "create deck" do
-    player_id = TestHelper.init_only_player "Martin Metr"
+    player_id = TestHelper.init_only_player "Bertil Metr"
     format = "commander"
     price = 12.34
-    # player_id = "martin_metr"
 
-    deck_id = %DeckInput{
+    deck = %DeckInput{
       black: false,
       white: false,
       red: true,
@@ -49,15 +48,14 @@ defmodule MetrTest do
       blue: true,
       colorless: false,
       format: format,
-      name: "Mike Metr",
+      name: "Bravo Metr",
       player_id: player_id,
       theme: "commanding",
       price: price
     }
     |> Metr.create(:deck)
+    |> Metr.read(:deck)
 
-    [read_event] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_id}), nil)
-    deck = read_event.data.out
     assert false == deck.black
     assert false == deck.white
     assert true == deck.red
@@ -66,7 +64,12 @@ defmodule MetrTest do
     assert false == deck.colorless
     assert nil == deck.rank # can only be initialized with nil and then adjusted
     assert price == deck.price
-    TestHelper.wipe_test(:deck, deck_id)
+
+    player = Metr.read(player_id, :player)
+
+    assert [deck.id] == player.decks
+
+    TestHelper.wipe_test(:deck, deck.id)
     TestHelper.wipe_test(:player, player_id)
   end
 
