@@ -20,9 +20,6 @@ defmodule Metr.Modules.State do
     process_name = Data.genserver_id(id, module) #|> IO.inspect(label: "state - process name")
     target_module = select_target_module(module) #|> IO.inspect(label: "state - process module")
 
-    IO.inspect id, label: "state - specified id"
-    IO.inspect input, label: "state - input"
-
     case GenServer.start(target_module, {id, input, event}, name: process_name) do
       {:ok, _pid} ->
         [Event.new([module, :created, repp], %{out: id})]
@@ -32,7 +29,6 @@ defmodule Metr.Modules.State do
         |> IO.inspect(label: "state - error")
     end
   end
-
 
   @doc """
   Generates a guid and runs corresponding feed with it
@@ -84,6 +80,9 @@ defmodule Metr.Modules.State do
     end
   end
 
+  @doc """
+  Reads the entity through its own module genserver
+  """
   def read(id, module) when is_atom(module) and is_bitstring(id) do
     {:ok, id, module}
     |> is_valid_id()
@@ -91,6 +90,11 @@ defmodule Metr.Modules.State do
     |> recall()
   end
 
+  @doc """
+  Checks if the id currently seems to be worth working with
+  ie it has some state
+  TODO Is this really neccessary? Does that not belong to the process?
+  """
   defp is_valid_id({:error, e}), do: {:error, e}
   defp is_valid_id({:ok, id, module}) when is_atom(module) and is_bitstring(id) do
     case Data.state_exists?(module, id) do
@@ -99,6 +103,11 @@ defmodule Metr.Modules.State do
     end
   end
 
+  @doc """
+  Checks if the given process is already running and if it has state
+  If not starts it up
+  TODO Is the state check really neccessary? Does that not belong to the process?
+  """
   defp ready_process({:error, e}), do: {:error, e}
   defp ready_process({:ok, id, module}) do
     # Is running?
@@ -115,6 +124,9 @@ defmodule Metr.Modules.State do
     end
   end
 
+  @doc """
+  Starts the given process
+  """
   defp start_process({:error, e}), do: {:error, e}
   defp start_process({:ok, id, module}) do
     # Get state
