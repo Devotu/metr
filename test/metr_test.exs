@@ -17,6 +17,20 @@ defmodule MetrTest do
 
   @id_length 14
 
+  test "create player" do
+    player_name = "Adam Metr"
+
+    player = %PlayerInput{
+      name: player_name
+    }
+    |> Metr.create(:player)
+    |> Metr.read(:player)
+
+    assert player_name == player.name
+
+    TestHelper.wipe_test(:player, player.id)
+  end
+
   test "list players" do
     assert is_list(Metr.list(:player))
   end
