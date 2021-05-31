@@ -48,6 +48,15 @@ defmodule Metr.Modules.State do
     feed(event_with_specific_id, repp)
   end
 
+  def feed(%Event{keys: [:read, module], data: %{id: id}}, repp) do
+    case read(id, module) do
+      {:error, e} ->
+        [Event.error_to_event(e, repp)]
+      state ->
+        [Event.new([module, :read, repp], %{out: state})]
+    end
+  end
+
   def feed(_event, _repp) do
     []
   end
@@ -65,5 +74,58 @@ defmodule Metr.Modules.State do
       :tag -> Tag
       _ -> {:error, "#{Kernel.inspect(module_atom)} is not a valid atom selecting module"}
     end
+  end
+
+  def read(id, module) when is_atom(module) and is_bitstring(id) do
+    {:ok, id, module}
+    |> is_valid_id()
+    |> ready_process()
+    |> recall()
+  end
+
+  defp is_valid_id({:error, e}), do: {:error, e}
+  defp is_valid_id({:ok, id, module}) when is_atom(module) and is_bitstring(id) do
+    case Data.state_exists?(module, id) do
+      true -> {:ok, id, module}
+      false -> {:error, "#{module |> Atom.to_string |> String.capitalize()} #{id} not found"}
+    end
+  end
+
+  defp ready_process({:error, e}), do: {:error, e}
+  defp ready_process({:ok, id, module}) do
+    # Is running?
+    case {GenServer.whereis(Data.genserver_id(module, id)),
+          Data.state_exists?(module, id)} do
+      {nil, true} ->
+        start_process({:ok, id, module})
+
+      {nil, false} ->
+        {:error, :no_such_id}
+
+      _ ->
+        {:ok, id, module}
+    end
+  end
+
+  defp start_process({:error, e}), do: {:error, e}
+  defp start_process({:ok, id, module}) do
+    # Get state
+    current_state =
+      Data.recall_state(module, id)
+
+    case GenServer.start(select_target_module(module), current_state,
+           name: Data.genserver_id(module, id)
+         ) do
+      {:ok, _pid} -> {:ok, id, module}
+      {:error, cause} -> {:error, cause}
+      x -> {:error, inspect(x)}
+    end
+  end
+
+  defp recall({:error, e}), do: {:error, e}
+  defp recall({:ok, id, entity}) when is_atom(entity) and is_bitstring(id) do
+    GenServer.call(Data.genserver_id(entity, id), %{
+      keys: [:read, entity]
+    })
   end
 end
