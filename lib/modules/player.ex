@@ -35,8 +35,8 @@ defmodule Metr.Modules.Player do
   def feed(
         %Event{
           id: _event_id,
-          keys: [:game, :deleted, _orepp] = keys,
-          data: %{results: result_ids}
+          keys: [:result, :created, _orepp],
+          data: %{out: result_id}
         } = event,
         repp
       ) do
@@ -144,18 +144,21 @@ defmodule Metr.Modules.Player do
 
   @impl true
   def handle_call(
-        %{keys: [:game, :created, _orepp], data: %{id: result_id, player_id: id}, event: event},
+        %{keys: [:result, :created, _orepp]} = event,
         _from,
         state
       ) do
-    new_state = Map.update!(state, :results, &(&1 ++ [result_id]))
 
-    case Data.save_state_with_log(@atom, id, state, event) do
-      {:error, e} -> {:stop, e}
-      _ -> {:ok, new_state}
+    result = Metr.read(event.data.out, :result)
+
+    new_state = Map.update!(state, :results, &(&1 ++ [result.id]))
+
+    case Data.save_state_with_log(@atom, result.player_id, state, event) do
+      {:error, e} ->
+        {:stop, e}
+      _ ->
+        {:reply, "Result #{result.id} added to player #{result.player_id}", new_state}
     end
-
-    {:reply, "Result #{result_id} added to player #{id}", new_state}
   end
 
   @impl true

@@ -106,6 +106,14 @@ defmodule MetrTest do
     game_1 = Metr.read(game_1_id, :game)
       deck_one: deck_1_id,
 
+    results = Metr.list(:result)
+    assert 2 == results |> Enum.count()
+
+    player_1 = Metr.read(player_1_id, :player)
+    IO.inspect player_1, label: "metr test - player 2"
+
+    assert 1 == player_1.results |> Enum.count()
+
     # game_2 = %GameInput{
     #   deck_one: deck_1_id,
     #   deck_two: deck_2_id,
