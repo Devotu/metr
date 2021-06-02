@@ -54,10 +54,6 @@ defmodule Metr.Modules.Result do
     # Data.recall_state(@atom, id)
   end
 
-  def delete(id) do
-    Data.wipe_state(id, @atom)
-  end
-
   ## gen
   @impl true
   def init({id, %ResultInput{} = data, %Event{} = event}) do

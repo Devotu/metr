@@ -127,44 +127,6 @@ defmodule MetrTest do
     TestHelper.wipe_test(:result, deck_2.results)
   end
 
-  test "delete game" do
-    player_1_id = TestHelper.init_only_player "Filip Metr"
-    player_2_id = TestHelper.init_only_player "Gustav Metr"
-    deck_1_id = TestHelper.init_only_deck "Foxtrot Metr", player_1_id
-    deck_2_id = TestHelper.init_only_deck "Golf Metr", player_2_id
-
-    game_id = %GameInput{
-      player_one: player_1_id,
-      player_two: player_2_id,
-      deck_one: deck_1_id,
-      deck_two: deck_2_id,
-      winner: 2
-    }
-    |> Metr.create(:game)
-
-    game = Game.read(game_id)
-    assert "Game #{game_id} deleted" == Metr.delete(game_id, :game)
-
-    deck_1 = Metr.read(deck_1_id, :deck)
-    assert 0 == Enum.count(deck_1.results)
-
-    player_1 = Metr.read(player_1_id, :player)
-    assert 0 == Enum.count(player_1.results)
-
-    assert {:error, "Game not an actual game id not found"} ==
-             Metr.delete("not an actual game id", :game)
-
-    results = Metr.list(:result)
-
-    assert 0 ==
-             Enum.filter(results, fn g -> String.equivalent?(g.id, game_id) end) |> Enum.count()
-
-    TestHelper.wipe_test(:player, [player_1_id, player_2_id])
-    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
-    TestHelper.wipe_test(:game, [game_id])
-    TestHelper.wipe_test(:result, game.results)
-  end
-
   test "list results by deck" do
     player_1_id = TestHelper.init_only_player "Helge Metr"
     player_2_id = TestHelper.init_only_player "Ivar Metr"

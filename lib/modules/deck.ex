@@ -109,32 +109,6 @@ defmodule Metr.Modules.Deck do
   #   |> Stately.out_to_event(@atom, [:altered, repp])
   # end
 
-
-
-  # def feed(
-  #       %Event{
-  #         keys: [:game, :deleted, _orepp] = keys,
-  #         data: %{results: result_ids}
-  #       } = event,
-  #       repp
-  #     ) do
-  #   # for each deck find connections to this game
-  #   deck_result_ids =
-  #     Data.list_ids(@atom)
-  #     |> Enum.map(fn id -> read(id) end)
-  #     |> Enum.filter(fn d -> Util.has_member?(d.results, result_ids) end)
-  #     |> Enum.map(fn d -> {d.id, Util.find_first_common_member(d.results, result_ids)} end)
-
-  #   # call update
-  #   Enum.reduce(deck_result_ids, [], fn {id, result_id}, acc ->
-  #     acc ++
-  #       [
-  #         Stately.update(id, @atom, keys, %{id: result_id, deck_id: id}, event)
-  #         |> Stately.out_to_event(@atom, [:altered, repp])
-  #       ]
-  #   end)
-  # end
-
   # def feed(%Event{keys: [:read, :log, @atom], data: %{deck_id: id}}, repp) do
   #   events = Data.read_log_by_id(id, @atom)
   #   [Event.new([@atom, :read, repp], %{out: events})]
@@ -379,30 +353,6 @@ defmodule Metr.Modules.Deck do
   #     _ -> {:ok, new_state}
   #   end
   #   {:reply, "Match #{match_id} added to deck #{id}", new_state}
-  # end
-
-  # @impl true
-  # def handle_call(
-  #       %{keys: [:game, :deleted, _orepp], data: %{deck_id: id, id: result_id}, event: event},
-  #       _from,
-  #       state
-  #     ) do
-  #   original_rank =
-  #     Data.read_log_by_id(id, @atom)
-  #     |> Enum.filter(fn e -> e.keys == [:create, @atom] end)
-  #     |> List.first()
-  #     |> find_original_rank()
-
-  #   new_state =
-  #     state
-  #     |> Map.update!(:results, fn results -> List.delete(results, result_id) end)
-  #     |> recalculate_rank(original_rank)
-
-  #   case Data.save_state_with_log(@atom, id, state, event) do
-  #     {:error, e} -> {:stop, e}
-  #     _ -> {:ok, new_state}
-  #   end
-  #   {:reply, "Result #{result_id} removed from deck #{id}", new_state}
   # end
 
   # @impl true

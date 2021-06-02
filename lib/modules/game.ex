@@ -96,23 +96,6 @@ defmodule Metr.Modules.Game do
   #   [{Event.new([:list, :result], %{ids: game.results}), repp}]
   # end
 
-  # def feed(%Event{id: _event_id, keys: [:delete, @atom], data: %{game_id: game_id}}, repp) do
-  #   delete_conclusion =
-  #     game_id
-  #     |> read()
-  #     |> delete_game_results()
-  #     |> delete_game()
-
-  #   case delete_conclusion do
-  #     %Game{} = game ->
-  #       [Event.new([@atom, :deleted, nil], %{id: game_id, results: game.results}),
-  #       Event.new([@atom, :deleted, repp], %{out: "Game #{game_id} deleted"})]
-
-  #     {:error, cause} ->
-  #       [Event.new([@atom, :error, repp], %{cause: cause})]
-  #   end
-  # end
-
   def feed(event, _orepp) do
       # IO.inspect event, label: " ---- #{@atom} passed event"
     []
@@ -221,29 +204,6 @@ defmodule Metr.Modules.Game do
   ## Internals
   defp is_ranked?(%{ranked: ranked}) when is_boolean(ranked), do: ranked
   defp is_ranked?(_), do: false
-
-  defp delete_game_results({:error, cause}), do: {:error, cause}
-
-  defp delete_game_results(%Game{} = game) do
-    all_deleted? =
-      game.results
-      |> Enum.map(fn rid -> Result.delete(rid) end)
-      |> Enum.all?(fn x -> x == {:ok} end)
-
-    case all_deleted? do
-      true -> game
-      false -> {:error, "Not all results deleted"}
-    end
-  end
-
-  defp delete_game({:error, cause}), do: {:error, cause}
-
-  defp delete_game(%Game{} = game) do
-    case Data.wipe_state(game.id, @atom) do
-      {:ok} -> game
-      _ -> {:error, "Could not delete game state"}
-    end
-  end
 
   defp from_input(%GameInput{} = data, id, created_time) do
     %Game{

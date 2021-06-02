@@ -76,9 +76,6 @@ defmodule Metr do
 
   def read_input_log(limit) when is_number(limit), do: read_log(limit);
 
-  ### delete
-  def delete(id, :game), do: delete_state(:game, id)
-
   ### functions
   @spec alter_rank(any, :down | :up) :: any
   def alter_rank(deck_id, :up) do
@@ -139,12 +136,6 @@ defmodule Metr do
     |> run()
   end
 
-  defp delete_state(type, id) when is_atom(type) do
-    Map.put(%{}, :id, id)
-    |> Event.new([:delete, type])
-    |> run()
-  end
-
   #Runns an event and awaits response
   defp run(%Event{} = event) do
     # Start listener
@@ -177,7 +168,6 @@ defmodule Metr do
   def feed(%Event{keys: [type,    :error,     pid], data: %{cause: cause}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, {:error, cause})
   def feed(%Event{keys: [type,    :altered,   pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
   def feed(%Event{keys: [type,    :created,   pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
-  def feed(%Event{keys: [type,    :deleted,   pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
   def feed(%Event{keys: [type,    :list,      pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
   def feed(%Event{keys: [type,    :read,      pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
   def feed(%Event{keys: [type,    :reran,     pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
