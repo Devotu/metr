@@ -11,6 +11,7 @@ defmodule Metr.Modules.Game do
   alias Metr.Modules.Game
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.State
   alias Metr.Modules.Stately
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.ResultInput
@@ -63,71 +64,72 @@ defmodule Metr.Modules.Game do
   #   end
   # end
 
-  def feed(%Event{id: _event_id, keys: [:read, @atom], data: %{game_id: id}}, repp) do
-    game = read(id)
-    [Event.new([@atom, :read, repp], %{out: game})]
-  end
+  # def feed(%Event{id: _event_id, keys: [:read, @atom], data: %{game_id: id}}, repp) do
+  #   game = read(id)
+  #   [Event.new([@atom, :read, repp], %{out: game})]
+  # end
 
-  def feed(%Event{id: _event_id, keys: [:read, :log, @atom], data: %{game_id: id}}, repp) do
-    events = Data.read_log_by_id(id, @atom)
-    [Event.new([@atom, :read, repp], %{out: events})]
-  end
+  # def feed(%Event{id: _event_id, keys: [:read, :log, @atom], data: %{game_id: id}}, repp) do
+  #   events = Data.read_log_by_id(id, @atom)
+  #   [Event.new([@atom, :read, repp], %{out: events})]
+  # end
 
-  def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{ids: ids}}, repp)
-      when is_list(ids) do
-    games = Enum.map(ids, &read/1)
-    [Event.new([@atom, :list, repp], %{out: games})]
-  end
+  # def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{ids: ids}}, repp)
+  #     when is_list(ids) do
+  #   games = Enum.map(ids, &read/1)
+  #   [Event.new([@atom, :list, repp], %{out: games})]
+  # end
 
-  def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{limit: limit}}, repp)
-      when is_number(limit) do
-    games =
-      Data.list_ids(@atom)
-      |> Enum.map(&read/1)
-      |> Enum.sort(&(&1.time < &2.time))
-      |> Enum.take(limit)
+  # def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{limit: limit}}, repp)
+  #     when is_number(limit) do
+  #   games =
+  #     Data.list_ids(@atom)
+  #     |> Enum.map(&read/1)
+  #     |> Enum.sort(&(&1.time < &2.time))
+  #     |> Enum.take(limit)
 
-    [Event.new([@atom, :list, repp], %{out: games})]
-  end
+  #   [Event.new([@atom, :list, repp], %{out: games})]
+  # end
 
-  def feed(%Event{id: _event_id, keys: [:list, :result], data: %{game_id: id}}, repp) do
-    game = read(id)
-    [{Event.new([:list, :result], %{ids: game.results}), repp}]
-  end
+  # def feed(%Event{id: _event_id, keys: [:list, :result], data: %{game_id: id}}, repp) do
+  #   game = read(id)
+  #   [{Event.new([:list, :result], %{ids: game.results}), repp}]
+  # end
 
-  def feed(%Event{id: _event_id, keys: [:delete, @atom], data: %{game_id: game_id}}, repp) do
-    delete_conclusion =
-      game_id
-      |> read()
-      |> delete_game_results()
-      |> delete_game()
+  # def feed(%Event{id: _event_id, keys: [:delete, @atom], data: %{game_id: game_id}}, repp) do
+  #   delete_conclusion =
+  #     game_id
+  #     |> read()
+  #     |> delete_game_results()
+  #     |> delete_game()
 
-    case delete_conclusion do
-      %Game{} = game ->
-        [Event.new([@atom, :deleted, nil], %{id: game_id, results: game.results}),
-        Event.new([@atom, :deleted, repp], %{out: "Game #{game_id} deleted"})]
+  #   case delete_conclusion do
+  #     %Game{} = game ->
+  #       [Event.new([@atom, :deleted, nil], %{id: game_id, results: game.results}),
+  #       Event.new([@atom, :deleted, repp], %{out: "Game #{game_id} deleted"})]
 
-      {:error, cause} ->
-        [Event.new([@atom, :error, repp], %{cause: cause})]
-    end
-  end
+  #     {:error, cause} ->
+  #       [Event.new([@atom, :error, repp], %{cause: cause})]
+  #   end
+  # end
 
-  def feed(_event, _orepp) do
+  def feed(event, _orepp) do
+      # IO.inspect event, label: " ---- #{@atom} passed event"
     []
   end
 
   ## module
-  def read(id) do
-    Stately.read(id, @atom)
-  end
+  # def read(id) do
+  #   Stately.read(id, @atom)
+  # end
 
-  def exist?(id) do
-    Stately.exist?(id, @atom)
-  end
+  # def exist?(id) do
+  #   Stately.exist?(id, @atom)
+  # end
 
-  def module_name() do
-    @atom
-  end
+  # def module_name() do
+  #   @atom
+  # end
 
   ## private
   defp convert_to_result_inputs(%GameInput{} = data, game_id) do
@@ -185,14 +187,14 @@ defmodule Metr.Modules.Game do
   end
 
   defp verify_player(player_id) do
-    case Player.exist?(player_id) do
+    case State.exist?(player_id, :player) do
       true -> {:ok}
       false -> {:error, "player #{player_id} not found"}
     end
   end
 
   defp verify_deck(deck_id) do
-    case Deck.exist?(deck_id) do
+    case State.exist?(deck_id, :deck) do
       true -> {:ok}
       false -> {:error, "deck #{deck_id} not found"}
     end
@@ -307,7 +309,6 @@ defmodule Metr.Modules.Game do
       {:error, e} -> {:stop, e}
       {:ok} ->
         IO.inspect data, label: "game - init - data"
-        match_id = Map.get(data, :match, nil)
 
         [result_1_input, result_2_input] = convert_to_result_inputs(data, id)
         |> IO.inspect(label: "game init - result data")
@@ -315,24 +316,20 @@ defmodule Metr.Modules.Game do
         result_1_id = Id.guid()
         result_2_id = Id.guid()
 
-        Router.input([
-          Event.new([:create, :result], %{id: result_1_id, input: result_1_input}),
-          Event.new([:create, :result], %{id: result_2_id, input: result_2_input}),
-          # Event.new([@atom, :created, nil], %{
-          #             id: id,
-          #             result_ids: data.results,
-          #             ranking: is_ranked?(data),
-          #             match_id: match_id
-          #           })
-        ])
-
         data = Map.put(data, :results, [result_1_id, result_2_id])
         |> IO.inspect(label: "game - init - with results")
 
         state = from_input(data, id, event.time)
         case Data.save_state_with_log(@atom, id, state, event) do
-          {:error, e} -> {:stop, e}
-          _ -> {:ok, state}
+          {:error, e} ->
+            {:stop, e}
+          _ ->
+            Router.input([
+              Event.new([:create, :result], %{id: result_1_id, input: result_1_input}),
+              Event.new([:create, :result], %{id: result_2_id, input: result_2_input}),
+            ])
+
+            {:ok, state}
         end
     end
   end
@@ -343,21 +340,20 @@ defmodule Metr.Modules.Game do
 
   @impl true
   def handle_call(%{keys: [:read, @atom]}, _from, state) do
-    # Reply
     {:reply, state, state}
   end
 
-  @impl true
-  def handle_call(
-        %{keys: [:tagged], data: %{id: id, tag: tag}, event: event},
-        _from,
-        state
-      ) do
-    new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    case Data.save_state_with_log(@atom, id, state, event) do
-      {:error, e} -> {:stop, e}
-      _ -> {:ok, state}
-    end
-    {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
-  end
+  # @impl true
+  # def handle_call(
+  #       %{keys: [:tagged], data: %{id: id, tag: tag}, event: event},
+  #       _from,
+  #       state
+  #     ) do
+  #   new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
+  #   case Data.save_state_with_log(@atom, id, state, event) do
+  #     {:error, e} -> {:stop, e}
+  #     _ -> {:ok, state}
+  #   end
+  #   {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+  # end
 end

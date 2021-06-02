@@ -13,57 +13,58 @@ defmodule Metr.Modules.Tag do
   @atom :tag
   @valid_tag_length 20
 
-  def feed(
-        %Event{id: _event_id, keys: [@atom, module_atom], data: %{id: module_id, tag: tag}} =
-          event,
-        repp
-      ) do
+  # def feed(
+  #       %Event{id: _event_id, keys: [@atom, module_atom], data: %{id: module_id, tag: tag}} =
+  #         event,
+  #       repp
+  #     ) do
 
-    validation =
-      :ok
-      |> is_valid_tag(tag)
-      |> is_valid_target(module_atom, module_id)
-      |> is_not_duplicate(module_atom, module_id, tag)
+  #   validation =
+  #     :ok
+  #     |> is_valid_tag(tag)
+  #     |> is_valid_target(module_atom, module_id)
+  #     |> is_not_duplicate(module_atom, module_id, tag)
 
-    case {validation, exist?(tag)} do
-      {:ok, false} ->
-        state = %Tag{id: Id.hrid(tag), name: tag, tagged: [{module_id, Time.timestamp()}]}
-        propagating_event = Event.new([module_atom, :tagged], %{id: module_id, tag: tag})
+  #   case {validation, exist?(tag)} do
+  #     {:ok, false} ->
+  #       state = %Tag{id: Id.hrid(tag), name: tag, tagged: [{module_id, Time.timestamp()}]}
+  #       propagating_event = Event.new([module_atom, :tagged], %{id: module_id, tag: tag})
 
-        Stately.create(@atom, state, event)
-        |> Stately.out_to_event(@atom, [:created, repp])
-        |> List.wrap()
-        |> Enum.concat([propagating_event])
+  #       Stately.create(@atom, state, event)
+  #       |> Stately.out_to_event(@atom, [:created, repp])
+  #       |> List.wrap()
+  #       |> Enum.concat([propagating_event])
 
-      {:ok, true} ->
-        propagating_event = Event.new([module_atom, :tagged], %{id: module_id, tag: tag})
+  #     {:ok, true} ->
+  #       propagating_event = Event.new([module_atom, :tagged], %{id: module_id, tag: tag})
 
-        Stately.update(tag, @atom, [:tagged], %{id: module_id}, event)
-        |> Stately.out_to_event(@atom, [:altered, repp])
-        |> List.wrap()
-        |> Enum.concat([propagating_event])
+  #       Stately.update(tag, @atom, [:tagged], %{id: module_id}, event)
+  #       |> Stately.out_to_event(@atom, [:altered, repp])
+  #       |> List.wrap()
+  #       |> Enum.concat([propagating_event])
 
-      {{:error, e}, _} ->
-        [Event.new([module_atom, :error, repp], %{msg: e})]
-    end
-  end
+  #     {{:error, e}, _} ->
+  #       [Event.new([module_atom, :error, repp], %{msg: e})]
+  #   end
+  # end
 
-  def feed(
-        %Event{id: _event_id, keys: [module_atom, :tagged], data: %{id: _id, tag: _tag}} = event,
-        _repp
-      ) do
-    Stately.update(
-      event.data.id,
-      module_atom,
-      [:tagged],
-      event.data,
-      event
-    )
-    |> Stately.out_to_event(module_atom, [module_atom, :tagged])
-    |> List.wrap()
-  end
+  # def feed(
+  #       %Event{id: _event_id, keys: [module_atom, :tagged], data: %{id: _id, tag: _tag}} = event,
+  #       _repp
+  #     ) do
+  #   Stately.update(
+  #     event.data.id,
+  #     module_atom,
+  #     [:tagged],
+  #     event.data,
+  #     event
+  #   )
+  #   |> Stately.out_to_event(module_atom, [module_atom, :tagged])
+  #   |> List.wrap()
+  # end
 
-  def feed(_event, _orepp) do
+  def feed(event, _orepp) do
+      # IO.inspect event, label: " ---- #{@atom} passed event"
     []
   end
 
@@ -98,32 +99,32 @@ defmodule Metr.Modules.Tag do
   end
 
   ## module
-  def read(id) do
-    Stately.read(id, @atom)
-  end
+  # def read(id) do
+  #   Stately.read(id, @atom)
+  # end
 
-  def exist?(id) do
-    Stately.exist?(id, @atom)
-  end
+  # def exist?(id) do
+  #   Stately.exist?(id, @atom)
+  # end
 
-  def module_name() do
-    @atom
-  end
+  # def module_name() do
+  #   @atom
+  # end
 
   ## gen
-  @impl true
-  def init(%Tag{} = state) do
-    {:ok, state}
-  end
+  # @impl true
+  # def init(%Tag{} = state) do
+  #   {:ok, state}
+  # end
 
-  @impl true
-  def handle_call(%{keys: [:read, @atom]}, _from, state) do
-    {:reply, state, state}
-  end
+  # @impl true
+  # def handle_call(%{keys: [:read, @atom]}, _from, state) do
+  #   {:reply, state, state}
+  # end
 
-  @impl true
-  def handle_call(%{keys: [:tagged], data: %{id: id}}, _from, state) do
-    new_state = Map.update!(state, :tagged, &(&1 ++ [{id, Time.timestamp()}]))
-    {:reply, state, new_state}
-  end
+  # @impl true
+  # def handle_call(%{keys: [:tagged], data: %{id: id}}, _from, state) do
+  #   new_state = Map.update!(state, :tagged, &(&1 ++ [{id, Time.timestamp()}]))
+  #   {:reply, state, new_state}
+  # end
 end

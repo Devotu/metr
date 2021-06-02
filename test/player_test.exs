@@ -21,32 +21,26 @@ defmodule PlayerTest do
     assert [:player, :created, nil] == resulting_event.keys
     log_entries = Data.read_log_by_id(resulting_event.data.out, :player)
     assert 1 = Enum.count(log_entries)
-    # TestHelper.wipe_test(:player, resulting_event.data.out)
+    TestHelper.wipe_test(:player, resulting_event.data.out)
   end
 
   test "deck created" do
-    # var
     player_id = TestHelper.init_only_player "Bertil Player"
-    deck_id = "player_deck"
-    # Player to own the deck
-    [player_created_event] =
-      State.feed(Event.new([:create, :player], %PlayerInput{name: "Deck owner"}), nil)
+    deck_id = TestHelper.init_only_deck "Bravor Player", player_id
 
     # Resolve deck created
     [resulting_event] =
-      Player.feed(Event.new([:deck, :created, nil], %{id: deck_id, player_id: player_id}), nil)
+      Player.feed(Event.new([:deck, :created, nil], %{out: deck_id}), nil)
 
     # Assert
     resulting_feedback_should_be = "Deck #{deck_id} added to player #{player_id}"
     assert [:player, :altered, nil] == resulting_event.keys
     assert resulting_feedback_should_be == resulting_event.data.out
     # Cleanup
-    TestHelper.wipe_test(:player, player_created_event.data.out)
+    TestHelper.wipe_test(:player, player_id)
   end
 
   test "game created" do
-    # var
-    # Players to participate
     player_one_name = "Filip Player"
     deck_one_name = "Foxtrot Player"
     player_two_name = "Gustav Player"
@@ -55,42 +49,70 @@ defmodule PlayerTest do
     {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id} =
       TestHelper.init_double_state(player_one_name, deck_one_name, player_two_name, deck_two_name)
 
-    # Resolve game created
-    [game_created_event, _game_created_return] =
-      Game.feed(
-        Event.new([:create, :game], %GameInput{
-          player_one: player_one_id,
-          player_two: player_two_id,
-          deck_one: deck_one_id,
-          deck_two: deck_two_id,
-          power_one: 2,
-          power_two: 1,
-          fun_one: -1,
-          fun_two: 2,
-          winner: 2,
-          ranking: false
-        }),
-        nil
-      )
+    # Above includes a game created ant thus the following should be true
+    player = Metr.read(player_one_id, :player)
+    [result_1_id, result_2_id] = player.results
+    result_1 = Metr.read(result_1_id, :result)
+    assert game_id == result_1.game_id
+    result_2 = Metr.read(result_2_id, :result)
+    assert game_id == result_2.game_id
 
-    resulting_events = Player.feed(game_created_event, nil)
-    first_resulting_event = List.first(resulting_events)
     player_log = Data.read_log_by_id(player_one_id, :player)
-
-    [first_result_id, _second_result_event] = game_created_event.data.result_ids
-
-    # Assert
-    assert 2 == Enum.count(resulting_events)
-    assert [:player, :altered, nil] == first_resulting_event.keys
-
-    assert "Result #{first_result_id} added to player #{player_one_id}" ==
-             first_resulting_event.data.out
-
     assert 3 + 2 == Enum.count(player_log) # init (3) + result added (2)
 
+    [_player_created_event, _deck_created_event, _match_created_event, result_1_created_event, _result_2_created_event] = player_log
+
+    assert [:player, :altered, nil] == result_1_created_event.keys
+    assert "Result #{result_1_id} added to player #{player_one_id}" ==
+      result_1_created_event.data.out
+
+    # # Resolve game created
+    # game_id =
+    #   State.feed(
+    #     Event.new([:create, :game], %GameInput{
+    #       player_one: player_one_id,
+    #       player_two: player_two_id,
+    #       deck_one: deck_one_id,
+    #       deck_two: deck_two_id,
+    #       power_one: 2,
+    #       power_two: 1,
+    #       fun_one: -1,
+    #       fun_two: 2,
+    #       winner: 2,
+    #       ranking: false
+    #     }),
+    #     nil
+    #   )
+    #   |> List.first()
+    #   |> Event.get_out()
+
+    # # game_id = Event.get_out(game_created_event)
+
+    # # resulting_events = Player.feed(game_created_event, nil)
+    # # first_resulting_event = List.first(resulting_events)
+
+    # player = Metr.read(player_id, :player)
+    # [result_1_id, _second_result_id] = player.results
+    # first_result = Metr.read(result_1_id, :result)
+
+
+    # player_log = Data.read_log_by_id(player_one_id, :player)
+
+
+    # [result_1_id, _second_result_event] = game_created_event.data.result_ids
+
+    # # Assert
+    # assert 2 == Enum.count(resulting_events)
+    # assert [:player, :altered, nil] == first_resulting_event.keys
+
+    # assert "Result #{result_1_id} added to player #{player_one_id}" ==
+    #          first_resulting_event.data.out
+
+    # assert 3 + 2 == Enum.count(player_log) # init (3) + result added (2)
+
     # Cleanup
-    TestHelper.wipe_test(:game, game_created_event.data.id)
-    TestHelper.wipe_test(:result, game_created_event.data.result_ids)
+    TestHelper.wipe_test(:game, game_id)
+    TestHelper.wipe_test(:result, player.results)
     TestHelper.cleanup_double_states(
       {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id}
     )

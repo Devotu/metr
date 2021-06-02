@@ -17,8 +17,8 @@ defmodule Metr.Modules.State do
         repp
       ) do
 
-    process_name = Data.genserver_id(id, module) #|> IO.inspect(label: "state - process name")
-    target_module = select_target_module(module) #|> IO.inspect(label: "state - process module")
+    process_name = Data.genserver_id(id, module) |> IO.inspect(label: "state - process name")
+    target_module = select_target_module(module) |> IO.inspect(label: "state - process module")
 
     case GenServer.start(target_module, {id, input, event}, name: process_name) do
       {:ok, _pid} ->

@@ -17,40 +17,41 @@ defmodule GameTest do
   alias Metr.Modules.Input.PlayerInput
 
   test "create game" do
-    player_name = "Erik Game"
-    deck_name = "Echo Game"
-    player_two_name = "Fredrik Game"
-    deck_two_name = "Foxtrot Game"
-
-    {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id} =
-      TestHelper.init_double_state(player_name, deck_name, player_two_name, deck_two_name)
+    player_1_id = TestHelper.init_only_player "Erik Game"
+    deck_1_id = TestHelper.init_only_deck "Echo Game", player_1_id
+    player_2_id = TestHelper.init_only_player "Fredrik Game"
+    deck_2_id = TestHelper.init_only_deck "Foxtrot Game", player_2_id
 
     game_input = %GameInput{
-      player_one: player_one_id,
-      player_two: player_two_id,
-      deck_one: deck_one_id,
-      deck_two: deck_two_id,
+      player_one: player_1_id,
+      player_two: player_2_id,
+      deck_one: deck_1_id,
+      deck_two: deck_2_id,
       power_one: 1,
       fun_one: -2,
       winner: 2
     }
 
-    [resulting_event, _created_response] = Game.feed(Event.new([:create, :game], game_input), nil)
-    assert [:game, :created, nil] == resulting_event.keys
-    assert is_bitstring(resulting_event.data.id)
+    resulting_event = State.feed(Event.new([:create, :game], game_input), nil)
+    |> List.first()
 
-    [result_1_id, _result_2_id] = resulting_event.data.result_ids
+    game_id = resulting_event.data.out
+
+    assert [:game, :created, nil] == resulting_event.keys
+    assert is_bitstring(game_id)
+
+    game = Metr.read(game_id, :game)
+
+    [result_1_id, result_2_id] = game.results
 
     result_1 = Metr.read(result_1_id, :result)
     assert true == Stately.exist?(result_1_id, :result)
+    assert game_id == result_1.game_id
 
-    assert resulting_event.data.id == result_1.game_id
-
-    TestHelper.wipe_test(:game, resulting_event.data.id)
-    TestHelper.wipe_test(:result, resulting_event.data.result_ids)
-    TestHelper.cleanup_double_states(
-      {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id}
-    )
+    TestHelper.wipe_test(:game, game_id)
+    TestHelper.wipe_test(:result, game.results)
+    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
+    TestHelper.wipe_test(:player, [player_1_id, player_2_id])
   end
 
   test "select last x games" do
@@ -120,6 +121,8 @@ defmodule GameTest do
     deck_1 = Metr.read(deck_1_id, :deck)
     deck_2 = Metr.read(deck_2_id, :deck)
     deck_3 = Metr.read(deck_3_id, :deck)
+
+    IO.inspect deck_1, label: "game test - deck 1"
 
     assert 5 == Enum.count(deck_1.results)
     assert 3 == Enum.count(Metr.list(:game, limit: 3))

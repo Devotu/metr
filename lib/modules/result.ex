@@ -32,14 +32,77 @@ defmodule Metr.Modules.Result do
   #   end
   # end
 
-  defp init_process(id, %ResultInput{} = data, %Event{} = event) do
-    process_name = Data.genserver_id(@atom, id)
-    # Start genserver
-    case GenServer.start(Metr.Modules.Result, {id, data, event}, name: process_name) do
-      {:ok, _pid} -> {:ok, id}
-      {:error, e} -> {:error, e}
+
+  # def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{ids: ids}}, repp)
+  #     when is_list(ids) do
+  #   results = Enum.map(ids, &read/1)
+  #   [Event.new([@atom, :list, repp], %{out: results})]
+  # end
+
+  # def feed(%Event{id: _event_id, keys: [:read, @atom], data: %{result_id: id}}, repp) do
+  #   result = read(id)
+  #   [Event.new([@atom, :read, repp], %{out: result})]
+  # end
+
+  def feed(event, _orepp) do
+      # IO.inspect event, label: " ---- #{@atom} passed event"
+    []
+  end
+
+  def read(id) do
+    Stately.read(id, @atom)
+    # Data.recall_state(@atom, id)
+  end
+
+  def delete(id) do
+    Data.wipe_state(id, @atom)
+  end
+
+  ## gen
+  @impl true
+  def init({id, %ResultInput{} = data, %Event{} = event}) do
+    IO.inspect data, label: "Result - init with"
+    state = from_input(data, id, event.time)
+
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} ->
+        {:stop, e}
+      _ ->
+        {:ok, state}
     end
   end
+
+  # def init(%Result{} = state) do
+  #   {:ok, state}
+  # end
+
+  @impl true
+  def handle_call(%{keys: [:read, @atom]}, _from, state) do
+    {:reply, state, state}
+  end
+
+  # @impl true
+  # def handle_call(
+  #       %{keys: [:tagged], data: %{id: id, tag: tag}, event: event},
+  #       _from,
+  #       state
+  #     ) do
+  #   new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
+  #   case Data.save_state_with_log(@atom, id, state, event) do
+  #     {:error, e} -> {:stop, e}
+  #     _ -> {:ok, state}
+  #   end
+  #   {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+  # end
+
+  # defp init_process(id, %ResultInput{} = data, %Event{} = event) do
+  #   process_name = Data.genserver_id(@atom, id)
+  #   # Start genserver
+  #   case GenServer.start(Metr.Modules.Result, {id, data, event}, name: process_name) do
+  #     {:ok, _pid} -> {:ok, id}
+  #     {:error, e} -> {:error, e}
+  #   end
+  # end
 
 
   defp verify_input(%ResultInput{} = data) do
@@ -87,73 +150,4 @@ defmodule Metr.Modules.Result do
     }
   end
 
-  def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{ids: ids}}, repp)
-      when is_list(ids) do
-    results = Enum.map(ids, &read/1)
-    [Event.new([@atom, :list, repp], %{out: results})]
-  end
-
-  def feed(%Event{id: _event_id, keys: [:read, @atom], data: %{result_id: id}}, repp) do
-    result = read(id)
-    [Event.new([@atom, :read, repp], %{out: result})]
-  end
-
-  def feed(_event, _orepp) do
-    []
-  end
-
-  def read(id) do
-    Stately.read(id, @atom)
-    # Data.recall_state(@atom, id)
-  end
-
-  def delete(id) do
-    Data.wipe_state(id, @atom)
-  end
-
-  ## gen
-  @impl true
-  def init({id, %ResultInput{} = data, %Event{} = event}) do
-    IO.inspect id, label: "result - init - id"
-    IO.inspect data, label: "result - init - data"
-    state = from_input(data, id, event.time)
-    |> IO.inspect(label: "result - init - state")
-
-    Router.input(
-      Event.new([:result, :created, nil], %{
-        result_id: id,
-        player_id: state.player_id,
-        deck_id: state.deck_id
-      })
-      |> IO.inspect(label: "result - propagating")
-    )
-
-    case Data.save_state_with_log(@atom, id, state, event) do
-      {:error, e} -> {:stop, e}
-      _ -> {:ok, state}
-    end
-  end
-
-  def init(%Result{} = state) do
-    {:ok, state}
-  end
-
-  @impl true
-  def handle_call(%{keys: [:read, @atom]}, _from, state) do
-    {:reply, state, state}
-  end
-
-  @impl true
-  def handle_call(
-        %{keys: [:tagged], data: %{id: id, tag: tag}, event: event},
-        _from,
-        state
-      ) do
-    new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    case Data.save_state_with_log(@atom, id, state, event) do
-      {:error, e} -> {:stop, e}
-      _ -> {:ok, state}
-    end
-    {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
-  end
 end

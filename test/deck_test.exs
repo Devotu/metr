@@ -123,7 +123,7 @@ defmodule DeckTest do
 
     assert [:error, nil] == created_event.keys
     assert "format failingformat not vaild" == created_event.data.cause
-    TestHelper.wipe_test(:player, "david_deck")
+    TestHelper.wipe_test(:player, player_id)
   end
 
   test "alter rank" do
@@ -359,13 +359,12 @@ defmodule DeckTest do
 
     assert [:error, nil] == creation_event.keys
 
+    IO.inspect player_id, label: "deck test - palyer id"
     TestHelper.wipe_test(:player, player_id)
   end
 
   test "create deck failed format" do
-    player_name = "Kalle Deck"
-    player_id = Id.hrid(player_name)
-    State.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
+    player_id = TestHelper.init_only_player "Ludvid Deck"
 
     [creation_event] =
       State.feed(

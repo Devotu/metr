@@ -29,114 +29,115 @@ defmodule Metr.Modules.Match do
   @atom :match
 
   ## feed
-  def feed(%Event{id: _event_id, keys: [:create, :match], data: %MatchInput{} = data} = event, repp) do
-    case verify_input_data(data) do
-      {:error, error} ->
-        # Return
-        [Event.new([:match, :error, repp], %{cause: error, data: data})]
+  # def feed(%Event{id: _event_id, keys: [:create, :match], data: %MatchInput{} = data} = event, repp) do
+  #   case verify_input_data(data) do
+  #     {:error, error} ->
+  #       # Return
+  #       [Event.new([:match, :error, repp], %{cause: error, data: data})]
 
-      {:ok} ->
-        id = Id.guid()
-        process_name = Data.genserver_id(@atom, id)
-        # Start genserver
-        case GenServer.start(Match, {id, data, event}, name: process_name) do
-          {:ok, _pid} ->
-            [
-              Event.new(
-                [:match, :created, nil],
-                %{
-                  id: id,
-                  player_ids: [data.player_one, data.player_two],
-                  deck_ids: [data.deck_one, data.deck_two]
-                }
-              ),
-              Event.new(
-                [:match, :created, repp],
-                %{
-                  out: id
-                }
-              )
-            ]
+  #     {:ok} ->
+  #       id = Id.guid()
+  #       process_name = Data.genserver_id(@atom, id)
+  #       # Start genserver
+  #       case GenServer.start(Match, {id, data, event}, name: process_name) do
+  #         {:ok, _pid} ->
+  #           [
+  #             Event.new(
+  #               [:match, :created, nil],
+  #               %{
+  #                 id: id,
+  #                 player_ids: [data.player_one, data.player_two],
+  #                 deck_ids: [data.deck_one, data.deck_two]
+  #               }
+  #             ),
+  #             Event.new(
+  #               [:match, :created, repp],
+  #               %{
+  #                 out: id
+  #               }
+  #             )
+  #           ]
 
-          {:error, cause} ->
-            [Event.new([:match, :error, repp], %{cause: cause})]
-        end
-    end
-  end
+  #         {:error, cause} ->
+  #           [Event.new([:match, :error, repp], %{cause: cause})]
+  #       end
+  #   end
+  # end
 
-  def feed(%Event{id: _event_id, keys: [:end, :match], data: %{match_id: id}} = event, repp) do
-    current_state = read(id)
-    rank_events = collect_rank_alterations(current_state)
-    # If any contains errors don't alter state
-    error_events = Event.only_errors(rank_events)
-    # Return
-    case Enum.count(error_events) > 0 do
-      true ->
-        error_events
-        |> Enum.map(fn e -> Event.add_repp(e, repp) end)
+  # def feed(%Event{id: _event_id, keys: [:end, :match], data: %{match_id: id}} = event, repp) do
+  #   current_state = read(id)
+  #   rank_events = collect_rank_alterations(current_state)
+  #   # If any contains errors don't alter state
+  #   error_events = Event.only_errors(rank_events)
+  #   # Return
+  #   case Enum.count(error_events) > 0 do
+  #     true ->
+  #       error_events
+  #       |> Enum.map(fn e -> Event.add_repp(e, repp) end)
 
-      false ->
-        close(id, event.keys, event.data, event, repp) ++ rank_events
-    end
-  end
+  #     false ->
+  #       close(id, event.keys, event.data, event, repp) ++ rank_events
+  #   end
+  # end
 
-  def feed(%Event{id: _event_id, keys: [:read, :match], data: %{match_id: id}}, repp) do
-    match = read(id)
-    [Event.new([:match, :read, repp], %{out: match})]
-  end
+  # def feed(%Event{id: _event_id, keys: [:read, :match], data: %{match_id: id}}, repp) do
+  #   match = read(id)
+  #   [Event.new([:match, :read, repp], %{out: match})]
+  # end
 
-  def feed(%Event{id: _event_id, keys: [:read, :log, :match], data: %{match_id: id}}, repp) do
-    events = Data.read_log_by_id(id, :match)
-    [Event.new([:match, :read, repp], %{out: events})]
-  end
+  # def feed(%Event{id: _event_id, keys: [:read, :log, :match], data: %{match_id: id}}, repp) do
+  #   events = Data.read_log_by_id(id, :match)
+  #   [Event.new([:match, :read, repp], %{out: events})]
+  # end
 
-  def feed(%Event{id: _event_id, keys: [:list, :match], data: %{ids: ids}}, repp)
-      when is_list(ids) do
-    matches = Enum.map(ids, &read/1)
-    [Event.new([:matches, repp], %{out: matches})]
-  end
+  # def feed(%Event{id: _event_id, keys: [:list, :match], data: %{ids: ids}}, repp)
+  #     when is_list(ids) do
+  #   matches = Enum.map(ids, &read/1)
+  #   [Event.new([:matches, repp], %{out: matches})]
+  # end
 
-  def feed(
-        %Event{
-          id: _event_id,
-          keys: [:game, :created, _orepp],
-          data: %{id: _game_id, match_id: nil}
-        },
-        _repp
-      ) do
-    []
-  end
+  # def feed(
+  #       %Event{
+  #         id: _event_id,
+  #         keys: [:game, :created, _orepp],
+  #         data: %{id: _game_id, match_id: nil}
+  #       },
+  #       _repp
+  #     ) do
+  #   []
+  # end
 
-  def feed(
-        %Event{
-          id: _event_id,
-          keys: [:game, :created, _orepp],
-          data: %{id: _game_id, match_id: id}
-        } = event,
-        repp
-      ) do
-    [
-      Stately.update(id, @atom, event.keys, event.data, event)
-      |> Stately.out_to_event(@atom, [:altered, repp])
-    ]
-  end
+  # def feed(
+  #       %Event{
+  #         id: _event_id,
+  #         keys: [:game, :created, _orepp],
+  #         data: %{id: _game_id, match_id: id}
+  #       } = event,
+  #       repp
+  #     ) do
+  #   [
+  #     Stately.update(id, @atom, event.keys, event.data, event)
+  #     |> Stately.out_to_event(@atom, [:altered, repp])
+  #   ]
+  # end
 
-  def feed(_event, _orepp) do
+  def feed(event, _orepp) do
+      # IO.inspect event, label: " ---- #{@atom} passed event"
     []
   end
 
   ## module
-  def read(id) do
-    Stately.read(id, @atom)
-  end
+  # def read(id) do
+  #   Stately.read(id, @atom)
+  # end
 
-  def exist?(id) do
-    Stately.exist?(id, @atom)
-  end
+  # def exist?(id) do
+  #   Stately.exist?(id, @atom)
+  # end
 
-  def module_name() do
-    @atom
-  end
+  # def module_name() do
+  #   @atom
+  # end
 
   ## private
   defp close(id, keys, data, event, repp) do
@@ -253,84 +254,83 @@ defmodule Metr.Modules.Match do
   defp find_winner(w1, w2) when w2 > w1, do: 2
 
   ## gen
-  @impl true
+  # @impl true
+  # def init({id, %MatchInput{} = data, event}) do
+  #   data = Map.put_new(data, :status, :initialized)
 
-  def init({id, %MatchInput{} = data, event}) do
-    data = Map.put_new(data, :status, :initialized)
+  #   state = %Match{
+  #     id: id,
+  #     player_one: data.player_one,
+  #     player_two: data.player_two,
+  #     deck_one: data.deck_one,
+  #     deck_two: data.deck_two,
+  #     ranking: data.ranking,
+  #     status: :initialized,
+  #     time: Time.timestamp()
+  #   }
 
-    state = %Match{
-      id: id,
-      player_one: data.player_one,
-      player_two: data.player_two,
-      deck_one: data.deck_one,
-      deck_two: data.deck_two,
-      ranking: data.ranking,
-      status: :initialized,
-      time: Time.timestamp()
-    }
+  #   case Data.save_state_with_log(@atom, id, state, event) do
+  #     {:error, e} -> {:stop, e}
+  #     _ -> {:ok, state}
+  #   end
+  #   {:ok, state}
+  # end
 
-    case Data.save_state_with_log(@atom, id, state, event) do
-      {:error, e} -> {:stop, e}
-      _ -> {:ok, state}
-    end
-    {:ok, state}
-  end
+  # def init(%Match{} = state) do
+  #   {:ok, state}
+  # end
 
-  def init(%Match{} = state) do
-    {:ok, state}
-  end
+  # @impl true
+  # def handle_call(%{keys: [:read, :match]}, _from, state) do
+  #   # Reply
+  #   {:reply, state, state}
+  # end
 
-  @impl true
-  def handle_call(%{keys: [:read, :match]}, _from, state) do
-    # Reply
-    {:reply, state, state}
-  end
+  # @impl true
+  # def handle_call(%{keys: [:end, :match], data: %{match_id: id}, event: event}, _from, state) do
+  #   new_state =
+  #     state
+  #     |> Map.put(:winner, find_winner(state))
+  #     |> Map.put(:status, :closed)
 
-  @impl true
-  def handle_call(%{keys: [:end, :match], data: %{match_id: id}, event: event}, _from, state) do
-    new_state =
-      state
-      |> Map.put(:winner, find_winner(state))
-      |> Map.put(:status, :closed)
+  #   case Data.save_state_with_log(@atom, id, state, event) do
+  #     {:error, e} -> {:stop, e}
+  #     _ -> {:ok, new_state}
+  #   end
+  #   # Reply
+  #   {:reply, :ok, new_state}
+  # end
 
-    case Data.save_state_with_log(@atom, id, state, event) do
-      {:error, e} -> {:stop, e}
-      _ -> {:ok, new_state}
-    end
-    # Reply
-    {:reply, :ok, new_state}
-  end
+  # @impl true
+  # def handle_call(
+  #       %{keys: [:game, :created, _orepp], data: %{id: game_id, match_id: id}, event: event},
+  #       _from,
+  #       state
+  #     ) do
+  #   new_state =
+  #     state
+  #     |> Map.update!(:games, &(&1 ++ [game_id]))
+  #     |> Map.put(:status, :open)
 
-  @impl true
-  def handle_call(
-        %{keys: [:game, :created, _orepp], data: %{id: game_id, match_id: id}, event: event},
-        _from,
-        state
-      ) do
-    new_state =
-      state
-      |> Map.update!(:games, &(&1 ++ [game_id]))
-      |> Map.put(:status, :open)
+  #   case Data.save_state_with_log(@atom, id, state, event) do
+  #     {:error, e} -> {:stop, e}
+  #     _ -> {:ok, new_state}
+  #   end
+  #   # Reply
+  #   {:reply, "Game #{game_id} added to match #{id}", new_state}
+  # end
 
-    case Data.save_state_with_log(@atom, id, state, event) do
-      {:error, e} -> {:stop, e}
-      _ -> {:ok, new_state}
-    end
-    # Reply
-    {:reply, "Game #{game_id} added to match #{id}", new_state}
-  end
-
-  @impl true
-  def handle_call(
-        %{keys: [:tagged], data: %{id: id, tag: tag}, event: event},
-        _from,
-        state
-      ) do
-    new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    case Data.save_state_with_log(@atom, id, state, event) do
-      {:error, e} -> {:stop, e}
-      _ -> {:ok, state}
-    end
-    {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
-  end
+  # @impl true
+  # def handle_call(
+  #       %{keys: [:tagged], data: %{id: id, tag: tag}, event: event},
+  #       _from,
+  #       state
+  #     ) do
+  #   new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
+  #   case Data.save_state_with_log(@atom, id, state, event) do
+  #     {:error, e} -> {:stop, e}
+  #     _ -> {:ok, state}
+  #   end
+  #   {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+  # end
 end
