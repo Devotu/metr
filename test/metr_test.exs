@@ -104,56 +104,27 @@ defmodule MetrTest do
     assert @id_length = String.length(game_1_id)
 
     game_1 = Metr.read(game_1_id, :game)
-      deck_one: deck_1_id,
 
     results = Metr.list(:result)
     assert 2 == results |> Enum.count()
 
     player_1 = Metr.read(player_1_id, :player)
-    IO.inspect player_1, label: "metr test - player 2"
-
     assert 1 == player_1.results |> Enum.count()
 
-    # game_2 = %GameInput{
-    #   deck_one: deck_1_id,
-    #   deck_two: deck_2_id,
-    #   fun_one: 1,
-    #   fun_two: -2,
-    #   player_one: player_1_id,
-    #   player_two: player_2_id,
-    #   power_one: 2,
-    #   power_two: -2,
-    #   winner: 1
-    # }
+    deck_1 = Metr.read(deck_1_id, :deck)
+    assert 1 == deck_1.results |> Enum.count()
+    assert deck_1.results == player_1.results
 
-    # game_2_id = Metr.create(game_2, :game)
-    # assert @id_length = String.length(game_2_id)
-
-    # results = Metr.list(:result)
-
-    # assert 2 ==
-    #          Enum.filter(results, fn r -> String.equivalent?(r.game_id, game_2_id) end)
-    #          |> Enum.count()
-
-    # [deck_1] = Metr.list(:deck) |> Enum.filter(fn d -> String.equivalent?(d.id, deck_1_id) end)
-
-    # [player_2] =
-    #   Metr.list(:player) |> Enum.filter(fn p -> String.equivalent?(p.id, player_2_id) end)
-
-    # assert 2 == Enum.count(deck_1.results)
-    # [_player_2_result_1, player_2_result_2] = player_2.results
-
-    # result_1 = Metr.read(player_2_result_2, :result)
-    # assert game_2_id == result_1.game_id
-    # assert player_2_id == result_1.player_id
-    # assert deck_2_id == result_1.deck_id
-    # assert 2 == result_1.place
+    deck_2 = Metr.read(deck_2_id, :deck)
+    [result_2_id] = deck_2.results
+    result_2 = Metr.read(result_2_id, :result)
+    assert 1 = result_2.place
 
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
     TestHelper.wipe_test(:game, [game_1_id])
-    # TestHelper.wipe_test(:result, deck_1.results)
-    # TestHelper.wipe_test(:result, player_2.results)
+    TestHelper.wipe_test(:result, player_1.results)
+    TestHelper.wipe_test(:result, deck_2.results)
   end
 
   test "delete game" do

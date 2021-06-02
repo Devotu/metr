@@ -48,11 +48,12 @@ defmodule Metr.Router do
     spawn(Router, :do_route, [event, response_pid])
   end
 
+  # TODO make this private => make the public method async
   def do_route(event, response_pid) do
     [
       # Module.feed(event),
       Player.feed(event, response_pid),
-      # Deck.feed(event, response_pid),
+      Deck.feed(event, response_pid),
       # Game.feed(event, response_pid),
       # Log.feed(event, response_pid),
       # Match.feed(event, response_pid),
