@@ -60,8 +60,6 @@ defmodule Metr.Modules.Deck do
       repp
     ) do
 
-  IO.inspect event, label: "deck - result created"
-
   result = State.read(result_id, :result)
 
   [
@@ -169,16 +167,16 @@ defmodule Metr.Modules.Deck do
   #   [{Event.new([:list, :result], %{ids: deck.results}), repp}]
   # end
 
-  # def feed(
-  #       %Event{keys: [:alter, :rank] = keys, data: %{deck_id: id, change: change}} = event,
-  #       repp
-  #     ) do
-  #   # call update
-  #   [
-  #     Stately.update(id, @atom, keys, %{id: id, change: change}, event)
-  #     |> Stately.out_to_event(@atom, [:altered, repp])
-  #   ]
-  # end
+  def feed(
+        %Event{keys: [:alter, :rank]} = event,
+        repp
+      ) do
+    # call update
+    [
+      State.update(event.data.id, @atom, event)
+      |> Stately.out_to_event(@atom, [:altered, repp])
+    ]
+  end
 
   def feed(%Event{keys: [:list, :format]}, repp) do
     [Event.new([:format, :list, repp], %{out: @formats})]
@@ -303,8 +301,6 @@ defmodule Metr.Modules.Deck do
         state
       ) do
 
-        IO.inspect event, label: "> Deck - result created"
-
     result = Metr.read(event.data.out, :result)
 
     new_state = Map.update!(state, :results, &(&1 ++ [result.id]))
@@ -360,19 +356,19 @@ defmodule Metr.Modules.Deck do
   #   {:reply, "Match #{match_id} added to deck #{id}", new_state}
   # end
 
-  # @impl true
-  # def handle_call(
-  #       %{keys: [:alter, :rank], data: %{id: id, change: change}, event: event},
-  #       _from,
-  #       state
-  #     ) do
-  #   new_state = Map.update!(state, :rank, fn rank -> Rank.apply_change(rank, change) end)
-  #   case Data.save_state_with_log(@atom, id, state, event) do
-  #     {:error, e} -> {:stop, e}
-  #     _ -> {:ok, new_state}
-  #   end
-  #   {:reply, "Deck #{id} rank altered to #{Kernel.inspect(new_state.rank)}", new_state}
-  # end
+  @impl true
+  def handle_call(
+        %Event{keys: [:alter, :rank], data: %{id: id, change: change} = event},
+        _from,
+        state
+      ) do
+    new_state = Map.update!(state, :rank, fn rank -> Rank.apply_change(rank, change) end)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, new_state}
+    end
+    {:reply, "Deck #{id} rank altered to #{Kernel.inspect(new_state.rank)}", new_state}
+  end
 
   # @impl true
   # def handle_call(

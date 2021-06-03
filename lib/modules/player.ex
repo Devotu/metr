@@ -24,8 +24,6 @@ defmodule Metr.Modules.Player do
         repp
       ) do
 
-        IO.inspect event, label: "---- player ---- deck created"
-
     deck = State.read(deck_id, :deck)
 
     [
