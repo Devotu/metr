@@ -180,9 +180,9 @@ defmodule Metr.Modules.Deck do
   #   ]
   # end
 
-  # def feed(%Event{keys: [:list, :format]}, repp) do
-  #   [Event.new([:format, :list, repp], %{out: @formats})]
-  # end
+  def feed(%Event{keys: [:list, :format]}, repp) do
+    [Event.new([:format, :list, repp], %{out: @formats})]
+  end
 
   def feed(event, _orepp) do
       # IO.inspect event, label: " ---- #{@atom} passed event"
