@@ -16,6 +16,7 @@ defmodule MetrTest do
   alias Metr.Id
 
   @id_length 14
+  @propagation_delay 48
 
   test "create player" do
     player_name = "Adam Metr"
@@ -199,8 +200,9 @@ defmodule MetrTest do
     }
     |> Metr.create(:game)
 
-    assert 3 == Metr.read_log(deck_1_id, :deck) |> Enum.count()
     assert 4 == Metr.read_log(player_1_id, :player) |> Enum.count()
+    assert 3 == Metr.read_log(deck_1_id, :deck) |> Enum.count()
+    assert 1 == Metr.read_log(game_2_id, :game) |> Enum.count()
 
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])

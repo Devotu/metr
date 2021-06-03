@@ -17,8 +17,8 @@ defmodule Metr.Modules.State do
         repp
       ) do
 
-    process_name = Data.genserver_id(id, module) |> IO.inspect(label: "state - process name")
-    target_module = select_target_module(module) |> IO.inspect(label: "state - process module")
+    process_name = Data.genserver_id(id, module)
+    target_module = select_target_module(module)
 
     case GenServer.start(target_module, {id, input, event}, name: process_name) do
       {:ok, _pid} ->
@@ -59,6 +59,11 @@ defmodule Metr.Modules.State do
       |> Enum.map(fn id -> read(id, module) end)
 
     [Event.new([module, :list, repp], %{out: states})]
+  end
+
+  def feed(%Event{id: _event_id, keys: [:read, :log, module], data: %{id: id}}, repp) when is_atom(module) do
+    events = Data.read_log_by_id(id, module)
+    [Event.new([module, :read, repp], %{out: events})]
   end
 
   def feed(_event, _repp) do

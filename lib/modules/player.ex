@@ -24,6 +24,8 @@ defmodule Metr.Modules.Player do
         repp
       ) do
 
+        IO.inspect event, label: "---- player ---- deck created"
+
     deck = State.read(deck_id, :deck)
 
     [
@@ -41,10 +43,7 @@ defmodule Metr.Modules.Player do
         repp
       ) do
 
-    IO.inspect event, label: "player - result created"
-
     result = State.read(result_id, :result)
-    |> IO.inspect(label: "player - read result")
 
     [
       State.update(result.player_id, @atom, event)
@@ -110,7 +109,7 @@ defmodule Metr.Modules.Player do
   # end
 
   def feed(event, _orepp) do
-      # IO.inspect event, label: " ---- #{@atom} passed event"
+    # IO.inspect event, label: " ---- #{@atom} passed event"
     []
   end
 
