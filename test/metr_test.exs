@@ -127,7 +127,7 @@ defmodule MetrTest do
     TestHelper.wipe_test(:result, deck_2.results)
   end
 
-  test "list results by deck" do
+  test "list results by deck/game" do
     player_1_id = TestHelper.init_only_player "Helge Metr"
     player_2_id = TestHelper.init_only_player "Ivar Metr"
     player_3_id = TestHelper.init_only_player "Johan Metr"
@@ -136,7 +136,7 @@ defmodule MetrTest do
     deck_3_id = TestHelper.init_only_deck "Juliet Metr", player_3_id
 
     # 1 vs 2
-    game_1_id = %GameInput{
+    game_1 = %GameInput{
       player_one: player_1_id,
       player_two: player_2_id,
       deck_one: deck_1_id,
@@ -144,9 +144,10 @@ defmodule MetrTest do
       winner: 2
     }
     |> Metr.create(:game)
+    |> Metr.read(:game)
 
     # 1 vs 3
-    game_2_id = %GameInput{
+    game_2 = %GameInput{
       player_one: player_1_id,
       player_two: player_3_id,
       deck_one: deck_1_id,
@@ -158,18 +159,18 @@ defmodule MetrTest do
       fun_two: 2
     }
     |> Metr.create(:game)
+    |> Metr.read(:game)
 
-    results =
-      Metr.list(:result, by: {:game, game_1_id}) ++ Metr.list(:result, by: {:game, game_2_id})
-
-    assert 4 == results |> Enum.count()
+    assert 2 == Metr.list(:result, by: {:game, game_1.id}) |> Enum.count()
+    assert 2 == Metr.list(:result, by: {:game, game_2.id}) |> Enum.count()
     assert 2 == Metr.list(:result, by: {:deck, deck_1_id}) |> Enum.count()
     assert 1 == Metr.list(:result, by: {:deck, deck_2_id}) |> Enum.count()
 
     TestHelper.wipe_test(:player, [player_1_id, player_2_id, player_3_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id, deck_3_id])
-    TestHelper.wipe_test(:game, [game_1_id, game_2_id])
-    TestHelper.wipe_test(:result, Enum.map(results, fn r -> r.id end))
+    TestHelper.wipe_test(:game, [game_1.id, game_2.id])
+    TestHelper.wipe_test(:result, game_1.results)
+    TestHelper.wipe_test(:result, game_2.results)
   end
 
   test "read log of x" do

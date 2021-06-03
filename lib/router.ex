@@ -54,7 +54,7 @@ defmodule Metr.Router do
       # Module.feed(event),
       Player.feed(event, response_pid),
       Deck.feed(event, response_pid),
-      # Game.feed(event, response_pid),
+      Game.feed(event, response_pid),
       # Log.feed(event, response_pid),
       # Match.feed(event, response_pid),
       Metr.feed(event, response_pid),

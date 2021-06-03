@@ -91,10 +91,10 @@ defmodule Metr.Modules.Game do
   #   [Event.new([@atom, :list, repp], %{out: games})]
   # end
 
-  # def feed(%Event{id: _event_id, keys: [:list, :result], data: %{game_id: id}}, repp) do
-  #   game = read(id)
-  #   [{Event.new([:list, :result], %{ids: game.results}), repp}]
-  # end
+  def feed(%Event{id: _event_id, keys: [:list, :result], data: %{by: @atom, id: id}}, repp) do
+    game = State.read(id, @atom)
+    [Event.new([:result, :list, repp], %{out: game.results})]
+  end
 
   def feed(event, _orepp) do
       # IO.inspect event, label: " ---- #{@atom} passed event"

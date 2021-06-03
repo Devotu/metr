@@ -70,6 +70,11 @@ defmodule Metr.Modules.Deck do
   ]
   end
 
+  def feed(%Event{id: _event_id, keys: [:list, :result], data: %{by: @atom, id: id}}, repp) do
+    deck = State.read(id, @atom)
+    [Event.new([:result, :list, repp], %{out: deck.results})]
+  end
+
   # def feed(
   #       %Event{
   #         keys: [:game, :created, _orepp] = keys,
