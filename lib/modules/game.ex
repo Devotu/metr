@@ -266,18 +266,15 @@ defmodule Metr.Modules.Game do
   @impl true
   def init({id, %GameInput{} = data, event}) do
     case verify_input_data(data) do
-      {:error, e} -> {:stop, e}
+      {:error, e} ->
+        {:stop, e}
       {:ok} ->
-        IO.inspect data, label: "game - init - data"
-
         [result_1_input, result_2_input] = convert_to_result_inputs(data, id)
-        |> IO.inspect(label: "game init - result data")
 
         result_1_id = Id.guid()
         result_2_id = Id.guid()
 
         data = Map.put(data, :results, [result_1_id, result_2_id])
-        |> IO.inspect(label: "game - init - with results")
 
         state = from_input(data, id, event.time)
         case Data.save_state_with_log(@atom, id, state, event) do

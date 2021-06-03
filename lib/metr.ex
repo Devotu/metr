@@ -40,7 +40,6 @@ defmodule Metr do
   end
 
   def list(:game, by: {:deck, id}) do
-    IO.inspect id, label: "--- metr - list games by deck"
     %{}
     |> Map.put(:by, :deck)
     |> Map.put(:id, id)
@@ -48,7 +47,6 @@ defmodule Metr do
   end
 
   def list(:result, by: {:deck, id}) do
-    IO.inspect id, label: "--- metr - list results by deck"
     %{}
     |> Map.put(:by, :deck)
     |> Map.put(:id, id)
@@ -56,7 +54,6 @@ defmodule Metr do
   end
 
   def list(:result, by: {:game, id}) do
-    IO.inspect id, label: "--- metr - list results by game"
     %{}
     |> Map.put(:by, :game)
     |> Map.put(:id, id)
@@ -120,7 +117,6 @@ defmodule Metr do
 
   defp list_of(constraints, type) when is_atom(type) and is_map(constraints) do
     Event.new([:list, type], constraints)
-    |> IO.inspect(label: "metr - listing event")
     |> run()
   end
 
