@@ -309,7 +309,8 @@ defmodule MetrTest do
     game_2_id = Metr.create(Map.put(game_data, :winner, 1), :game)
     game_3_id = Metr.create(game_data, :game)
 
-    assert :ok == Metr.end_match(match_id)
+    expected_response = "Match #{match_id} ended"
+    assert expected_response == Metr.end_match(match_id)
 
     ended_match = Metr.read(match_id, :match)
     assert 3 = ended_match.games |> Enum.count()
@@ -322,11 +323,15 @@ defmodule MetrTest do
     deck_2 = Metr.read(deck_2_id, :deck)
     assert {0, 1} == deck_2.rank
 
+    player_1 = Metr.read(player_1_id, :player)
+    player_2 = Metr.read(player_2_id, :player)
+
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
     TestHelper.wipe_test(:game, [game_1_id, game_2_id, game_3_id])
     TestHelper.wipe_test(:match, [match_id])
-    TestHelper.wipe_test(:result, [deck_1.results])
+    TestHelper.wipe_test(:result, player_1.results)
+    TestHelper.wipe_test(:result, player_2.results)
   end
 
   test "list results by ids" do

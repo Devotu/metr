@@ -94,8 +94,8 @@ defmodule Metr do
     |> run()
   end
 
-  def end_match(match_id) do
-    Event.new([:end, :match], %{match_id: match_id})
+  def end_match(id) do
+    Event.new([:end, :match], %{id: id})
     |> run()
   end
 

@@ -16,6 +16,7 @@ defmodule Metr.Modules.Match do
   alias Metr.Data
   alias Metr.Event
   alias Metr.Id
+  alias Metr.Modules.State
   alias Metr.Modules.Stately
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
@@ -24,11 +25,44 @@ defmodule Metr.Modules.Match do
   alias Metr.Modules.Result
   alias Metr.Modules.Input.MatchInput
   alias Metr.Rank
+  alias Metr.Router
   alias Metr.Time
 
   @atom :match
 
   ## feed
+  def feed(
+        %Event{
+          id: _event_id,
+          keys: [:game, :created, _orepp],
+          data: %{out: game_id}
+        } = event,
+        repp
+      ) do
+
+    game = State.read(game_id, :game)
+
+    [
+      State.update(game.match, @atom, event)
+      |> Event.message_to_event([@atom, :altered, repp])
+    ]
+  end
+
+  def feed(
+        %Event{
+          id: _event_id,
+          keys: [:end, :match],
+          data: %{id: id}
+        } = event,
+        repp
+      ) do
+
+    [
+      State.update(id, @atom, event)
+      |> Event.message_to_event([@atom, :altered, repp])
+    ]
+  end
+
   # def feed(%Event{id: _event_id, keys: [:create, :match], data: %MatchInput{} = data} = event, repp) do
   #   case verify_input_data(data) do
   #     {:error, error} ->
@@ -65,7 +99,7 @@ defmodule Metr.Modules.Match do
   # end
 
   # def feed(%Event{id: _event_id, keys: [:end, :match], data: %{match_id: id}} = event, repp) do
-  #   current_state = read(id)
+  #   current_state = State.read(id, @atom)
   #   rank_events = collect_rank_alterations(current_state)
   #   # If any contains errors don't alter state
   #   error_events = Event.only_errors(rank_events)
@@ -140,18 +174,18 @@ defmodule Metr.Modules.Match do
   # end
 
   ## private
-  defp close(id, keys, data, event, repp) do
-    Stately.ready(id, @atom)
+  # defp close(id, keys, data, event, repp) do
+  #   Stately.ready(id, @atom)
 
-    cause =
-      GenServer.call(Data.genserver_id(@atom, id), %{
-        keys: keys,
-        data: data,
-        event: event
-      })
+  #   cause =
+  #     GenServer.call(Data.genserver_id(@atom, id), %{
+  #       keys: keys,
+  #       data: data,
+  #       event: event
+  #     })
 
-    [Event.new([:match, :ended, repp], %{out: cause})]
-  end
+  #   [Event.new([:match, :ended, repp], %{out: cause})]
+  # end
 
   defp verify_input_data(%MatchInput{} = data) do
     p1 = verify_player(data.player_one)
@@ -171,14 +205,14 @@ defmodule Metr.Modules.Match do
   end
 
   defp verify_player(player_id) do
-    case Player.exist?(player_id) do
+    case State.exist?(player_id, :player) do
       true -> {:ok}
       false -> {:error, "player #{player_id} not found"}
     end
   end
 
   defp verify_deck(deck_id) do
-    case Deck.exist?(deck_id) do
+    case State.exist?(deck_id, :deck) do
       true -> {:ok}
       false -> {:error, "deck #{deck_id} not found"}
     end
@@ -186,8 +220,8 @@ defmodule Metr.Modules.Match do
 
   defp verify_rank(_deck_id_1, _deck_id_2, false), do: {:ok}
   defp verify_rank(deck_id_1, deck_id_2, true) do
-    deck_1 = Deck.read(deck_id_1)
-    deck_2 = Deck.read(deck_id_2)
+    deck_1 = State.read(deck_id_1, :deck)
+    deck_2 = State.read(deck_id_2, :deck)
 
     case Rank.is_at_same(deck_1.rank, deck_2.rank) do
       false -> {:error, "ranks does not match"}
@@ -197,8 +231,8 @@ defmodule Metr.Modules.Match do
 
   defp collect_rank_alterations(%Match{ranking: false}), do: []
   defp collect_rank_alterations(%Match{ranking: true} = state) do
-    deck_1 = Deck.read(state.deck_one)
-    deck_2 = Deck.read(state.deck_two)
+    deck_1 = State.read(state.deck_one, :deck)
+    deck_2 = State.read(state.deck_two, :deck)
 
     case Rank.is_at_same(deck_1.rank, deck_2.rank) do
       true ->
@@ -233,13 +267,13 @@ defmodule Metr.Modules.Match do
   end
 
   defp new_rank_event(deck_id, change) do
-    Event.new([:alter, :rank], %{deck_id: deck_id, change: change})
+    Event.new([:alter, :rank], %{id: deck_id, change: change})
   end
 
   defp find_winner(state) do
     tally =
       state.games
-      |> Enum.map(fn gid -> Game.read(gid) end)
+      |> Enum.map(fn gid -> State.read(gid, :game) end)
       |> Enum.map(fn g -> extract_wins(g) end)
       |> Enum.concat()
       |> collect_wins()
@@ -254,71 +288,84 @@ defmodule Metr.Modules.Match do
   defp find_winner(w1, w2) when w2 > w1, do: 2
 
   ## gen
-  # @impl true
-  # def init({id, %MatchInput{} = data, event}) do
-  #   data = Map.put_new(data, :status, :initialized)
+  @impl true
+  def init({id, %MatchInput{} = data, event}) do
+    case verify_input_data(data) do
+      {:error, e} ->
+        {:stop, e}
+      {:ok} ->
+        state = %Match{
+          id: id,
+          player_one: data.player_one,
+          player_two: data.player_two,
+          deck_one: data.deck_one,
+          deck_two: data.deck_two,
+          ranking: data.ranking,
+          status: :initialized,
+          time: Time.timestamp()
+        }
 
-  #   state = %Match{
-  #     id: id,
-  #     player_one: data.player_one,
-  #     player_two: data.player_two,
-  #     deck_one: data.deck_one,
-  #     deck_two: data.deck_two,
-  #     ranking: data.ranking,
-  #     status: :initialized,
-  #     time: Time.timestamp()
-  #   }
-
-  #   case Data.save_state_with_log(@atom, id, state, event) do
-  #     {:error, e} -> {:stop, e}
-  #     _ -> {:ok, state}
-  #   end
-  #   {:ok, state}
-  # end
+        case Data.save_state_with_log(@atom, id, state, event) do
+          {:error, e} ->
+            {:stop, e}
+          _ ->
+            {:ok, state}
+        end
+    end
+  end
 
   # def init(%Match{} = state) do
   #   {:ok, state}
   # end
 
-  # @impl true
-  # def handle_call(%{keys: [:read, :match]}, _from, state) do
-  #   # Reply
-  #   {:reply, state, state}
-  # end
+  @impl true
+  def handle_call(%{keys: [:read, @atom]}, _from, state) do
+    # Reply
+    {:reply, state, state}
+  end
 
-  # @impl true
-  # def handle_call(%{keys: [:end, :match], data: %{match_id: id}, event: event}, _from, state) do
-  #   new_state =
-  #     state
-  #     |> Map.put(:winner, find_winner(state))
-  #     |> Map.put(:status, :closed)
+  @impl true
+  def handle_call(
+        %Event{keys: [:end, :match]} = event,
+        _from,
+        state
+      ) do
 
-  #   case Data.save_state_with_log(@atom, id, state, event) do
-  #     {:error, e} -> {:stop, e}
-  #     _ -> {:ok, new_state}
-  #   end
-  #   # Reply
-  #   {:reply, :ok, new_state}
-  # end
+    state
+    |> collect_rank_alterations()
+    |> Router.input()
 
-  # @impl true
-  # def handle_call(
-  #       %{keys: [:game, :created, _orepp], data: %{id: game_id, match_id: id}, event: event},
-  #       _from,
-  #       state
-  #     ) do
-  #   new_state =
-  #     state
-  #     |> Map.update!(:games, &(&1 ++ [game_id]))
-  #     |> Map.put(:status, :open)
+    new_state =
+      state
+      |> Map.put(:winner, find_winner(state))
+      |> Map.put(:status, :closed)
 
-  #   case Data.save_state_with_log(@atom, id, state, event) do
-  #     {:error, e} -> {:stop, e}
-  #     _ -> {:ok, new_state}
-  #   end
-  #   # Reply
-  #   {:reply, "Game #{game_id} added to match #{id}", new_state}
-  # end
+    case Data.save_state_with_log(@atom, event.data.id, state, event) do
+      {:error, e} ->
+        {:stop, e}
+      _ ->
+        {:reply, "Match #{state.id} ended", new_state}
+    end
+  end
+
+  @impl true
+  def handle_call(
+        %Event{keys: [:game, :created, _orepp]} = event,
+        _from,
+        state
+      ) do
+
+    new_state = state
+      |> Map.update!(:games, &(&1 ++ [event.data.out]))
+      |> Map.put(:status, :open)
+
+    case Data.save_state_with_log(@atom, state.id, state, event) do
+      {:error, e} ->
+        {:stop, e}
+      _ ->
+        {:reply, "Game #{event.data.out} added to match #{state.id}", new_state}
+    end
+  end
 
   # @impl true
   # def handle_call(
