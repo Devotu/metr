@@ -8,6 +8,9 @@ defmodule Metr.Modules.State do
   alias Metr.Modules.Player
   alias Metr.Modules.Result
 
+  @max_read_attempts 3
+  @timeout_ms 32
+
   @doc """
   Passes the input to the appropriate module for creation.
   The idea is to collect all boiler plate in one place and let each module focus on its specifics
@@ -89,10 +92,26 @@ defmodule Metr.Modules.State do
   Reads the entity through its own module genserver
   """
   def read(id, module) when is_atom(module) and is_bitstring(id) do
-    {:ok, id, module}
-    |> is_valid_id()
-    |> ready_process()
-    |> recall()
+    {id, module}
+    |> read_robust()
+  end
+
+  defp read_robust({:error, e}), do: {:error, e}
+  defp read_robust({id, module}), do: read_robust({id, module}, 0)
+  defp read_robust({id, module}, @max_read_attempts), do: read_robust({:error, "#{module} #{id} not found"})
+  defp read_robust({id, module}, attempt) do
+    :timer.sleep(attempt * @timeout_ms)
+    IO.inspect attempt * @timeout_ms, label: "state read slept"
+
+    result = {id, module}
+      |> is_valid_id()
+      |> ready_process()
+      |> recall()
+
+    case result do
+      {:error, _e} -> read_robust({id, module}, attempt + 1)
+      x -> x
+    end
   end
 
   @doc """
@@ -101,9 +120,9 @@ defmodule Metr.Modules.State do
   TODO Is this really neccessary? Does that not belong to the process?
   """
   defp is_valid_id({:error, e}), do: {:error, e}
-  defp is_valid_id({:ok, id, module}) when is_atom(module) and is_bitstring(id) do
+  defp is_valid_id({id, module}) when is_atom(module) and is_bitstring(id) do
     case Data.state_exists?(module, id) do
-      true -> {:ok, id, module}
+      true -> {id, module}
       false -> {:error, "#{module |> Atom.to_string |> String.capitalize()} #{id} not found"}
     end
   end
@@ -114,18 +133,18 @@ defmodule Metr.Modules.State do
   TODO Is the state check really neccessary? Does that not belong to the process?
   """
   defp ready_process({:error, e}), do: {:error, e}
-  defp ready_process({:ok, id, module}) do
+  defp ready_process({id, module}) do
     # Is running?
     case {GenServer.whereis(Data.genserver_id(module, id)),
           Data.state_exists?(module, id)} do
       {nil, true} ->
-        start_process({:ok, id, module})
+        start_process({id, module})
 
       {nil, false} ->
         {:error, :no_such_id}
 
       _ ->
-        {:ok, id, module}
+        {id, module}
     end
   end
 
@@ -133,7 +152,7 @@ defmodule Metr.Modules.State do
   Starts the given process
   """
   defp start_process({:error, e}), do: {:error, e}
-  defp start_process({:ok, id, module}) do
+  defp start_process({id, module}) do
     # Get state
     current_state =
       Data.recall_state(module, id)
@@ -141,7 +160,7 @@ defmodule Metr.Modules.State do
     case GenServer.start(select_target_module(module), current_state,
            name: Data.genserver_id(module, id)
          ) do
-      {:ok, _pid} -> {:ok, id, module}
+      {:ok, _pid} -> {id, module}
       {:error, cause} -> {:error, cause}
       x -> {:error, inspect(x)}
     end
@@ -151,7 +170,7 @@ defmodule Metr.Modules.State do
   Calls the corresponding process and asks it to return its state
   """
   defp recall({:error, e}), do: {:error, e}
-  defp recall({:ok, id, module}) when is_atom(module) and is_bitstring(id) do
+  defp recall({id, module}) when is_atom(module) and is_bitstring(id) do
     GenServer.call(Data.genserver_id(module, id), %{
       keys: [:read, module]
     })
@@ -161,7 +180,7 @@ defmodule Metr.Modules.State do
   Calls the corresponding process with a notice that it should concider the given change
   """
   def update(id, module, event) when is_atom(module) and is_bitstring(id) do
-    {:ok, id, module}
+    {id, module}
     |> is_valid_id()
     |> ready_process()
     |> alter(event)
