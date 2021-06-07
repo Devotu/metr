@@ -42,10 +42,15 @@ defmodule Metr.Modules.Match do
 
     game = State.read(game_id, :game)
 
-    [
-      State.update(game.match, @atom, event)
-      |> Event.message_to_event([@atom, :altered, repp])
-    ]
+    case game.match do
+      nil ->
+        []
+      _ ->
+        [
+          State.update(game.match, @atom, event)
+          |> Event.message_to_event([@atom, :altered, repp])
+        ]
+    end
   end
 
   def feed(
