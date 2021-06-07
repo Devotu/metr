@@ -354,7 +354,7 @@ defmodule MetrTest do
     assert deck_id == first_result.deck_id
     assert player_id == first_result.player_id
 
-    TestHelper.wipe_test(:player, [player_id])
+    TestHelper.wipe_test(:player, player_id)
     TestHelper.wipe_test(:deck, deck_id)
     TestHelper.wipe_test(:game, game.id)
     TestHelper.wipe_test(:result, game.results)

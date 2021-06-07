@@ -187,7 +187,7 @@ defmodule Metr.Modules.State do
   end
 
   defp alter({:error, e},_event), do: {:error, e}
-  defp alter({:ok, id, entity}, event) do
+  defp alter({id, entity}, event) do
     # Call update
     GenServer.call(Data.genserver_id(entity, id), event)
   end
