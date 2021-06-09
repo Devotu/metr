@@ -2,50 +2,31 @@ defmodule Metr.Modules.State do
   alias Metr.Data
   alias Metr.Event
   alias Metr.Id
+  alias Metr.Util
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
   alias Metr.Modules.Match
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.State
 
   @max_read_attempts 3
   @timeout_ms 32
 
   @doc """
-  Passes the input to the appropriate module for creation.
-  The idea is to collect all boiler plate in one place and let each module focus on its specifics
-  """
-  def feed(
-        %Event{id: _event_id, keys: [:create, module], data: %{id: id, input: input}} = event,
-        repp
-      ) do
-
-    process_name = Data.genserver_id(id, module)
-    target_module = select_target_module(module)
-
-    case GenServer.start(target_module, {id, input, event}, name: process_name) do
-      {:ok, _pid} ->
-        [Event.new([module, :created, repp], %{out: id})]
-        |> IO.inspect(label: "state - ok")
-      {:error, e} ->
-        [Event.error_to_event(e, repp)]
-        |> IO.inspect(label: "state - error")
-    end
-  end
-
-  @doc """
   Generates a guid and runs corresponding feed with it
   """
-  def feed(
-        %Event{id: _event_id, keys: [:create, _module], data: input} = event,
-        repp
-      ) do
+  # def feed(
+  #       %Event{id: _event_id, keys: [:create, module], data: input} = event,
+  #       repp
+  #     ) do
 
-    id = Id.guid() |> IO.inspect(label: "state - id")
-    id_input = %{id: id, input: input}
-    event_with_specific_id = Map.put(event, :data, id_input)
-    feed(event_with_specific_id, repp)
-  end
+  #   target_module = select_target_module(module)
+  #   id = Id.guid() |> IO.inspect(label: "state - id")
+  #   id_input = %{id: id, input: input}
+  #   event_with_specific_id = Map.put(event, :data, id_input)
+  #   target_module.feed(event_with_specific_id, repp)
+  # end
 
   def feed(%Event{keys: [:read, module], data: %{id: id}}, repp) do
     case read(id, module) do

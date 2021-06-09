@@ -29,8 +29,11 @@ defmodule Metr.Event do
     |> Map.put(:keys, event.keys ++ [repp])
   end
 
-  def error_to_event(cause, repp) when is_pid(repp) do
+  def error_to_event(cause, repp) when is_pid(repp) and is_bitstring(cause) do
     Event.new([:error, repp], %{cause: cause})
+  end
+  def error_to_event(cause, repp) when is_pid(repp) do
+    Event.new([:error, repp], %{cause: Kernel.inspect(cause)})
   end
   def error_to_event(cause, nil) do
     Event.new([:error, nil], %{cause: cause})

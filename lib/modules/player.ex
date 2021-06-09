@@ -17,6 +17,25 @@ defmodule Metr.Modules.Player do
   @atom :player
 
   def feed(
+    %Event{
+      id: _event_id,
+      keys: [:create, @atom],
+      data: %{id: id, input: _input}
+      } = event,
+    repp
+  ) do
+
+    process_name = Data.genserver_id(id, @atom)
+
+    case GenServer.start(Player, event, name: process_name) do
+      {:ok, _pid} ->
+        [Event.new([@atom, :created, repp], %{out: id})]
+      {:error, e} ->
+        [Event.error_to_event(e, repp)]
+    end
+  end
+
+  def feed(
         %Event{
           keys: [:deck, :created, _orepp],
           data: %{out: deck_id}
@@ -126,13 +145,20 @@ defmodule Metr.Modules.Player do
 
   ## gen
   @impl true
-  def init({id, %PlayerInput{} = data, %Event{} = event}) do
-    state = %Player{id: id, name: data.name, time: event.time}
+  def init(%Event{} = event) do
+    id = event.data.id
+    input = event.data.input
+    state = %Player{
+      id: id,
+      name: input.name,
+      time: event.time
+    }
     case Data.save_state_with_log(@atom, id, state, event) do
-      {:error, e} -> {:stop, e}
-      _ -> {:ok, state}
+      {:error, e} ->
+        {:stop, e}
+      _ ->
+        {:ok, state}
     end
-    {:ok, state}
   end
 
   @impl true

@@ -8,6 +8,7 @@ defmodule Metr do
   """
 
   alias Metr.Event
+  alias Metr.Id
   alias Metr.Router
   alias Metr.Modules.Stately
   alias Metr.Modules.Input.DeckInput
@@ -18,10 +19,14 @@ defmodule Metr do
   ## api
 
   ### create
-  def create(%PlayerInput{} = data, :player), do: create_state(:player, data)
-  def create(%DeckInput{} = data, :deck), do: create_state(:deck, data)
-  def create(%GameInput{} = data, :game), do: create_state(:game, data)
-  def create(%MatchInput{} = data, :match), do: create_state(:match, data)
+  def create(%PlayerInput{} = data, :player), do: create_state(:player, add_id(data))
+  def create(%DeckInput{} = data, :deck), do: create_state(:deck, add_id(data))
+  def create(%GameInput{} = data, :game), do: create_state(:game, add_id(data))
+  def create(%MatchInput{} = data, :match), do: create_state(:match, add_id(data))
+
+  defp add_id(data) do
+    %{id: Id.guid(), input: data}
+  end
 
   ### list
   # all
