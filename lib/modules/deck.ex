@@ -52,6 +52,18 @@ defmodule Metr.Modules.Deck do
   @atom :deck
 
   def feed(
+    %Event{
+      id: _event_id,
+      keys: [:create, @atom],
+      data: %{id: id, input: _input}
+      } = event,
+    repp
+  ) do
+
+    State.create(id, @atom, event, repp)
+  end
+
+  def feed(
       %Event{
         id: _event_id,
         keys: [:result, :created, _orepp],
@@ -267,23 +279,25 @@ defmodule Metr.Modules.Deck do
     }
   end
 
-  ## gen
   @impl true
-  def init({id, %DeckInput{} = data, event}) do
-    case verify_new_deck_input(data) do
+  def init(%Event{} = event) do
+    id = event.data.id
+    input = event.data.input
+
+    case verify_new_deck_input(input) do
       {:error, e} ->
         {:stop, e}
       {:ok} ->
-        state = from_input(data, id, event.time)
+        state = from_input(input, id, event.time)
         case Data.save_state_with_log(@atom, id, state, event) do
           {:error, e} -> {:stop, e}
           _ ->
-            # Router.input([Event.new([@atom, :created, nil], %{id: id, player_id: data.player_id})])
             {:ok, state}
         end
     end
   end
 
+  @impl true
   def init(%Deck{} = state) do
     {:ok, state}
   end
