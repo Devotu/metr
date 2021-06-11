@@ -54,6 +54,20 @@ defmodule Metr.Modules.State do
     []
   end
 
+
+  def create(id, module, %Event{} = event, repp) do
+
+    process_name = Data.genserver_id(id, module)
+    target_module = select_target_module(module)
+
+    case GenServer.start(target_module, event, name: process_name) do
+      {:ok, _pid} ->
+        [Event.new([module, :created, repp], %{out: id})]
+      {:error, e} ->
+        [Event.error_to_event(e, repp)]
+    end
+  end
+
   @doc """
   Fetches the actual corresponding module for use in further functions
   """

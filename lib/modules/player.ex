@@ -25,14 +25,7 @@ defmodule Metr.Modules.Player do
     repp
   ) do
 
-    process_name = Data.genserver_id(id, @atom)
-
-    case GenServer.start(Player, event, name: process_name) do
-      {:ok, _pid} ->
-        [Event.new([@atom, :created, repp], %{out: id})]
-      {:error, e} ->
-        [Event.error_to_event(e, repp)]
-    end
+    State.create(id, @atom, event, repp)
   end
 
   def feed(
