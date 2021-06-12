@@ -91,6 +91,19 @@ defmodule Metr.Modules.Game do
   #   [Event.new([@atom, :list, repp], %{out: games})]
   # end
 
+
+  def feed(
+    %Event{
+      id: _event_id,
+      keys: [:create, @atom],
+      data: %{id: id, input: _input}
+      } = event,
+    repp
+  ) do
+
+    State.create(id, @atom, event, repp)
+  end
+
   def feed(%Event{id: _event_id, keys: [:list, :result], data: %{by: @atom, id: id}}, repp) do
     game = State.read(id, @atom)
     [Event.new([:result, :list, repp], %{out: game.results})]
@@ -264,6 +277,35 @@ defmodule Metr.Modules.Game do
 
   ## gen
   @impl true
+  def init(%Event{} = event) do
+    id = event.data.id
+    input = event.data.input
+    case verify_input_data(input) do
+      {:error, e} ->
+        {:stop, e}
+      {:ok} ->
+        [result_1_input, result_2_input] = convert_to_result_inputs(input, id)
+
+        result_1_id = Id.guid()
+        result_2_id = Id.guid()
+
+        complete_input = Map.put(input, :results, [result_1_id, result_2_id])
+
+        state = from_input(complete_input, id, event.time)
+        case Data.save_state_with_log(@atom, id, state, event) do
+          {:error, e} ->
+            {:stop, e}
+          _ ->
+            Router.input([
+              Event.new([:create, :result], %{id: result_1_id, input: result_1_input}),
+              Event.new([:create, :result], %{id: result_2_id, input: result_2_input}),
+            ])
+
+            {:ok, state}
+        end
+    end
+  end
+
   def init({id, %GameInput{} = data, event}) do
     case verify_input_data(data) do
       {:error, e} ->

@@ -58,7 +58,7 @@ defmodule Metr.Router do
       # Log.feed(event, response_pid),
       Match.feed(event, response_pid),
       Metr.feed(event, response_pid),
-      # Result.feed(event, response_pid),
+      Result.feed(event, response_pid),
       # Stately.feed(event, response_pid),
       # Tag.feed(event, response_pid),
       State.feed(event, response_pid)

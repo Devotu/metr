@@ -18,6 +18,7 @@ defmodule Metr.Modules.Result do
   alias Metr.Modules.Deck
   alias Metr.Modules.Player
   alias Metr.Modules.Result
+  alias Metr.Modules.State
   alias Metr.Modules.Stately
   alias Metr.Modules.Input.ResultInput
 
@@ -44,6 +45,18 @@ defmodule Metr.Modules.Result do
   #   [Event.new([@atom, :read, repp], %{out: result})]
   # end
 
+  def feed(
+    %Event{
+      id: _event_id,
+      keys: [:create, @atom],
+      data: %{id: id, input: _input}
+      } = event,
+    repp
+  ) do
+
+    State.create(id, @atom, event, repp)
+  end
+
   def feed(event, _orepp) do
       # IO.inspect event, label: " ---- #{@atom} passed event"
     []
@@ -56,9 +69,10 @@ defmodule Metr.Modules.Result do
 
   ## gen
   @impl true
-  def init({id, %ResultInput{} = data, %Event{} = event}) do
-    IO.inspect data, label: "Result - init with"
-    state = from_input(data, id, event.time)
+  def init(%Event{} = event) do
+    id = event.data.id
+    input = event.data.input
+    state = from_input(input, id, event.time)
 
     case Data.save_state_with_log(@atom, id, state, event) do
       {:error, e} ->
