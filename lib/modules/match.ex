@@ -30,6 +30,18 @@ defmodule Metr.Modules.Match do
 
   @atom :match
 
+  def feed(
+    %Event{
+      id: _event_id,
+      keys: [:create, @atom],
+      data: %{id: id, input: _input}
+      } = event,
+    repp
+  ) do
+
+    State.create(id, @atom, event, repp)
+  end
+
   ## feed
   def feed(
         %Event{
@@ -294,18 +306,20 @@ defmodule Metr.Modules.Match do
 
   ## gen
   @impl true
-  def init({id, %MatchInput{} = data, event}) do
-    case verify_input_data(data) do
+  def init(%Event{} = event) do
+    id = event.data.id
+    input = event.data.input
+    case verify_input_data(input) do
       {:error, e} ->
         {:stop, e}
       {:ok} ->
         state = %Match{
           id: id,
-          player_one: data.player_one,
-          player_two: data.player_two,
-          deck_one: data.deck_one,
-          deck_two: data.deck_two,
-          ranking: data.ranking,
+          player_one: input.player_one,
+          player_two: input.player_two,
+          deck_one: input.deck_one,
+          deck_two: input.deck_two,
+          ranking: input.ranking,
           status: :initialized,
           time: Time.timestamp()
         }
