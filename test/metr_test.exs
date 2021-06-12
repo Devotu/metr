@@ -375,10 +375,10 @@ defmodule MetrTest do
 
     deck_1_state = Metr.read(deck_1_id, :deck)
     [result_1, result_2] = Metr.list(:result, by: {:game, game_1_id})
-    assert [result_1.id, result_2.id] == deck_1_state.results
+    assert [result_1, result_2] == deck_1_state.results
 
     player_1_state = Metr.read(player_1_id, :player)
-    assert [result_1.id, result_2.id] == player_1_state.results
+    assert [result_1, result_2] == player_1_state.results
 
     game_1_state = Metr.read(game_1_id, :game)
     assert 2 == Enum.count(game_1_state.results)
