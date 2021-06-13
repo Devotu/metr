@@ -50,6 +50,15 @@ defmodule Metr.Modules.State do
     [Event.new([module, :read, repp], %{out: events})]
   end
 
+  def feed(%Event{id: _event_id, keys: [:rerun, module], data: %{id: id}}, repp) when is_atom(module) do
+    case rerun_log({id, module}) do
+      {:error, e} ->
+        [Event.error_to_event(e, repp)]
+      out ->
+        [Event.new([module, :reran, repp], %{out: out})]
+    end
+  end
+
   def feed(_event, _repp) do
     []
   end
@@ -189,5 +198,76 @@ defmodule Metr.Modules.State do
 
   def exist?(id, module) when is_atom(module) do
     Data.state_exists?(module, id)
+  end
+
+  defp rerun_log({id, module}) do
+    {id, module}
+    |> has_log()
+    |> stop()
+    |> wipe_current()
+    |> feed_log()
+  end
+
+  defp has_log({:error, e}), do: {:error, e}
+  defp has_log({id, module}) do
+    Data.log_exists?(module, id)
+    case Data.log_exists?(module, id) do
+      false ->
+        {:error, "#{module} #{id} has no log"}
+      _ ->
+        {id, module}
+    end
+  end
+
+  defp wipe_current({:error, e}), do: {:error, e}
+  defp wipe_current({id, module}) do
+    case Data.wipe_state(id, module) do
+      {:error, e} ->
+        {:error, e}
+      _ ->
+        {id, module}
+    end
+  end
+
+  defp feed_log({:error, e}), do: {:error, e}
+  defp feed_log({id, module}) do
+    mod = select_target_module(module)
+    result = Data.read_log_by_id(id, module)
+      |> Enum.map(fn e -> feed_event(mod, e) end)
+      |> Enum.filter(fn r -> Util.is_error?(r) end)
+      |> List.first()
+
+      case result do
+        {:error, e} ->
+          {:error, e}
+        _ ->
+          :ok
+      end
+  end
+
+  defp feed_event(reciever, event) do
+    reciever.feed(event, nil)
+  end
+
+  def stop({id, module}) do
+    case is_running?({id, module}) do
+      {:error, e} ->
+        {:error, e}
+      true ->
+        Data.genserver_id(module, id) |> GenServer.stop()
+        {id, module}
+      false ->
+        {id, module}
+    end
+  end
+
+  defp is_running?({:error, e}), do: {:error, e}
+  defp is_running?({id, entity}) do
+    case GenServer.whereis(Data.genserver_id(entity, id)) do
+      nil ->
+        false
+      _pid ->
+        true
+    end
   end
 end

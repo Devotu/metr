@@ -396,12 +396,14 @@ defmodule MetrTest do
       TestHelper.init_single_states(player_name, deck_name)
 
     original_deck = Stately.read(deck_id, :deck)
+    
     # To verify it is not the same state read
-    Data.wipe_state([deck_id], :deck)
-    assert {:error, "Deck #{deck_id} not found"} == Deck.read(deck_id)
+    Data.wipe_state(deck_id, :deck)
+    State.stop({deck_id, :deck})
+    :timer.sleep(@propagation_delay)
 
+    assert {:error, "deck #{deck_id} not found"} == State.read(deck_id, :deck)
     assert {:error, "not found"} == Data.recall_state(:deck, deck_id)
-
     assert :ok == Metr.rerun(:deck, deck_id)
 
     recreated_deck = Stately.read(deck_id, :deck)
@@ -417,7 +419,7 @@ defmodule MetrTest do
     {player_id, deck_id, match_id, game_id} =
       TestHelper.init_single_states(player_name, deck_name)
 
-    game = Game.read(game_id)
+    game = State.read(game_id, :game)
 
     tag_name = "test"
     original_deck = Stately.read(deck_id, :deck)

@@ -37,7 +37,7 @@ defmodule TestHelper do
   end
 
   def cleanup_single_states({player_id, deck_id, match_id, game_id}) do
-    game = Game.read(game_id)
+    game = State.read(game_id, :game)
 
     TestHelper.wipe_test(:player, [player_id])
     TestHelper.wipe_test(:deck, [deck_id])
