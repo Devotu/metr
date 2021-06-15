@@ -109,8 +109,8 @@ defmodule Metr do
     |> run()
   end
 
-  def add_tag(tag, type, id) when is_bitstring(tag) and is_atom(type) and is_bitstring(id) do
-    Event.new([:tag, type], %{id: id, tag: tag})
+  def add_tag(tag, target_type, target_id) when is_bitstring(tag) and is_atom(target_type) and is_bitstring(target_id) do
+    Event.new([:tag, target_type], %{id: target_id, tag: tag})
     |> run()
   end
 

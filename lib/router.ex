@@ -60,7 +60,7 @@ defmodule Metr.Router do
       Metr.feed(event, response_pid),
       Result.feed(event, response_pid),
       # Stately.feed(event, response_pid),
-      # Tag.feed(event, response_pid),
+      Tag.feed(event, response_pid),
       State.feed(event, response_pid)
     ]
     |> Enum.filter(fn e -> Enum.count(e) > 0 end)

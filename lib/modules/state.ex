@@ -9,6 +9,7 @@ defmodule Metr.Modules.State do
   alias Metr.Modules.Player
   alias Metr.Modules.Result
   alias Metr.Modules.State
+  alias Metr.Modules.Tag
 
   @max_read_attempts 3
   @timeout_ms 32
@@ -65,7 +66,6 @@ defmodule Metr.Modules.State do
 
 
   def create(id, module, %Event{} = event, repp) do
-
     process_name = Data.genserver_id(id, module)
     target_module = select_target_module(module)
 
@@ -197,7 +197,7 @@ defmodule Metr.Modules.State do
   end
 
   def exist?(id, module) when is_atom(module) do
-    Data.state_exists?(module, id)
+    Data.log_exists?(module, id)
   end
 
   defp rerun_log({id, module}) do
