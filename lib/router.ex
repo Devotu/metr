@@ -44,7 +44,6 @@ defmodule Metr.Router do
   defp route({%Event{} = event, response_pid}), do: route(event, response_pid)
 
   defp route(%Event{} = event, response_pid \\ nil) do
-    # IO.inspect(event, label: "routing")
     spawn(Router, :do_route, [event, response_pid])
   end
 

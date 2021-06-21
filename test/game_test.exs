@@ -122,8 +122,6 @@ defmodule GameTest do
     deck_2 = Metr.read(deck_2_id, :deck)
     deck_3 = Metr.read(deck_3_id, :deck)
 
-    IO.inspect deck_1, label: "game test - deck 1"
-
     assert 5 == Enum.count(deck_1.results)
     assert 3 == Enum.count(Metr.list(:game, limit: 3))
 

@@ -355,4 +355,21 @@ defmodule Metr.Modules.Game do
   #   end
   #   {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
   # end
+
+
+
+  @impl true
+  def handle_call(
+        %Event{keys: [@atom, :tagged], data: %{id: id, tag: tag} = event},
+        _from,
+        state
+      ) do
+
+    new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, new_state}
+    end
+    {:reply, "Game #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
+  end
 end

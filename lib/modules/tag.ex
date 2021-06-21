@@ -100,6 +100,10 @@ defmodule Metr.Modules.Tag do
     end
   end
 
+  defp tag_tuple(target_module, target_id) do
+    {target_module, target_id, Time.timestamp()}
+  end
+
   ## module
   # def read(id) do
   #   Stately.read(id, @atom)
@@ -124,7 +128,7 @@ defmodule Metr.Modules.Tag do
     state = %Tag{
       id: id,
       name: tag_name,
-      tagged: [{target_module, target_id, Time.timestamp()}]
+      tagged: [tag_tuple(target_module, target_id)]
     }
 
     case Data.save_state_with_log(@atom, id, state, event) do
@@ -140,14 +144,19 @@ defmodule Metr.Modules.Tag do
     {:ok, state}
   end
 
-  # @impl true
-  # def handle_call(%{keys: [:read, @atom]}, _from, state) do
-  #   {:reply, state, state}
-  # end
+  @impl true
+  def handle_call(%{keys: [:read, @atom]}, _from, state) do
+    {:reply, state, state}
+  end
 
-  # @impl true
-  # def handle_call(%{keys: [:tagged], data: %{id: id}}, _from, state) do
-  #   new_state = Map.update!(state, :tagged, &(&1 ++ [{id, Time.timestamp()}]))
-  #   {:reply, state, new_state}
-  # end
+  @impl true
+  def handle_call(%Event{keys: [:tag, target_module], data: %{id: target_id}}, _from, state) do
+    new_state = state
+      |> Map.update!(
+        :tagged,
+        &(&1 ++ [tag_tuple(target_module, target_id)])
+      )
+      
+    {:reply, :ok, new_state}
+  end
 end

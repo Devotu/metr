@@ -60,6 +60,12 @@ defmodule Metr.Modules.State do
     end
   end
 
+  def feed(%Event{id: _event_id, keys: [tagged_module, :tagged], data: %{id: tagged_id}} = event, repp) when is_atom(tagged_module) do
+    State.update(tagged_id, tagged_module, event)
+    |> Event.message_to_event([tagged_module, :altered, repp])
+    |> List.wrap()
+  end
+
   def feed(_event, _repp) do
     []
   end
@@ -104,8 +110,11 @@ defmodule Metr.Modules.State do
   defp read_robust({id, module}), do: read_robust({id, module}, 0)
   defp read_robust({id, module}, @max_read_attempts), do: read_robust({:error, "#{module} #{id} not found"})
   defp read_robust({id, module}, attempt) do
-    :timer.sleep(attempt * @timeout_ms)
-    IO.inspect attempt * @timeout_ms, label: "state read slept"
+
+    if attempt != 0 do
+      :timer.sleep(attempt * @timeout_ms)
+      IO.inspect attempt * @timeout_ms, label: "state read slept"
+    end
 
     result = {id, module}
       |> is_valid_id()

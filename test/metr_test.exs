@@ -396,7 +396,7 @@ defmodule MetrTest do
       TestHelper.init_single_states(player_name, deck_name)
 
     original_deck = Stately.read(deck_id, :deck)
-    
+
     # To verify it is not the same state read
     Data.wipe_state(deck_id, :deck)
     State.stop({deck_id, :deck})
@@ -429,34 +429,34 @@ defmodule MetrTest do
     tagged_deck = Stately.read(deck_id, :deck)
     assert [tag_name] == tagged_deck.tags
 
-    assert is_struct(Metr.add_tag(tag_name, :player, player_id))
+    assert tag_name == Metr.add_tag(tag_name, :player, player_id)
     tagged_player = Stately.read(player_id, :player)
     assert [tag_name] == tagged_player.tags
 
-    assert is_struct(Metr.add_tag(tag_name, :match, match_id))
+    assert tag_name == Metr.add_tag(tag_name, :match, match_id)
     tagged_match = Stately.read(match_id, :match)
     assert [tag_name] == tagged_match.tags
 
-    assert is_struct(Metr.add_tag(tag_name, :game, game_id))
+    assert tag_name == Metr.add_tag(tag_name, :game, game_id)
     tagged_game = Stately.read(game_id, :game)
     assert [tag_name] == tagged_game.tags
 
     result_id_1 = game.results |> List.first()
-    assert is_struct(Metr.add_tag(tag_name, :result, result_id_1))
+    assert tag_name == Metr.add_tag(tag_name, :result, result_id_1)
     tagged_result = Stately.read(result_id_1, :result)
     assert [tag_name] == tagged_result.tags
 
     test_tag = Metr.read(tag_name, :tag)
     [dt, pt, mt, gt, rt] = test_tag.tagged
-    {did, _dtime} = dt
+    {:deck, did, _dtime} = dt
     assert did == deck_id
-    {pid, _ptime} = pt
+    {:player, pid, _ptime} = pt
     assert pid == player_id
-    {mid, _mtime} = mt
+    {:match, mid, _mtime} = mt
     assert mid == match_id
-    {gid, _gtime} = gt
+    {:game, gid, _gtime} = gt
     assert gid == game_id
-    {rid, _rtime} = rt
+    {:result, rid, _rtime} = rt
     assert rid == result_id_1
 
     assert [test_tag] == Metr.list(:tag)
