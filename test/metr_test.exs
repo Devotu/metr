@@ -16,7 +16,6 @@ defmodule MetrTest do
   alias Metr.Id
 
   @id_length 14
-  @propagation_delay 48
 
   test "create player" do
     player_name = "Adam Metr"
@@ -70,6 +69,7 @@ defmodule MetrTest do
 
     assert [deck.id] == player.decks
 
+    TestHelper.delay()
     TestHelper.wipe_test(:deck, deck.id)
     TestHelper.wipe_test(:player, player_id)
   end
@@ -107,7 +107,7 @@ defmodule MetrTest do
     game_1 = Metr.read(game_1_id, :game)
 
     results = Metr.list(:result)
-    assert 2 == results |> Enum.count()
+    assert 2 <= results |> Enum.count()
 
     player_1 = Metr.read(player_1_id, :player)
     assert 1 == player_1.results |> Enum.count()
@@ -121,6 +121,7 @@ defmodule MetrTest do
     result_2 = Metr.read(result_2_id, :result)
     assert 1 = result_2.place
 
+    TestHelper.delay()
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
     TestHelper.wipe_test(:game, [game_1_id])
@@ -162,11 +163,14 @@ defmodule MetrTest do
     |> Metr.create(:game)
     |> Metr.read(:game)
 
-    assert 2 == Metr.list(:result, by: {:game, game_1.id}) |> Enum.count()
-    assert 2 == Metr.list(:result, by: {:game, game_2.id}) |> Enum.count()
-    assert 2 == Metr.list(:result, by: {:deck, deck_1_id}) |> Enum.count()
-    assert 1 == Metr.list(:result, by: {:deck, deck_2_id}) |> Enum.count()
+    TestHelper.delay()
 
+    assert 2 <= Metr.list(:result, by: {:game, game_1.id}) |> Enum.count()
+    assert 2 <= Metr.list(:result, by: {:game, game_2.id}) |> Enum.count()
+    assert 2 <= Metr.list(:result, by: {:deck, deck_1_id}) |> Enum.count()
+    assert 1 <= Metr.list(:result, by: {:deck, deck_2_id}) |> Enum.count()
+
+    TestHelper.delay()
     TestHelper.wipe_test(:player, [player_1_id, player_2_id, player_3_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id, deck_3_id])
     TestHelper.wipe_test(:game, [game_1.id, game_2.id])
@@ -199,8 +203,7 @@ defmodule MetrTest do
       winner: 1
     }
     |> Metr.create(:game)
-
-    :timer.sleep(@propagation_delay)
+    TestHelper.delay()
 
     assert 4 == Metr.read_log(player_1_id, :player) |> Enum.count()
     assert 3 == Metr.read_log(deck_1_id, :deck) |> Enum.count()
@@ -209,6 +212,7 @@ defmodule MetrTest do
     player_1 = Metr.read(player_1_id, :player)
     player_2 = Metr.read(player_2_id, :player)
 
+    TestHelper.delay()
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
     TestHelper.wipe_test(:game, [game_1_id, game_2_id])
@@ -264,6 +268,7 @@ defmodule MetrTest do
     deck_02_0 = Metr.read(deck_id, :deck)
     assert {-2, 0} == deck_02_0.rank
 
+    TestHelper.delay()
     TestHelper.wipe_test(:player, [player_id])
     TestHelper.wipe_test(:deck, [deck_id])
   end
@@ -326,6 +331,7 @@ defmodule MetrTest do
     player_1 = Metr.read(player_1_id, :player)
     player_2 = Metr.read(player_2_id, :player)
 
+    TestHelper.delay()
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
     TestHelper.wipe_test(:game, [game_1_id, game_2_id, game_3_id])
@@ -354,6 +360,7 @@ defmodule MetrTest do
     assert deck_id == first_result.deck_id
     assert player_id == first_result.player_id
 
+    TestHelper.delay()
     TestHelper.wipe_test(:player, player_id)
     TestHelper.wipe_test(:deck, deck_id)
     TestHelper.wipe_test(:game, game.id)
@@ -372,17 +379,23 @@ defmodule MetrTest do
       winner: 2
     }
     |> Metr.create(:game)
+    TestHelper.delay()
 
     deck_1_state = Metr.read(deck_1_id, :deck)
     [result_1, result_2] = Metr.list(:result, by: {:game, game_1_id})
-    assert [result_1, result_2] == deck_1_state.results
+    assert Enum.member?(deck_1_state.results, result_1)
+    assert Enum.member?(deck_1_state.results, result_2)
 
     player_1_state = Metr.read(player_1_id, :player)
-    assert [result_1, result_2] == player_1_state.results
+    [result_11, result_12] = player_1_state.results
+    assert Enum.member?(deck_1_state.results, result_11)
+    assert Enum.member?(deck_1_state.results, result_12)
 
     game_1_state = Metr.read(game_1_id, :game)
     assert 2 == Enum.count(game_1_state.results)
 
+    TestHelper.delay()
+    TestHelper.wipe_test(:result, [result_1, result_2])
     TestHelper.wipe_test(:player, [player_1_id])
     TestHelper.wipe_test(:deck, [deck_1_id])
     TestHelper.wipe_test(:game, [game_1_id])
@@ -400,7 +413,7 @@ defmodule MetrTest do
     # To verify it is not the same state read
     Data.wipe_state(deck_id, :deck)
     State.stop({deck_id, :deck})
-    :timer.sleep(@propagation_delay)
+    TestHelper.delay()
 
     assert {:error, "deck #{deck_id} not found"} == State.read(deck_id, :deck)
     assert {:error, "not found"} == Data.recall_state(:deck, deck_id)
@@ -409,6 +422,7 @@ defmodule MetrTest do
     recreated_deck = Stately.read(deck_id, :deck)
     assert recreated_deck == original_deck
 
+    TestHelper.delay()
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
   end
 
@@ -461,6 +475,7 @@ defmodule MetrTest do
 
     assert [test_tag] == Metr.list(:tag)
 
+    TestHelper.delay()
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
     TestHelper.wipe_test(:tag, tag_name)
   end

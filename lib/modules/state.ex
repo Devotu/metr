@@ -11,7 +11,7 @@ defmodule Metr.Modules.State do
   alias Metr.Modules.State
   alias Metr.Modules.Tag
 
-  @max_read_attempts 3
+  @max_read_attempts 6
   @timeout_ms 32
 
   @doc """

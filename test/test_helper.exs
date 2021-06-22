@@ -10,6 +10,8 @@ defmodule TestHelper do
   alias Metr.Modules.Input.MatchInput
   alias Metr.Modules.Input.PlayerInput
 
+  @propagation_delay 48
+
   def init_single_states(player_name, deck_name) do
     player_id = Metr.create(%PlayerInput{name: player_name}, :player)
     deck_id = Metr.create(%DeckInput{name: deck_name, player_id: player_id, format: "standard"}, :deck)
@@ -109,5 +111,9 @@ defmodule TestHelper do
 
   def init_only_deck(name, player_id, format \\ "standard") do
     Metr.create(%DeckInput{name: name, format: format, player_id: player_id}, :deck)
+  end
+
+  def delay() do
+    :timer.sleep(@propagation_delay)
   end
 end
