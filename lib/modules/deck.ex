@@ -147,16 +147,17 @@ defmodule Metr.Modules.Deck do
   #   end)
   # end
 
-  # def feed(
-  #       %Event{
-  #         keys: [:toggle, @atom, :active] = keys,
-  #         data: %{deck_id: deck_id} = data
-  #       } = event,
-  #       repp
-  #     ) do
-  #   Stately.update(deck_id, @atom, keys, data, event)
-  #   |> Stately.out_to_event(@atom, [:altered, repp])
-  # end
+  def feed(
+        %Event{
+          keys: [:toggle, @atom, :active],
+          data: %{id: id}
+        } = event,
+        repp
+      ) do
+
+    State.update(id, @atom, event)
+    |> Stately.out_to_event(@atom, [:altered, repp])
+  end
 
   # def feed(%Event{keys: [:read, @atom], data: %{deck_id: id}}, repp) do
   #   deck = read(id)
@@ -384,19 +385,20 @@ defmodule Metr.Modules.Deck do
     {:reply, "Deck #{id} rank altered to #{Kernel.inspect(new_state.rank)}", new_state}
   end
 
-  # @impl true
-  # def handle_call(
-  #       %{keys: [:toggle, @atom, :active], data: %{deck_id: id}, event: event},
-  #       _from,
-  #       state
-  #     ) do
-  #   new_state = Map.update!(state, :active, fn active -> not active end)
-  #   case Data.save_state_with_log(@atom, id, state, event) do
-  #     {:error, e} -> {:stop, e}
-  #     _ -> {:ok, new_state}
-  #   end
-  #   {:reply, "Deck #{id} active altered to #{Kernel.inspect(new_state.active)}", new_state}
-  # end
+  @impl true
+  def handle_call(
+        %Event{keys: [:toggle, @atom, :active], data: %{id: id} = event},
+        _from,
+        state
+      ) do
+
+    new_state = Map.update!(state, :active, fn active -> not active end)
+    case Data.save_state_with_log(@atom, id, state, event) do
+      {:error, e} -> {:stop, e}
+      _ -> {:ok, new_state}
+    end
+    {:reply, "Deck #{id} active altered to #{Kernel.inspect(new_state.active)}", new_state}
+  end
 
   @impl true
   def handle_call(
