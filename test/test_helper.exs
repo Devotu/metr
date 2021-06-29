@@ -2,8 +2,6 @@ ExUnit.start()
 
 defmodule TestHelper do
   alias Metr.Data
-  alias Metr.Event
-  alias Metr.Modules.Game
   alias Metr.Modules.State
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
@@ -77,7 +75,7 @@ defmodule TestHelper do
   end
 
   def cleanup_double_states({player_1_id, deck_1_id, player_2_id, deck_2_id, match_id, game_id}) do
-    game = Game.read(game_id)
+    game = State.read(game_id, :game)
 
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
