@@ -80,16 +80,26 @@ defmodule Metr.Modules.Game do
   #   [Event.new([@atom, :list, repp], %{out: games})]
   # end
 
-  # def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{limit: limit}}, repp)
-  #     when is_number(limit) do
-  #   games =
-  #     Data.list_ids(@atom)
-  #     |> Enum.map(&read/1)
-  #     |> Enum.sort(&(&1.time < &2.time))
-  #     |> Enum.take(limit)
+  def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{by: :deck, id: deck_id}}, repp) do
+    games = deck_id
+    |> State.read(:deck)
+    |> then(fn deck -> deck.results end)
+    |> Enum.map(fn rid -> State.read(rid, :result) end)
+    |> Enum.map(fn r -> State.read(r.game_id, :game) end)
 
-  #   [Event.new([@atom, :list, repp], %{out: games})]
-  # end
+    [Event.new([@atom, :list, repp], %{out: games})]
+  end
+
+  def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{limit: limit}}, repp)
+      when is_number(limit) do
+    games =
+      Data.list_ids(@atom)
+      |> Enum.map(fn id -> State.read(id, @atom) end)
+      |> Enum.sort(&(&1.time < &2.time))
+      |> Enum.take(limit)
+
+    [Event.new([@atom, :list, repp], %{out: games})]
+  end
 
 
   def feed(
