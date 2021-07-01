@@ -232,6 +232,7 @@ defmodule GameTest do
     |> Metr.create(:game)
     |> Metr.read(:game)
 
+    TestHelper.delay()
     [result_11_id, result_12_id] = game_1.results
     result_11 = Result.read(result_11_id)
     result_12 = Result.read(result_12_id)
@@ -248,6 +249,7 @@ defmodule GameTest do
     |> Metr.create(:game)
     |> Metr.read(:game)
 
+    TestHelper.delay()
     [result_21_id, result_22_id] = game_2.results
     result_21 = Result.read(result_21_id)
     result_22 = Result.read(result_22_id)
@@ -265,6 +267,7 @@ defmodule GameTest do
     |> Metr.create(:game)
     |> Metr.read(:game)
 
+    TestHelper.delay()
     [result_31_id, result_32_id] = game_3.results
     result_31 = Result.read(result_31_id)
     result_32 = Result.read(result_32_id)
