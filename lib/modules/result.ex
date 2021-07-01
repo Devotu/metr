@@ -153,9 +153,9 @@ defmodule Metr.Modules.Result do
     end
   end
 
-  # def init(%Result{} = state) do
-  #   {:ok, state}
-  # end
+  def init(%Result{} = state) do
+    {:ok, state}
+  end
 
   @impl true
   def handle_call(%{keys: [:read, @atom]}, _from, state) do
