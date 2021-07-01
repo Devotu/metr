@@ -1,19 +1,13 @@
 defmodule MetrTest do
   use ExUnit.Case
 
-  alias Metr.Event
   alias Metr.Data
   alias Metr.Modules.State
   alias Metr.Modules.Stately
-  alias Metr.Modules.Deck
-  alias Metr.Modules.Game
-  alias Metr.Modules.Player
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.MatchInput
   alias Metr.Modules.Input.PlayerInput
-  alias Metr.Router
-  alias Metr.Id
 
   @id_length 14
 
@@ -103,8 +97,6 @@ defmodule MetrTest do
 
     # assert :ok == status
     assert @id_length = String.length(game_1_id)
-
-    game_1 = Metr.read(game_1_id, :game)
 
     results = Metr.list(:result)
     assert 2 <= results |> Enum.count()
