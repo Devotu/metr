@@ -11,8 +11,8 @@ defmodule Metr.Modules.State do
   alias Metr.Modules.State
   alias Metr.Modules.Tag
 
-  @max_read_attempts 6
-  @timeout_ms 12
+  @max_read_attempts 8
+  @timeout_ms 16
 
   @doc """
   Generates a guid and runs corresponding feed with it
@@ -43,6 +43,7 @@ defmodule Metr.Modules.State do
       |> Data.list_ids()
       |> Task.async_stream(fn id -> read(id, module) end)
       |> Enum.to_list()
+      |> Enum.map(fn {:ok, s} -> s end)
 
     [Event.new([module, :list, repp], %{out: states})]
   end
@@ -114,6 +115,7 @@ defmodule Metr.Modules.State do
 
     if attempt != 0 do
       :timer.sleep(attempt * @timeout_ms)
+      IO.inspect {id, module}, label: "state read sleep"
       IO.inspect attempt * @timeout_ms, label: "state read slept"
     end
 
