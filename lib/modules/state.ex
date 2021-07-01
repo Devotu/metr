@@ -12,7 +12,7 @@ defmodule Metr.Modules.State do
   alias Metr.Modules.Tag
 
   @max_read_attempts 6
-  @timeout_ms 32
+  @timeout_ms 12
 
   @doc """
   Generates a guid and runs corresponding feed with it
@@ -41,7 +41,8 @@ defmodule Metr.Modules.State do
   def feed(%Event{keys: [:list, module], data: data}, repp) when %{} == data do
     states = module
       |> Data.list_ids()
-      |> Enum.map(fn id -> read(id, module) end)
+      |> Task.async_stream(fn id -> read(id, module) end)
+      |> Enum.to_list()
 
     [Event.new([module, :list, repp], %{out: states})]
   end
@@ -122,8 +123,10 @@ defmodule Metr.Modules.State do
       |> recall()
 
     case result do
-      {:error, _e} -> read_robust({id, module}, attempt + 1)
-      x -> x
+      {:error, e} ->
+        read_robust({id, module}, attempt + 1)
+      x ->
+        x
     end
   end
 
