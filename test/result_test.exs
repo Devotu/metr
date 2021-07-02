@@ -1,15 +1,8 @@
 defmodule ResultTest do
   use ExUnit.Case
 
-  alias Metr.Id
-  alias Metr.Event
-  alias Metr.Modules.State
-  alias Metr.Modules.Deck
-  alias Metr.Modules.Player
   alias Metr.Modules.Result
-  alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
-  alias Metr.Modules.Input.PlayerInput
 
   test "valid created" do
     player_id = TestHelper.init_only_player "Adam Result"
@@ -39,8 +32,9 @@ defmodule ResultTest do
     assert result == Metr.read(result.id, :result)
     assert result == Metr.list(game.results, :result) |> List.first()
 
-    TestHelper.wipe_test(:deck, player_id)
-    TestHelper.wipe_test(:player, deck_id)
+    TestHelper.delay()
+    TestHelper.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:deck, deck_id)
     TestHelper.wipe_test(:game, game.id)
     TestHelper.wipe_test(:result, game.results)
   end
