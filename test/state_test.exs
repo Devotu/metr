@@ -4,6 +4,7 @@ defmodule StateTest do
   alias Metr.Event
   alias Metr.Modules.Input.PlayerInput
   alias Metr.Modules.State
+  alias Metr.Modules.Player
 
   test "standoff read entity x" do
     player_id = "adam_state_fake_id"
@@ -18,7 +19,7 @@ defmodule StateTest do
 
     read_task = Task.async(fn -> Metr.read(player_id, :player) end)
     :timer.sleep(50)
-    State.feed(player_create_event, nil)
+    Player.feed(player_create_event, nil)
 
     assert {:error, "player adam_state_fake_id not found"} != Task.await(read_task)
 
@@ -37,9 +38,9 @@ defmodule StateTest do
     )
 
     read_task = Task.async(fn -> Metr.read(player_id, :player) end)
-    :timer.sleep(200)
-    State.feed(player_create_event, nil)
-    
+    :timer.sleep(500)
+    Player.feed(player_create_event, nil)
+
     assert {:error, "player bertil_state_fake_id not found"} == Task.await(read_task)
 
     TestHelper.wipe_test(:player, player_id)
