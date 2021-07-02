@@ -333,9 +333,9 @@ defmodule Metr.Modules.Match do
     end
   end
 
-  # def init(%Match{} = state) do
-  #   {:ok, state}
-  # end
+  def init(%Match{} = state) do
+    {:ok, state}
+  end
 
   @impl true
   def handle_call(%{keys: [:read, @atom]}, _from, state) do
@@ -359,7 +359,7 @@ defmodule Metr.Modules.Match do
       |> Map.put(:winner, find_winner(state))
       |> Map.put(:status, :closed)
 
-    case Data.save_state_with_log(@atom, event.data.id, state, event) do
+    case Data.save_state_with_log(@atom, event.data.id, new_state, event) do
       {:error, e} ->
         {:stop, e}
       _ ->

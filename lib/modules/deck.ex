@@ -80,6 +80,24 @@ defmodule Metr.Modules.Deck do
   ]
   end
 
+  def feed(
+      %Event{
+        keys: [:match, :created, _orepp],
+        data: %{out: match_id}
+      } = event,
+      repp
+    ) do
+
+  match = State.read(match_id, :match)
+
+  [
+    State.update(match.deck_one, @atom, event)
+    |> Event.message_to_event([@atom, :altered, repp]),
+    State.update(match.deck_two, @atom, event)
+    |> Event.message_to_event([@atom, :altered, repp])
+  ]
+  end
+
   def feed(%Event{id: _event_id, keys: [:list, :result], data: %{by: @atom, id: id}}, repp) do
     deck = State.read(id, @atom)
     [Event.new([:result, :list, repp], %{out: deck.results})]
@@ -320,11 +338,30 @@ defmodule Metr.Modules.Deck do
 
     new_state = Map.update!(state, :results, &(&1 ++ [result.id]))
 
-    case Data.save_state_with_log(@atom, result.deck_id, state, event) do
+    case Data.save_state_with_log(@atom, state.id, state, event) do
       {:error, e} ->
         {:stop, e}
       _ ->
-        {:reply, "Result #{result.id} added to deck #{result.deck_id}", new_state}
+        {:reply, "Result #{result.id} added to deck #{state.id}", new_state}
+    end
+  end
+
+  @impl true
+  def handle_call(
+        %{keys: [:match, :created, _orepp]} = event,
+        _from,
+        state
+      ) do
+
+    match = Metr.read(event.data.out, :match)
+
+    new_state = Map.update!(state, :matches, &(&1 ++ [match.id]))
+
+    case Data.save_state_with_log(@atom, state.id, state, event) do
+      {:error, e} ->
+        {:stop, e}
+      _ ->
+        {:reply, "Match #{match.id} added to deck #{state.id}", new_state}
     end
   end
 

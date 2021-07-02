@@ -61,6 +61,24 @@ defmodule Metr.Modules.Player do
     ]
   end
 
+  def feed(
+      %Event{
+        keys: [:match, :created, _orepp],
+        data: %{out: match_id}
+      } = event,
+      repp
+    ) do
+
+  match = State.read(match_id, :match)
+
+  [
+    State.update(match.player_one, @atom, event)
+    |> Event.message_to_event([@atom, :altered, repp]),
+    State.update(match.player_two, @atom, event)
+    |> Event.message_to_event([@atom, :altered, repp])
+  ]
+  end
+
   # # def feed(
   # #       %Event{
   # #         id: _event_id,
@@ -207,21 +225,24 @@ defmodule Metr.Modules.Player do
     end
   end
 
-  # @impl true
-  # def handle_call(
-  #       %{keys: [:match, :created, _orepp], data: %{id: match_id, player_id: id}, event: event},
-  #       _from,
-  #       state
-  #     ) do
-  #   new_state = Map.update!(state, :matches, &(&1 ++ [match_id]))
+  @impl true
+  def handle_call(
+        %{keys: [:match, :created, _orepp]} = event,
+        _from,
+        state
+      ) do
 
-  #   case Data.save_state_with_log(@atom, id, state, event) do
-  #     {:error, e} -> {:stop, e}
-  #     _ -> {:ok, new_state}
-  #   end
+    match = Metr.read(event.data.out, :match)
 
-  #   {:reply, "Match #{match_id} added to player #{id}", new_state}
-  # end
+    new_state = Map.update!(state, :matches, &(&1 ++ [match.id]))
+
+    case Data.save_state_with_log(@atom, state.id, state, event) do
+      {:error, e} ->
+        {:stop, e}
+      _ ->
+        {:reply, "Match #{match.id} added to player #{state.id}", new_state}
+    end
+  end
 
   @impl true
   def handle_call(

@@ -310,7 +310,6 @@ defmodule Metr.Modules.Game do
               Event.new([:create, :result], %{id: result_1_id, input: result_1_input}),
               Event.new([:create, :result], %{id: result_2_id, input: result_2_input}),
             ])
-
             {:ok, state}
         end
     end
