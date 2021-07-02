@@ -196,7 +196,7 @@ defmodule Metr.Modules.Player do
 
     new_state = Map.update!(state, :decks, &(&1 ++ [deck.id]))
 
-    case Data.save_state_with_log(@atom, deck.player, state, event) do
+    case Data.save_state_with_log(@atom, deck.player, new_state, event) do
       {:error, e} ->
         {:stop, e}
       _ ->
@@ -212,10 +212,9 @@ defmodule Metr.Modules.Player do
       ) do
 
     result = Metr.read(event.data.out, :result)
-
     new_state = Map.update!(state, :results, &(&1 ++ [result.id]))
 
-    case Data.save_state_with_log(@atom, result.player_id, state, event) do
+    case Data.save_state_with_log(@atom, result.player_id, new_state, event) do
       {:error, e} ->
         {:stop, e}
       _ ->
@@ -231,10 +230,9 @@ defmodule Metr.Modules.Player do
       ) do
 
     match = Metr.read(event.data.out, :match)
-
     new_state = Map.update!(state, :matches, &(&1 ++ [match.id]))
 
-    case Data.save_state_with_log(@atom, state.id, state, event) do
+    case Data.save_state_with_log(@atom, state.id, new_state, event) do
       {:error, e} ->
         {:stop, e}
       _ ->
