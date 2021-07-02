@@ -18,7 +18,6 @@ defmodule Metr.Modules.Player do
 
   def feed(
     %Event{
-      id: _event_id,
       keys: [:create, @atom],
       data: %{id: id, input: _input}
       } = event,
@@ -46,7 +45,6 @@ defmodule Metr.Modules.Player do
 
   def feed(
         %Event{
-          id: _event_id,
           keys: [:result, :created, _orepp],
           data: %{out: result_id}
         } = event,
@@ -252,7 +250,7 @@ defmodule Metr.Modules.Player do
       ) do
 
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    case Data.save_state_with_log(@atom, id, state, event) do
+    case Data.save_state_with_log(@atom, id, new_state, event) do
       {:error, e} -> {:stop, e}
       _ -> {:ok, new_state}
     end

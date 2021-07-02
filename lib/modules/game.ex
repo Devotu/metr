@@ -104,7 +104,6 @@ defmodule Metr.Modules.Game do
 
   def feed(
     %Event{
-      id: _event_id,
       keys: [:create, @atom],
       data: %{id: id, input: _input}
       } = event,
@@ -326,8 +325,8 @@ defmodule Metr.Modules.Game do
         result_2_id = Id.guid()
 
         data = Map.put(data, :results, [result_1_id, result_2_id])
-
         state = from_input(data, id, event.time)
+
         case Data.save_state_with_log(@atom, id, state, event) do
           {:error, e} ->
             {:stop, e}
@@ -358,7 +357,7 @@ defmodule Metr.Modules.Game do
   #       state
   #     ) do
   #   new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-  #   case Data.save_state_with_log(@atom, id, state, event) do
+  #   case Data.save_state_with_log(@atom, id, new_state, event) do
   #     {:error, e} -> {:stop, e}
   #     _ -> {:ok, state}
   #   end
@@ -375,7 +374,7 @@ defmodule Metr.Modules.Game do
       ) do
 
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    case Data.save_state_with_log(@atom, id, state, event) do
+    case Data.save_state_with_log(@atom, id, new_state, event) do
       {:error, e} -> {:stop, e}
       _ -> {:ok, new_state}
     end

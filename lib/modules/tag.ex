@@ -156,7 +156,7 @@ defmodule Metr.Modules.Tag do
         :tagged,
         &(&1 ++ [tag_tuple(target_module, target_id)])
       )
-      
+
     {:reply, :ok, new_state}
   end
 end

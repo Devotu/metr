@@ -53,7 +53,6 @@ defmodule Metr.Modules.Deck do
 
   def feed(
     %Event{
-      id: _event_id,
       keys: [:create, @atom],
       data: %{id: id, input: _input}
       } = event,
@@ -335,10 +334,9 @@ defmodule Metr.Modules.Deck do
       ) do
 
     result = Metr.read(event.data.out, :result)
-
     new_state = Map.update!(state, :results, &(&1 ++ [result.id]))
 
-    case Data.save_state_with_log(@atom, state.id, state, event) do
+    case Data.save_state_with_log(@atom, state.id, new_state, event) do
       {:error, e} ->
         {:stop, e}
       _ ->
@@ -373,7 +371,7 @@ defmodule Metr.Modules.Deck do
   #       state
   #     ) do
   #   new_state = Map.update!(state, :results, &(&1 ++ [result_id]))
-  #   case Data.save_state_with_log(@atom, id, state, event) do
+  #   case Data.save_state_with_log(@atom, id, new_state, event) do
   #     {:error, e} -> {:stop, e}
   #     _ -> {:ok, new_state}
   #   end
@@ -387,7 +385,7 @@ defmodule Metr.Modules.Deck do
   #       state
   #     ) do
   #   new_state = Map.update!(state, :results, &(&1 ++ [result_id]))
-  #   case Data.save_state_with_log(@atom, id, state, event) do
+  #   case Data.save_state_with_log(@atom, id, new_state, event) do
   #     {:error, e} -> {:stop, e}
   #     _ -> {:ok, new_state}
   #   end
@@ -401,7 +399,7 @@ defmodule Metr.Modules.Deck do
   #       state
   #     ) do
   #   new_state = Map.update!(state, :matches, &(&1 ++ [match_id]))
-  #   case Data.save_state_with_log(@atom, id, state, event) do
+  #   case Data.save_state_with_log(@atom, id, new_state, event) do
   #     {:error, e} -> {:stop, e}
   #     _ -> {:ok, new_state}
   #   end
@@ -415,7 +413,7 @@ defmodule Metr.Modules.Deck do
         state
       ) do
     new_state = Map.update!(state, :rank, fn rank -> Rank.apply_change(rank, change) end)
-    case Data.save_state_with_log(@atom, id, state, event) do
+    case Data.save_state_with_log(@atom, id, new_state, event) do
       {:error, e} -> {:stop, e}
       _ -> {:ok, new_state}
     end
@@ -430,7 +428,7 @@ defmodule Metr.Modules.Deck do
       ) do
 
     new_state = Map.update!(state, :active, fn active -> not active end)
-    case Data.save_state_with_log(@atom, id, state, event) do
+    case Data.save_state_with_log(@atom, id, new_state, event) do
       {:error, e} -> {:stop, e}
       _ -> {:ok, new_state}
     end
@@ -445,7 +443,7 @@ defmodule Metr.Modules.Deck do
       ) do
 
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    case Data.save_state_with_log(@atom, id, state, event) do
+    case Data.save_state_with_log(@atom, id, new_state, event) do
       {:error, e} -> {:stop, e}
       _ -> {:ok, new_state}
     end

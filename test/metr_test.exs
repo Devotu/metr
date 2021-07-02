@@ -400,13 +400,16 @@ defmodule MetrTest do
     {player_id, deck_id, match_id, game_id} =
       TestHelper.init_single_states(player_name, deck_name)
 
+    TestHelper.delay()
     original_deck = Stately.read(deck_id, :deck)
+
+    Data.read_log_by_id(deck_id, :deck)
 
     # To verify it is not the same state read
     Data.wipe_state(deck_id, :deck)
     State.stop({deck_id, :deck})
-    TestHelper.delay()
 
+    TestHelper.delay()
     assert {:error, "deck #{deck_id} not found"} == State.read(deck_id, :deck)
     assert {:error, "not found"} == Data.recall_state(:deck, deck_id)
     assert :ok == Metr.rerun(:deck, deck_id)

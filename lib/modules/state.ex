@@ -247,6 +247,7 @@ defmodule Metr.Modules.State do
   defp feed_log({id, module}) do
     mod = select_target_module(module)
     result = Data.read_log_by_id(id, module)
+      |> Enum.uniq()
       |> Enum.map(fn e -> feed_event(mod, e) end)
       |> Enum.filter(fn r -> Util.is_error?(r) end)
       |> List.first()
@@ -266,11 +267,14 @@ defmodule Metr.Modules.State do
   def stop({id, module}) do
     case is_running?({id, module}) do
       {:error, e} ->
+        IO.inspect e, label: "state - stop e"
         {:error, e}
       true ->
-        Data.genserver_id(module, id) |> GenServer.stop()
+        IO.inspect id, label: "state - stoping"
+        Data.genserver_id(module, id) |> GenServer.stop() |> IO.inspect(label: "state - stopped")
         {id, module}
       false ->
+        IO.inspect id, label: "state - not running"
         {id, module}
     end
   end

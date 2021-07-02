@@ -32,7 +32,6 @@ defmodule Metr.Modules.Match do
 
   def feed(
     %Event{
-      id: _event_id,
       keys: [:create, @atom],
       data: %{id: id, input: _input}
       } = event,
@@ -45,7 +44,6 @@ defmodule Metr.Modules.Match do
   ## feed
   def feed(
         %Event{
-          id: _event_id,
           keys: [:game, :created, _orepp],
           data: %{out: game_id}
         } = event,
@@ -67,7 +65,6 @@ defmodule Metr.Modules.Match do
 
   def feed(
         %Event{
-          id: _event_id,
           keys: [:end, :match],
           data: %{id: id}
         } = event,
@@ -393,7 +390,7 @@ defmodule Metr.Modules.Match do
   #       state
   #     ) do
   #   new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-  #   case Data.save_state_with_log(@atom, id, state, event) do
+  #   case Data.save_state_with_log(@atom, id, new_state, event) do
   #     {:error, e} -> {:stop, e}
   #     _ -> {:ok, state}
   #   end
@@ -408,7 +405,7 @@ defmodule Metr.Modules.Match do
       ) do
 
     new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-    case Data.save_state_with_log(@atom, id, state, event) do
+    case Data.save_state_with_log(@atom, id, new_state, event) do
       {:error, e} -> {:stop, e}
       _ -> {:ok, new_state}
     end
