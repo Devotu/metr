@@ -3,15 +3,11 @@ defmodule TimeTest do
 
   alias Metr.Id
   alias Metr.Event
-  alias Metr.Modules.Deck
   alias Metr.Modules.Match
-  alias Metr.Modules.Player
   alias Metr.Modules.Result
   alias Metr.Modules.State
-  alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.MatchInput
-  alias Metr.Modules.Input.PlayerInput
   alias Metr.Time
 
   test "state timestamps" do
@@ -19,12 +15,12 @@ defmodule TimeTest do
     time_of_creation = Time.timestamp()
     player_id = TestHelper.init_only_player "Adam Time"
 
-    player = Player.read(player_id)
+    player = State.read(player_id, :player)
     assert 0 != player.time
     assert 0 >= player.time - time_of_creation
 
     deck_id = TestHelper.init_only_deck "Alpha Time", player_id
-    deck = Deck.read(deck_id)
+    deck = State.read(deck_id, :deck)
     assert 0 != deck.time
     assert 0 >= deck.time - time_of_creation
 
@@ -46,16 +42,17 @@ defmodule TimeTest do
     assert 0 >= result.time - time_of_creation
 
     Match.feed(
-      Event.new(
-        [:create, :match],
-        %MatchInput{
+      Event.new([:create, :match],
+      %{
+        id: Id.guid(),
+        input: %MatchInput{
           player_one: player_id,
-          player_two: player_id,
           deck_one: deck_id,
+          player_two: player_id,
           deck_two: deck_id,
           ranking: false
         }
-      ),
+      }),
       nil
     )
 
