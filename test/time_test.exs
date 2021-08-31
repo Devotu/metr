@@ -63,8 +63,10 @@ defmodule TimeTest do
     assert 0 != match.time
     assert 0 >= match.time - time_of_creation
 
-    TestHelper.wipe_test(:deck, deck_id)
+    TestHelper.delay()
+
     TestHelper.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:deck, deck_id)
     TestHelper.wipe_test(:game, game.id)
     TestHelper.wipe_test(:match, match.id)
   end

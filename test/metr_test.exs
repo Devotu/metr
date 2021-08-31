@@ -3,7 +3,6 @@ defmodule MetrTest do
 
   alias Metr.Data
   alias Metr.Modules.State
-  alias Metr.Modules.Stately
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.MatchInput

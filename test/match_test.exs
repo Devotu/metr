@@ -5,7 +5,6 @@ defmodule MatchTest do
   alias Metr.Id
   alias Metr.Modules.Input.MatchInput
   alias Metr.Modules.Match
-  alias Metr.Modules.Stately
   alias Metr.Modules.State
 
   test "basic feed" do

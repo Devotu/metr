@@ -7,7 +7,6 @@ defmodule DeckTest do
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.State
-  alias Metr.Modules.Stately
 
   test "basic feed" do
     assert [] == Deck.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)

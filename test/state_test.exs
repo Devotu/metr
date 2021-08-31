@@ -3,7 +3,6 @@ defmodule StateTest do
 
   alias Metr.Event
   alias Metr.Modules.Input.PlayerInput
-  alias Metr.Modules.State
   alias Metr.Modules.Player
 
   test "standoff read entity x" do

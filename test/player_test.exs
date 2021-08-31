@@ -7,7 +7,6 @@ defmodule PlayerTest do
   alias Metr.Modules.Deck
   alias Metr.Modules.Player
   alias Metr.Modules.State
-  alias Metr.Modules.Stately
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.PlayerInput
 
