@@ -13,8 +13,6 @@ defmodule Metr.Modules.Result do
 
   alias Metr.Data
   alias Metr.Event
-  alias Metr.Modules.Deck
-  alias Metr.Modules.Player
   alias Metr.Modules.Result
   alias Metr.Modules.State
   alias Metr.Modules.Input.ResultInput
@@ -40,37 +38,6 @@ defmodule Metr.Modules.Result do
     State.read(id, @atom)
     # Data.recall_state(@atom, id)
   end
-
-  defp verify_input(%ResultInput{} = data) do
-    p = verify_player(data.player_id)
-    d = verify_deck(data.deck_id)
-    g = verify_game(data.game_id)
-
-    case [p,d,g] do
-      [{:error, e}, _, _] -> {:error, e}
-      [_, {:error, e}, _] -> {:error, e}
-      [_, _, {:error, e}] -> {:error, e}
-      _ -> {:ok}
-    end
-  end
-
-  defp verify_player(player_id) do
-    case Player.exist?(player_id) do
-      true -> {:ok}
-      false -> {:error, "player #{player_id} not found"}
-    end
-  end
-
-  defp verify_deck(deck_id) do
-    case Deck.exist?(deck_id) do
-      true -> {:ok}
-      false -> {:error, "deck #{deck_id} not found"}
-    end
-  end
-
-  defp verify_game(game_id) when is_bitstring(game_id) , do: {:ok}
-  defp verify_game(nil), do: {:error, "game id cannot be nil"}
-  defp verify_game(game_id), do: {:error, "game id #{game_id} is not valid"}
 
   defp from_input(%ResultInput{} = data, id, created_time) do
     %Result{
