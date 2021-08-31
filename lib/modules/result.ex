@@ -62,7 +62,7 @@ defmodule Metr.Modules.Result do
   end
 
   def read(id) do
-    Stately.read(id, @atom)
+    State.read(id, @atom)
     # Data.recall_state(@atom, id)
   end
 

@@ -29,7 +29,7 @@ defmodule MatchTest do
     deck = Metr.read(deck_id, :deck)
     assert 2 == Enum.count(deck.matches)
 
-    [read_player_event] = Stately.feed(Event.new([:read, :player], %{player_id: player_id}), nil)
+    [read_player_event] = State.feed(Event.new([:read, :player], %{id: player_id}), nil)
     player = read_player_event.data.out
     assert 2 == Enum.count(player.matches)
 

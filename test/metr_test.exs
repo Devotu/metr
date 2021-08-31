@@ -401,7 +401,7 @@ defmodule MetrTest do
       TestHelper.init_single_states(player_name, deck_name)
 
     TestHelper.delay()
-    original_deck = Stately.read(deck_id, :deck)
+    original_deck = State.read(deck_id, :deck)
 
     Data.read_log_by_id(deck_id, :deck)
 
@@ -414,7 +414,7 @@ defmodule MetrTest do
     assert {:error, "not found"} == Data.recall_state(:deck, deck_id)
     assert :ok == Metr.rerun(:deck, deck_id)
 
-    recreated_deck = Stately.read(deck_id, :deck)
+    recreated_deck = State.read(deck_id, :deck)
     assert recreated_deck == original_deck
 
     TestHelper.delay()
@@ -431,28 +431,28 @@ defmodule MetrTest do
     game = State.read(game_id, :game)
 
     tag_name = "test"
-    original_deck = Stately.read(deck_id, :deck)
+    original_deck = State.read(deck_id, :deck)
     assert [] == original_deck.tags
     assert tag_name == Metr.add_tag(tag_name, :deck, deck_id)
 
-    tagged_deck = Stately.read(deck_id, :deck)
+    tagged_deck = State.read(deck_id, :deck)
     assert [tag_name] == tagged_deck.tags
 
     assert tag_name == Metr.add_tag(tag_name, :player, player_id)
-    tagged_player = Stately.read(player_id, :player)
+    tagged_player = State.read(player_id, :player)
     assert [tag_name] == tagged_player.tags
 
     assert tag_name == Metr.add_tag(tag_name, :match, match_id)
-    tagged_match = Stately.read(match_id, :match)
+    tagged_match = State.read(match_id, :match)
     assert [tag_name] == tagged_match.tags
 
     assert tag_name == Metr.add_tag(tag_name, :game, game_id)
-    tagged_game = Stately.read(game_id, :game)
+    tagged_game = State.read(game_id, :game)
     assert [tag_name] == tagged_game.tags
 
     result_id_1 = game.results |> List.first()
     assert tag_name == Metr.add_tag(tag_name, :result, result_id_1)
-    tagged_result = Stately.read(result_id_1, :result)
+    tagged_result = State.read(result_id_1, :result)
     assert [tag_name] == tagged_result.tags
 
     test_tag = Metr.read(tag_name, :tag)

@@ -9,7 +9,7 @@ defmodule GameTest do
   alias Metr.Modules.Input.MatchInput
   alias Metr.Modules.Match
   alias Metr.Modules.Result
-  alias Metr.Modules.Stately
+  alias Metr.Modules.State
 
   test "create game" do
     player_1_id = TestHelper.init_only_player "Erik Game"
@@ -49,7 +49,7 @@ defmodule GameTest do
     [result_1_id, _result_2_id] = game.results
 
     result_1 = Metr.read(result_1_id, :result)
-    assert true == Stately.exist?(result_1_id, :result)
+    assert true == State.exist?(result_1_id, :result)
     assert game_id == result_1.game_id
 
     TestHelper.delay()
@@ -451,11 +451,14 @@ defmodule GameTest do
     # Assert
     assert 1 == Enum.count(deck_1_game_events)
 
+    player_1 = State.read(player_1_id, :player)
+    player_2 = State.read(player_2_id, :player)
+
     # Cleanup
-    [result_1, result_2] = Metr.list(:result)
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
     TestHelper.wipe_test(:game, [game_id])
-    TestHelper.wipe_test(:result, [result_1.id, result_2.id])
+    TestHelper.wipe_test(:result, player_1.results)
+    TestHelper.wipe_test(:result, player_2.results)
   end
 end

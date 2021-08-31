@@ -173,7 +173,7 @@ defmodule Metr.Modules.Deck do
       ) do
 
     State.update(id, @atom, event)
-    |> Stately.out_to_event(@atom, [:altered, repp])
+    |> Event.message_to_event([@atom, :altered, repp])
   end
 
   # def feed(%Event{keys: [:read, @atom], data: %{deck_id: id}}, repp) do
@@ -204,7 +204,7 @@ defmodule Metr.Modules.Deck do
     # call update
     [
       State.update(event.data.id, @atom, event)
-      |> Stately.out_to_event(@atom, [:altered, repp])
+      |> Event.message_to_event([@atom, :altered, repp])
     ]
   end
 

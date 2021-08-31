@@ -100,7 +100,7 @@ defmodule PlayerTest do
     Deck.feed(Event.new([:create, :deck], %{id: did1, input: %DeckInput{name: "Beta List", player_id: "bertil_list", format: "standard"}}), nil)
     Deck.feed(Event.new([:create, :deck], %{id: did2, input: %DeckInput{name: "Alpha List", player_id: "adam_list", format: "standard"}}), nil)
 
-    [resulting_event] = Stately.feed(Event.new([:list, :player]), nil)
+    [resulting_event] = State.feed(Event.new([:list, :player]), nil)
     assert [:player, :list, nil] == resulting_event.keys
     # any actual data will break proper comparison
     assert 3 <= Enum.count(resulting_event.data.out)

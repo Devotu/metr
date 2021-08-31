@@ -10,7 +10,6 @@ defmodule Metr do
   alias Metr.Event
   alias Metr.Id
   alias Metr.Router
-  alias Metr.Modules.Stately
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.MatchInput
