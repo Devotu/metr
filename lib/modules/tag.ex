@@ -50,23 +50,7 @@ defmodule Metr.Modules.Tag do
     end
   end
 
-  # def feed(
-  #       %Event{id: _event_id, keys: [target_module, :tagged], data: %{id: _id, tag: _tag}} = event,
-  #       _repp
-  #     ) do
-  #   Stately.update(
-  #     event.data.id,
-  #     target_module,
-  #     [:tagged],
-  #     event.data,
-  #     event
-  #   )
-  #   |> Stately.out_to_event(target_module, [target_module, :tagged])
-  #   |> List.wrap()
-  # end
-
-  def feed(event, _orepp) do
-      # IO.inspect event, label: " ---- #{@atom} passed event"
+  def feed(_event, _orepp) do
     []
   end
 
@@ -103,19 +87,6 @@ defmodule Metr.Modules.Tag do
   defp tag_tuple(target_module, target_id) do
     {target_module, target_id, Time.timestamp()}
   end
-
-  ## module
-  # def read(id) do
-  #   Stately.read(id, @atom)
-  # end
-
-  # def exist?(id) do
-  #   Stately.exist?(id, @atom)
-  # end
-
-  # def module_name() do
-  #   @atom
-  # end
 
   ## gen
   @impl true

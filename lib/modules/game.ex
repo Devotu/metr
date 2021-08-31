@@ -7,78 +7,12 @@ defmodule Metr.Modules.Game do
   alias Metr.Id
   alias Metr.Data
   alias Metr.Router
-  alias Metr.Modules.Deck
   alias Metr.Modules.Game
-  alias Metr.Modules.Player
-  alias Metr.Modules.Result
   alias Metr.Modules.State
-  alias Metr.Modules.Stately
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.ResultInput
 
   @atom :game
-
-  ## feed
-  # def feed(%Event{id: _event_id, keys: [:create, @atom], data: %GameInput{} = data} = event, repp) do
-  #   case verify_input_data(data) do
-  #     {:error, error} ->
-  #       [Event.new([@atom, :error, repp], %{cause: error, data: data})]
-
-  #     {:ok} ->
-  #       id = Id.guid()
-  #       process_name = Data.genserver_id(@atom, id)
-  #       result_inputs = convert_to_result_inputs(data, id)
-
-  #       result_ids =
-  #         result_inputs
-  #         |> Enum.map(fn r -> Result.create(r, event) end)
-  #         |> Enum.map(fn {:ok, result_id} -> result_id end)
-
-
-  #       data = Map.put(data, :results, result_ids)
-
-  #       case GenServer.start(Metr.Modules.Game, {id, data, event},
-  #              name: process_name
-  #            ) do
-
-  #         {:ok, _pid} ->
-  #           match_id = Map.get(data, :match, nil)
-  #           [
-  #             Event.new([@atom, :created, nil], %{
-  #               id: id,
-  #               result_ids: result_ids,
-  #               ranking: is_ranked?(data),
-  #               match_id: match_id
-  #             }),
-  #             Event.new([@atom, :created, repp], %{
-  #               out: id
-  #             })
-  #           ]
-
-  #         {:error, cause} ->
-  #           [Event.new([@atom, :error, repp], %{cause: cause})]
-
-  #         _ ->
-  #           [Event.new([@atom, :error, repp], %{cause: "Could not save game state"})]
-  #       end
-  #   end
-  # end
-
-  # def feed(%Event{id: _event_id, keys: [:read, @atom], data: %{game_id: id}}, repp) do
-  #   game = read(id)
-  #   [Event.new([@atom, :read, repp], %{out: game})]
-  # end
-
-  # def feed(%Event{id: _event_id, keys: [:read, :log, @atom], data: %{game_id: id}}, repp) do
-  #   events = Data.read_log_by_id(id, @atom)
-  #   [Event.new([@atom, :read, repp], %{out: events})]
-  # end
-
-  # def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{ids: ids}}, repp)
-  #     when is_list(ids) do
-  #   games = Enum.map(ids, &read/1)
-  #   [Event.new([@atom, :list, repp], %{out: games})]
-  # end
 
   def feed(%Event{id: _event_id, keys: [:list, @atom], data: %{by: :deck, id: deck_id}}, repp) do
     games = deck_id
@@ -119,22 +53,8 @@ defmodule Metr.Modules.Game do
   end
 
   def feed(event, _orepp) do
-      # IO.inspect event, label: " ---- #{@atom} passed event"
     []
   end
-
-  ## module
-  # def read(id) do
-  #   Stately.read(id, @atom)
-  # end
-
-  # def exist?(id) do
-  #   Stately.exist?(id, @atom)
-  # end
-
-  # def module_name() do
-  #   @atom
-  # end
 
   ## private
   defp convert_to_result_inputs(%GameInput{} = data, game_id) do
@@ -238,52 +158,6 @@ defmodule Metr.Modules.Game do
     }
   end
 
-
-  # def feed(%Event{id: _event_id, keys: [:create, @atom], data: %GameInput{} = data} = event, repp) do
-  #   case verify_input_data(data) do
-  #     {:error, error} ->
-  #       [Event.new([@atom, :error, repp], %{cause: error, data: data})]
-
-  #     {:ok} ->
-  #       id = Id.guid()
-  #       process_name = Data.genserver_id(@atom, id)
-  #       result_inputs = convert_to_result_inputs(data, id)
-
-  #       result_ids =
-  #         result_inputs
-  #         |> Enum.map(fn r -> Result.create(r, event) end)
-  #         |> Enum.map(fn {:ok, result_id} -> result_id end)
-
-
-  #       data = Map.put(data, :results, result_ids)
-
-  #       case GenServer.start(Metr.Modules.Game, {id, data, event},
-  #              name: process_name
-  #            ) do
-
-  #         {:ok, _pid} ->
-  #           match_id = Map.get(data, :match, nil)
-  #           [
-  #             Event.new([@atom, :created, nil], %{
-  #               id: id,
-  #               result_ids: result_ids,
-  #               ranking: is_ranked?(data),
-  #               match_id: match_id
-  #             }),
-  #             Event.new([@atom, :created, repp], %{
-  #               out: id
-  #             })
-  #           ]
-
-  #         {:error, cause} ->
-  #           [Event.new([@atom, :error, repp], %{cause: cause})]
-
-  #         _ ->
-  #           [Event.new([@atom, :error, repp], %{cause: "Could not save game state"})]
-  #       end
-  #   end
-  # end
-
   ## gen
   @impl true
   def init(%Event{} = event) do
@@ -349,22 +223,6 @@ defmodule Metr.Modules.Game do
   def handle_call(%{keys: [:read, @atom]}, _from, state) do
     {:reply, state, state}
   end
-
-  # @impl true
-  # def handle_call(
-  #       %{keys: [:tagged], data: %{id: id, tag: tag}, event: event},
-  #       _from,
-  #       state
-  #     ) do
-  #   new_state = Map.update!(state, :tags, &(&1 ++ [tag]))
-  #   case Data.save_state_with_log(@atom, id, new_state, event) do
-  #     {:error, e} -> {:stop, e}
-  #     _ -> {:ok, state}
-  #   end
-  #   {:reply, "#{@atom} #{id} tags altered to #{Kernel.inspect(new_state.tags)}", new_state}
-  # end
-
-
 
   @impl true
   def handle_call(

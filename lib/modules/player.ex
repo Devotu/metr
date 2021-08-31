@@ -4,15 +4,9 @@ defmodule Metr.Modules.Player do
   use GenServer
 
   alias Metr.Modules.State
-  alias Metr.Modules.Stately
   alias Metr.Event
-  alias Metr.Id
   alias Metr.Data
   alias Metr.Modules.Player
-  alias Metr.Modules.Result
-  alias Metr.Modules.Input.PlayerInput
-  alias Metr.Util
-  alias Metr.Time
 
   @atom :player
 
@@ -77,80 +71,9 @@ defmodule Metr.Modules.Player do
   ]
   end
 
-  # # def feed(
-  # #       %Event{
-  # #         id: _event_id,
-  # #         keys: [:game, :created, _orepp] = keys,
-  # #         data: %{result_ids: result_ids}
-  # #       } = event,
-  # #       repp
-  # #     ) do
-  # #   player_result_ids =
-  # #     result_ids
-  # #     |> Enum.map(fn result_id -> Result.read(result_id) end)
-  # #     |> Enum.map(fn r -> {r.player_id, r.id} end)
-
-  # #   # for each participant
-  # #   # call update
-  # #   Enum.reduce(
-  # #     player_result_ids,
-  # #     [],
-  # #     fn {id, result_id}, acc ->
-  # #       acc ++
-  # #         [
-  # #           Stately.update(id, @atom, keys, %{id: result_id, player_id: id}, event)
-  # #           |> Stately.out_to_event(@atom, [:altered, repp])
-  # #         ]
-  # #     end
-  # #   )
-  # # end
-
-  # def feed(
-  #       %Event{
-  #         id: _event_id,
-  #         keys: [:match, :created, _orepp] = keys,
-  #         data: %{id: match_id, player_ids: player_ids}
-  #       } = event,
-  #       repp
-  #     ) do
-  #   # for each participant
-  #   # call update
-  #   Enum.reduce(player_ids, [], fn id, acc ->
-  #     acc ++
-  #       [
-  #         Stately.update(id, @atom, keys, %{id: match_id, player_id: id}, event)
-  #         |> Stately.out_to_event(@atom, [:altered, repp])
-  #       ]
-  #   end)
-  # end
-
-  # def feed(%Event{id: _event_id, keys: [:read, @atom], data: %{player_id: id}}, repp) do
-  #   player = read(id)
-  #   [Event.new([@atom, :read, repp], %{out: player})]
-  # end
-
-  # def feed(%Event{id: _event_id, keys: [:read, :log, @atom], data: %{player_id: id}}, repp) do
-  #   events = Data.read_log_by_id(id, @atom)
-  #   [Event.new([@atom, :read, repp], %{out: events})]
-  # end
-
   def feed(event, _orepp) do
-    # IO.inspect event, label: " ---- #{@atom} passed event"
     []
   end
-
-  ## module
-  # def read(id) do
-  #   Stately.read(id, @atom)
-  # end
-
-  # def exist?(id) do
-  #   Stately.exist?(id, @atom)
-  # end
-
-  # def module_name() do
-  #   @atom
-  # end
 
   ## gen
   @impl true
@@ -179,11 +102,6 @@ defmodule Metr.Modules.Player do
   def handle_call(%{keys: [:read, @atom]}, _from, state) do
     {:reply, state, state}
   end
-
-  # @impl true
-  # def init(input) do
-  #   {:ok, %{}}
-  # end
 
   @impl true
   def handle_call(

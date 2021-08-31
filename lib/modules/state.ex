@@ -14,21 +14,6 @@ defmodule Metr.Modules.State do
   @max_read_attempts 8
   @timeout_ms 16
 
-  @doc """
-  Generates a guid and runs corresponding feed with it
-  """
-  # def feed(
-  #       %Event{id: _event_id, keys: [:create, module], data: input} = event,
-  #       repp
-  #     ) do
-
-  #   target_module = select_target_module(module)
-  #   id = Id.guid() |> IO.inspect(label: "state - id")
-  #   id_input = %{id: id, input: input}
-  #   event_with_specific_id = Map.put(event, :data, id_input)
-  #   target_module.feed(event_with_specific_id, repp)
-  # end
-
   def feed(%Event{keys: [:read, module], data: %{id: id}}, repp) do
     case read(id, module) do
       {:error, e} ->
