@@ -39,6 +39,37 @@ defmodule Metr.Modules.Result do
     # Data.recall_state(@atom, id)
   end
 
+  defp verify_input(%ResultInput{} = data) do
+    p = verify_player(data.player_id)
+    d = verify_deck(data.deck_id)
+    g = verify_game(data.game_id)
+
+    case [p,d,g] do
+      [{:error, e}, _, _] -> {:error, e}
+      [_, {:error, e}, _] -> {:error, e}
+      [_, _, {:error, e}] -> {:error, e}
+      _ -> {:ok}
+    end
+  end
+
+  defp verify_player(player_id) do
+    case State.exist?(player_id, :player) do
+      true -> {:ok}
+      false -> {:error, "player #{player_id} not found"}
+    end
+  end
+
+  defp verify_deck(deck_id) do
+    case State.exist?(deck_id, :deck) do
+      true -> {:ok}
+      false -> {:error, "deck #{deck_id} not found"}
+    end
+  end
+
+  defp verify_game(game_id) when is_bitstring(game_id) , do: {:ok}
+  defp verify_game(nil), do: {:error, "game id cannot be nil"}
+  defp verify_game(game_id), do: {:error, "game id #{game_id} is not valid"}
+
   defp from_input(%ResultInput{} = data, id, created_time) do
     %Result{
       id: id,
@@ -59,13 +90,19 @@ defmodule Metr.Modules.Result do
   def init(%Event{} = event) do
     id = event.data.id
     input = event.data.input
-    state = from_input(input, id, event.time)
 
-    case Data.save_state_with_log(@atom, id, state, event) do
+    case verify_input(input) do
       {:error, e} ->
+        IO.inspect e, label: "Result - Input error"
         {:stop, e}
-      _ ->
-        {:ok, state}
+      {:ok} ->
+        state = from_input(input, id, event.time)
+        case Data.save_state_with_log(@atom, id, state, event) do
+          {:error, e} ->
+            {:stop, e}
+          _ ->
+            {:ok, state}
+        end
     end
   end
 
