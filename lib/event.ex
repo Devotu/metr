@@ -50,4 +50,7 @@ defmodule Metr.Event do
 
   def get_out(%Event{data: %{out: out}}), do: out
   def get_out(%Event{}), do: nil
+
+  def is(%Event{}), do: true
+  def is(_x), do: false
 end
