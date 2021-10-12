@@ -2,7 +2,6 @@ defmodule MetrTest do
   use ExUnit.Case
 
   alias Metr.Data
-  alias Metr.Event
   alias Metr.Modules.State
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput

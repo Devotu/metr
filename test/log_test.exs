@@ -14,5 +14,8 @@ defmodule LogTest do
 
     deck_log = Metr.read_log(deck_id, :deck)
     assert deck_log |> Enum.all?(fn l -> Event.is(l) end)
+
+    TestHelper.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:deck, deck_id)
   end
 end
