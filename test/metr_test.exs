@@ -240,10 +240,6 @@ defmodule MetrTest do
     deck_2_0 = Metr.read(deck_id, :deck)
     assert {2, 0} == deck_2_0.rank
 
-    deck_log = Metr.read_log(deck_id, :deck)
-    IO.inspect deck_log, label: "Metr test - deck log"
-    assert deck_log |> Enum.all?(fn l -> Event.is(l) end)
-
     # 2-1
     Metr.alter_rank(deck_id, :down)
     # 10

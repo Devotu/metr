@@ -262,7 +262,7 @@ defmodule Metr.Modules.Deck do
 
   @impl true
   def handle_call(
-        %Event{keys: [:alter, :rank], data: %{id: id, change: change} = event},
+        %Event{keys: [:alter, :rank], data: %{id: id, change: change}} = event,
         _from,
         state
       ) do
