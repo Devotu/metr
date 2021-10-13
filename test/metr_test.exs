@@ -1,32 +1,39 @@
 defmodule MetrTest do
   use ExUnit.Case
 
-  alias Metr.Event
   alias Metr.Data
-  alias Metr.Modules.Stately
-  alias Metr.Modules.Deck
-  alias Metr.Modules.Game
-  alias Metr.Modules.Player
+  alias Metr.Modules.State
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.MatchInput
   alias Metr.Modules.Input.PlayerInput
-  alias Metr.Router
-  alias Metr.Id
 
   @id_length 14
+
+  test "create player" do
+    player_name = "Adam Metr"
+
+    player = %PlayerInput{
+      name: player_name
+    }
+    |> Metr.create(:player)
+    |> Metr.read(:player)
+
+    assert player_name == player.name
+
+    TestHelper.wipe_test(:player, player.id)
+  end
 
   test "list players" do
     assert is_list(Metr.list(:player))
   end
 
   test "create deck" do
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Martin Metr"}), nil)
+    player_id = TestHelper.init_only_player "Bertil Metr"
     format = "commander"
     price = 12.34
-    player_id = "martin_metr"
 
-    deck_id = %DeckInput{
+    deck = %DeckInput{
       black: false,
       white: false,
       red: true,
@@ -34,15 +41,14 @@ defmodule MetrTest do
       blue: true,
       colorless: false,
       format: format,
-      name: "Mike Metr",
+      name: "Bravo Metr",
       player_id: player_id,
       theme: "commanding",
       price: price
     }
     |> Metr.create(:deck)
+    |> Metr.read(:deck)
 
-    [read_event] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_id}), nil)
-    deck = read_event.data.out
     assert false == deck.black
     assert false == deck.white
     assert true == deck.red
@@ -51,7 +57,13 @@ defmodule MetrTest do
     assert false == deck.colorless
     assert nil == deck.rank # can only be initialized with nil and then adjusted
     assert price == deck.price
-    TestHelper.wipe_test(:deck, deck_id)
+
+    player = Metr.read(player_id, :player)
+
+    assert [deck.id] == player.decks
+
+    TestHelper.delay()
+    TestHelper.wipe_test(:deck, deck.id)
     TestHelper.wipe_test(:player, player_id)
   end
 
@@ -68,20 +80,10 @@ defmodule MetrTest do
   end
 
   test "create game" do
-    player_1_name = "David Metr"
-    player_1_id = Id.hrid(player_1_name)
-    deck_1_name = "Delta Metr"
-    deck_1_id = Id.hrid(deck_1_name)
-
-    player_2_name = "Erik Metr"
-    player_2_id = Id.hrid(player_2_name)
-    deck_2_name = "Echo Metr"
-    deck_2_id = Id.hrid(deck_2_name)
-
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_1_name}), nil)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_2_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
+    player_1_id = TestHelper.init_only_player "Ceasar Metr"
+    player_2_id = TestHelper.init_only_player "David Metr"
+    deck_1_id = TestHelper.init_only_deck "Charlie Metr", player_1_id
+    deck_2_id = TestHelper.init_only_deck "Delta Metr", player_2_id
 
     game_1_id = %GameInput{
       player_one: player_1_id,
@@ -95,121 +97,39 @@ defmodule MetrTest do
     # assert :ok == status
     assert @id_length = String.length(game_1_id)
 
-    game_2 = %GameInput{
-      deck_one: deck_1_id,
-      deck_two: deck_2_id,
-      fun_one: 1,
-      fun_two: -2,
-      player_one: player_1_id,
-      player_two: player_2_id,
-      power_one: 2,
-      power_two: -2,
-      winner: 1
-    }
-
-    game_2_id = Metr.create(game_2, :game)
-    assert @id_length = String.length(game_2_id)
-
     results = Metr.list(:result)
-
-    assert 2 ==
-             Enum.filter(results, fn r -> String.equivalent?(r.game_id, game_2_id) end)
-             |> Enum.count()
-
-    [deck_1] = Metr.list(:deck) |> Enum.filter(fn d -> String.equivalent?(d.id, deck_1_id) end)
-
-    [player_2] =
-      Metr.list(:player) |> Enum.filter(fn p -> String.equivalent?(p.id, player_2_id) end)
-
-    assert 2 == Enum.count(deck_1.results)
-    [_player_2_result_1, player_2_result_2] = player_2.results
-
-    result_1 = Metr.read(player_2_result_2, :result)
-    assert game_2_id == result_1.game_id
-    assert player_2_id == result_1.player_id
-    assert deck_2_id == result_1.deck_id
-    assert 2 == result_1.place
-
-    TestHelper.wipe_test(:player, [player_1_id, player_2_id])
-    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
-    TestHelper.wipe_test(:game, [game_1_id, game_2_id])
-    TestHelper.wipe_test(:result, deck_1.results)
-    TestHelper.wipe_test(:result, player_2.results)
-  end
-
-  test "delete game" do
-    player_1_name = "Filip Metr"
-    player_1_id = Id.hrid(player_1_name)
-    deck_1_name = "Foxtrot Metr"
-    deck_1_id = Id.hrid(deck_1_name)
-
-    player_2_name = "Gustav Metr"
-    player_2_id = Id.hrid(player_2_name)
-    deck_2_name = "Golf Metr"
-    deck_2_id = Id.hrid(deck_2_name)
-
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_1_name}), nil)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_2_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
-
-    game_id = %GameInput{
-      player_one: player_1_id,
-      player_two: player_2_id,
-      deck_one: deck_1_id,
-      deck_two: deck_2_id,
-      winner: 2
-    }
-    |> Metr.create(:game)
-
-    game = Game.read(game_id)
-    assert "Game #{game_id} deleted" == Metr.delete(game_id, :game)
-
-    deck_1 = Metr.read(deck_1_id, :deck)
-    assert 0 == Enum.count(deck_1.results)
+    assert 2 <= results |> Enum.count()
 
     player_1 = Metr.read(player_1_id, :player)
-    assert 0 == Enum.count(player_1.results)
+    assert 1 == player_1.results |> Enum.count()
 
-    assert {:error, "Game not an actual game id not found"} ==
-             Metr.delete("not an actual game id", :game)
+    deck_1 = Metr.read(deck_1_id, :deck)
+    assert 1 == deck_1.results |> Enum.count()
+    assert deck_1.results == player_1.results
 
-    results = Metr.list(:result)
+    deck_2 = Metr.read(deck_2_id, :deck)
+    [result_2_id] = deck_2.results
+    result_2 = Metr.read(result_2_id, :result)
+    assert 1 = result_2.place
 
-    assert 0 ==
-             Enum.filter(results, fn g -> String.equivalent?(g.id, game_id) end) |> Enum.count()
-
+    TestHelper.delay()
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
-    TestHelper.wipe_test(:game, [game_id])
-    TestHelper.wipe_test(:result, game.results)
+    TestHelper.wipe_test(:game, [game_1_id])
+    TestHelper.wipe_test(:result, player_1.results)
+    TestHelper.wipe_test(:result, deck_2.results)
   end
 
-  test "list results by deck" do
-    player_1_name = "Helge Metr"
-    player_1_id = Id.hrid(player_1_name)
-    deck_1_name = "Hotel Metr"
-    deck_1_id = Id.hrid(deck_1_name)
-
-    player_2_name = "Ivar Metr"
-    player_2_id = Id.hrid(player_2_name)
-    deck_2_name = "India Metr"
-    deck_2_id = Id.hrid(deck_2_name)
-
-    player_3_name = "Johan Metr"
-    player_3_id = Id.hrid(player_3_name)
-    deck_3_name = "Juliett Metr"
-    deck_3_id = Id.hrid(deck_3_name)
-
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_1_name}), nil)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_2_name}), nil)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_3_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_3_name, player_id: player_3_id, format: "standard"}), nil)
+  test "list results by deck/game" do
+    player_1_id = TestHelper.init_only_player "Helge Metr"
+    player_2_id = TestHelper.init_only_player "Ivar Metr"
+    player_3_id = TestHelper.init_only_player "Johan Metr"
+    deck_1_id = TestHelper.init_only_deck "Hotel Metr", player_1_id
+    deck_2_id = TestHelper.init_only_deck "India Metr", player_2_id
+    deck_3_id = TestHelper.init_only_deck "Juliet Metr", player_3_id
 
     # 1 vs 2
-    game_1_id = %GameInput{
+    game_1 = %GameInput{
       player_one: player_1_id,
       player_two: player_2_id,
       deck_one: deck_1_id,
@@ -217,9 +137,10 @@ defmodule MetrTest do
       winner: 2
     }
     |> Metr.create(:game)
+    |> Metr.read(:game)
 
     # 1 vs 3
-    game_2_id = %GameInput{
+    game_2 = %GameInput{
       player_one: player_1_id,
       player_two: player_3_id,
       deck_one: deck_1_id,
@@ -231,35 +152,28 @@ defmodule MetrTest do
       fun_two: 2
     }
     |> Metr.create(:game)
+    |> Metr.read(:game)
 
-    results =
-      Metr.list(:result, by: {:game, game_1_id}) ++ Metr.list(:result, by: {:game, game_2_id})
+    TestHelper.delay()
 
-    assert 4 == results |> Enum.count()
-    assert 2 == Metr.list(:result, by: {:deck, deck_1_id}) |> Enum.count()
-    assert 1 == Metr.list(:result, by: {:deck, deck_2_id}) |> Enum.count()
+    assert 2 <= Metr.list(:result, by: {:game, game_1.id}) |> Enum.count()
+    assert 2 <= Metr.list(:result, by: {:game, game_2.id}) |> Enum.count()
+    assert 2 <= Metr.list(:result, by: {:deck, deck_1_id}) |> Enum.count()
+    assert 1 <= Metr.list(:result, by: {:deck, deck_2_id}) |> Enum.count()
 
+    TestHelper.delay()
     TestHelper.wipe_test(:player, [player_1_id, player_2_id, player_3_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id, deck_3_id])
-    TestHelper.wipe_test(:game, [game_1_id, game_2_id])
-    TestHelper.wipe_test(:result, Enum.map(results, fn r -> r.id end))
+    TestHelper.wipe_test(:game, [game_1.id, game_2.id])
+    TestHelper.wipe_test(:result, game_1.results)
+    TestHelper.wipe_test(:result, game_2.results)
   end
 
   test "read log of x" do
-    player_1_name = "Kalle Metr"
-    player_1_id = Id.hrid(player_1_name)
-    deck_1_name = "Kilo Metr"
-    deck_1_id = Id.hrid(deck_1_name)
-
-    player_2_name = "Ludvig Metr"
-    player_2_id = Id.hrid(player_2_name)
-    deck_2_name = "Lima Metr"
-    deck_2_id = Id.hrid(deck_2_name)
-
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_1_name}), nil)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_2_name}), nil)
-    Router.input(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}))
-    Router.input(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}))
+    player_1_id = TestHelper.init_only_player "Kalle Metr"
+    player_2_id = TestHelper.init_only_player "Ludvig Metr"
+    deck_1_id = TestHelper.init_only_deck "Kilo Metr", player_1_id
+    deck_2_id = TestHelper.init_only_deck "Lima Metr", player_2_id
 
     # 1 vs 2
     game_1_id = %GameInput{
@@ -280,13 +194,21 @@ defmodule MetrTest do
       winner: 1
     }
     |> Metr.create(:game)
+    TestHelper.delay()
 
-    assert 3 == Metr.read_log(deck_1_id, :deck) |> Enum.count()
     assert 4 == Metr.read_log(player_1_id, :player) |> Enum.count()
+    assert 3 == Metr.read_log(deck_1_id, :deck) |> Enum.count()
+    assert 1 == Metr.read_log(game_2_id, :game) |> Enum.count()
 
+    player_1 = Metr.read(player_1_id, :player)
+    player_2 = Metr.read(player_2_id, :player)
+
+    TestHelper.delay()
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
     TestHelper.wipe_test(:game, [game_1_id, game_2_id])
+    TestHelper.wipe_test(:result, player_1.results)
+    TestHelper.wipe_test(:result, player_2.results)
   end
 
   test "format" do
@@ -295,13 +217,8 @@ defmodule MetrTest do
   end
 
   test "adjust rank" do
-    player_name = "Olof Metr"
-    player_id = Id.hrid(player_name)
-    deck_name = "Oscar Metr"
-    deck_id = Id.hrid(deck_name)
-
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
+    player_id = TestHelper.init_only_player "Olof Metr"
+    deck_id = TestHelper.init_only_deck "Oscar Metr", player_id
 
     deck_initial = Metr.read(deck_id, :deck)
     assert nil == deck_initial.rank
@@ -342,25 +259,16 @@ defmodule MetrTest do
     deck_02_0 = Metr.read(deck_id, :deck)
     assert {-2, 0} == deck_02_0.rank
 
+    TestHelper.delay()
     TestHelper.wipe_test(:player, [player_id])
     TestHelper.wipe_test(:deck, [deck_id])
   end
 
   test "match lifecycle" do
-    player_1_name = "Petter Metr"
-    player_1_id = Id.hrid(player_1_name)
-    deck_1_name = "Papa Metr"
-    deck_1_id = Id.hrid(deck_1_name)
-
-    player_2_name = "Quintus Metr"
-    player_2_id = Id.hrid(player_2_name)
-    deck_2_name = "Qubec Metr"
-    deck_2_id = Id.hrid(deck_2_name)
-
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_1_name}), nil)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_2_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
+    player_1_id = TestHelper.init_only_player "Petter Metr"
+    player_2_id = TestHelper.init_only_player "Quintus Metr"
+    deck_1_id = TestHelper.init_only_deck "Papa Metr", player_1_id
+    deck_2_id = TestHelper.init_only_deck "Qubec Metr", player_2_id
 
     match_data = %MatchInput{
       player_one: player_1_id,
@@ -397,7 +305,8 @@ defmodule MetrTest do
     game_2_id = Metr.create(Map.put(game_data, :winner, 1), :game)
     game_3_id = Metr.create(game_data, :game)
 
-    assert :ok == Metr.end_match(match_id)
+    expected_response = "Match #{match_id} ended"
+    assert expected_response == Metr.end_match(match_id)
 
     ended_match = Metr.read(match_id, :match)
     assert 3 = ended_match.games |> Enum.count()
@@ -410,21 +319,21 @@ defmodule MetrTest do
     deck_2 = Metr.read(deck_2_id, :deck)
     assert {0, 1} == deck_2.rank
 
+    player_1 = Metr.read(player_1_id, :player)
+    player_2 = Metr.read(player_2_id, :player)
+
+    TestHelper.delay()
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
     TestHelper.wipe_test(:game, [game_1_id, game_2_id, game_3_id])
     TestHelper.wipe_test(:match, [match_id])
-    TestHelper.wipe_test(:result, [deck_1.results])
+    TestHelper.wipe_test(:result, player_1.results)
+    TestHelper.wipe_test(:result, player_2.results)
   end
 
   test "list results by ids" do
-    player_name = "Rudolf Metr"
-    player_id = Id.hrid(player_name)
-    deck_name = "Romeo Metr"
-    deck_id = Id.hrid(deck_name)
-
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
+    player_id = TestHelper.init_only_player "Rudolf Metr"
+    deck_id = TestHelper.init_only_deck "Romeo Metr", player_id
 
     game = %GameInput{
       player_one: player_id,
@@ -442,20 +351,16 @@ defmodule MetrTest do
     assert deck_id == first_result.deck_id
     assert player_id == first_result.player_id
 
-    TestHelper.wipe_test(:player, [player_id])
+    TestHelper.delay()
+    TestHelper.wipe_test(:player, player_id)
     TestHelper.wipe_test(:deck, deck_id)
     TestHelper.wipe_test(:game, game.id)
     TestHelper.wipe_test(:result, game.results)
   end
 
   test "read state of x" do
-    player_1_name = "Sigurd Metr"
-    player_1_id = Id.hrid(player_1_name)
-    deck_1_name = "Sierra Metr"
-    deck_1_id = Id.hrid(deck_1_name)
-
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_1_name}), nil)
-    Router.input(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}))
+    player_1_id = TestHelper.init_only_player "Sigurd Metr"
+    deck_1_id = TestHelper.init_only_deck "Sierra Metr", player_1_id
 
     game_1_id = %GameInput{
       player_one: player_1_id,
@@ -465,17 +370,23 @@ defmodule MetrTest do
       winner: 2
     }
     |> Metr.create(:game)
+    TestHelper.delay()
 
     deck_1_state = Metr.read(deck_1_id, :deck)
     [result_1, result_2] = Metr.list(:result, by: {:game, game_1_id})
-    assert [result_1.id, result_2.id] == deck_1_state.results
+    assert Enum.member?(deck_1_state.results, result_1)
+    assert Enum.member?(deck_1_state.results, result_2)
 
     player_1_state = Metr.read(player_1_id, :player)
-    assert [result_1.id, result_2.id] == player_1_state.results
+    [result_11, result_12] = player_1_state.results
+    assert Enum.member?(deck_1_state.results, result_11)
+    assert Enum.member?(deck_1_state.results, result_12)
 
     game_1_state = Metr.read(game_1_id, :game)
     assert 2 == Enum.count(game_1_state.results)
 
+    TestHelper.delay()
+    TestHelper.wipe_test(:result, [result_1, result_2])
     TestHelper.wipe_test(:player, [player_1_id])
     TestHelper.wipe_test(:deck, [deck_1_id])
     TestHelper.wipe_test(:game, [game_1_id])
@@ -488,18 +399,24 @@ defmodule MetrTest do
     {player_id, deck_id, match_id, game_id} =
       TestHelper.init_single_states(player_name, deck_name)
 
-    original_deck = Stately.read(deck_id, :deck)
+    TestHelper.delay()
+    original_deck = State.read(deck_id, :deck)
+
+    Data.read_log_by_id(deck_id, :deck)
+
     # To verify it is not the same state read
-    Data.wipe_state([deck_id], :deck)
-    assert {:error, "Deck #{deck_id} not found"} == Deck.read(deck_id)
+    Data.wipe_state(deck_id, :deck)
+    State.stop({deck_id, :deck})
 
+    TestHelper.delay()
+    assert {:error, "deck #{deck_id} not found"} == State.read(deck_id, :deck)
     assert {:error, "not found"} == Data.recall_state(:deck, deck_id)
-
     assert :ok == Metr.rerun(:deck, deck_id)
 
-    recreated_deck = Stately.read(deck_id, :deck)
+    recreated_deck = State.read(deck_id, :deck)
     assert recreated_deck == original_deck
 
+    TestHelper.delay()
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
   end
 
@@ -510,48 +427,49 @@ defmodule MetrTest do
     {player_id, deck_id, match_id, game_id} =
       TestHelper.init_single_states(player_name, deck_name)
 
-    game = Game.read(game_id)
+    game = State.read(game_id, :game)
 
     tag_name = "test"
-    original_deck = Stately.read(deck_id, :deck)
+    original_deck = State.read(deck_id, :deck)
     assert [] == original_deck.tags
     assert tag_name == Metr.add_tag(tag_name, :deck, deck_id)
 
-    tagged_deck = Stately.read(deck_id, :deck)
+    tagged_deck = State.read(deck_id, :deck)
     assert [tag_name] == tagged_deck.tags
 
-    assert is_struct(Metr.add_tag(tag_name, :player, player_id))
-    tagged_player = Stately.read(player_id, :player)
+    assert tag_name == Metr.add_tag(tag_name, :player, player_id)
+    tagged_player = State.read(player_id, :player)
     assert [tag_name] == tagged_player.tags
 
-    assert is_struct(Metr.add_tag(tag_name, :match, match_id))
-    tagged_match = Stately.read(match_id, :match)
+    assert tag_name == Metr.add_tag(tag_name, :match, match_id)
+    tagged_match = State.read(match_id, :match)
     assert [tag_name] == tagged_match.tags
 
-    assert is_struct(Metr.add_tag(tag_name, :game, game_id))
-    tagged_game = Stately.read(game_id, :game)
+    assert tag_name == Metr.add_tag(tag_name, :game, game_id)
+    tagged_game = State.read(game_id, :game)
     assert [tag_name] == tagged_game.tags
 
     result_id_1 = game.results |> List.first()
-    assert is_struct(Metr.add_tag(tag_name, :result, result_id_1))
-    tagged_result = Stately.read(result_id_1, :result)
+    assert tag_name == Metr.add_tag(tag_name, :result, result_id_1)
+    tagged_result = State.read(result_id_1, :result)
     assert [tag_name] == tagged_result.tags
 
     test_tag = Metr.read(tag_name, :tag)
     [dt, pt, mt, gt, rt] = test_tag.tagged
-    {did, _dtime} = dt
+    {:deck, did, _dtime} = dt
     assert did == deck_id
-    {pid, _ptime} = pt
+    {:player, pid, _ptime} = pt
     assert pid == player_id
-    {mid, _mtime} = mt
+    {:match, mid, _mtime} = mt
     assert mid == match_id
-    {gid, _gtime} = gt
+    {:game, gid, _gtime} = gt
     assert gid == game_id
-    {rid, _rtime} = rt
+    {:result, rid, _rtime} = rt
     assert rid == result_id_1
 
     assert [test_tag] == Metr.list(:tag)
 
+    TestHelper.delay()
     TestHelper.cleanup_single_states({player_id, deck_id, match_id, game_id})
     TestHelper.wipe_test(:tag, tag_name)
   end

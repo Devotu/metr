@@ -1,51 +1,38 @@
 defmodule MatchTest do
   use ExUnit.Case
 
-  alias Metr.Modules.Deck
-  alias Metr.Modules.Match
   alias Metr.Event
-  alias Metr.Modules.Player
-  alias Metr.Modules.Stately
-  alias Metr.Router
-  alias Metr.Modules.Input.DeckInput
+  alias Metr.Id
   alias Metr.Modules.Input.MatchInput
-  alias Metr.Modules.Input.PlayerInput
+  alias Metr.Modules.Match
+  alias Metr.Modules.State
 
   test "basic feed" do
     assert [] == Match.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
   end
 
   test "create match" do
-    [player_created_event] =
-      Player.feed(Event.new([:create, :player], %PlayerInput{name: "Adam Match"}), nil)
+    player_id = TestHelper.init_only_player "Adam Match"
+    deck_id = TestHelper.init_only_deck "Alpha Match", player_id
 
-    player_id = player_created_event.data.out
+    match_input = %MatchInput{
+      player_one: player_id,
+      deck_one: deck_id,
+      player_two: player_id,
+      deck_two: deck_id,
+      ranking: false
+    }
 
-    [deck_created_event, _deck_created_response] =
-      Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Alpha Match", player_id: player_id, format: "standard"}), nil)
+    match_id = Metr.create(match_input, :match)
 
-    deck_id = deck_created_event.data.id
-
-    Router.input(
-      Event.new([:create, :match], %MatchInput{
-        player_one: player_id,
-        deck_one: deck_id,
-        player_two: player_id,
-        deck_two: deck_id,
-        ranking: false
-      })
-    )
-
-    [read_deck_event] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_id}), nil)
-    deck = read_deck_event.data.out
+    deck = Metr.read(deck_id, :deck)
     assert 2 == Enum.count(deck.matches)
 
-    [read_player_event] = Stately.feed(Event.new([:read, :player], %{player_id: player_id}), nil)
+    [read_player_event] = State.feed(Event.new([:read, :player], %{id: player_id}), nil)
     player = read_player_event.data.out
     assert 2 == Enum.count(player.matches)
 
-    match_id = List.first(deck.matches)
-    [read_match_event] = Match.feed(Event.new([:read, :match], %{match_id: match_id}), nil)
+    [read_match_event] = State.feed(Event.new([:read, :match], %{id: match_id}), nil)
     match = read_match_event.data.out
     assert :initialized == match.status
     assert false == match.ranking
@@ -57,92 +44,93 @@ defmodule MatchTest do
   end
 
   test "fail create match" do
-    [player_created_event] =
-      Player.feed(Event.new([:create, :player], %PlayerInput{name: "Bertil Match"}), nil)
+    player_id = TestHelper.init_only_player "Bertil Match"
+    deck_1_id = TestHelper.init_only_deck "Bravo Match", player_id
+    deck_2_id = TestHelper.init_only_deck "Charlie Match", player_id
 
-    player_id = player_created_event.data.out
+    Metr.alter_rank(deck_2_id, :up)
+    Metr.alter_rank(deck_2_id, :up)
 
-    [deck_1_created_event, _deck_1_created_response] =
-      Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Bravo Match", player_id: player_id, format: "standard"}), nil)
+    id = Id.guid()
 
-    deck_id_1 = deck_1_created_event.data.id
-
-    [deck_2_created_event, _deck_2_created_response] =
-      Deck.feed(
-        Event.new([:create, :deck], %DeckInput{name: "Charlie Match", player_id: player_id, format: "standard"}),
-        nil
-      )
-
-    deck_id_2 = deck_2_created_event.data.id
-
-    Metr.alter_rank(deck_id_2, :up)
-    Metr.alter_rank(deck_id_2, :up)
-
-    [resulting_event] =
+    resulting_event =
       Match.feed(
-        Event.new([:create, :match], %MatchInput{
-          player_one: player_id,
-          player_two: player_id,
-          deck_one: deck_id_1,
-          deck_two: deck_id_2,
-          ranking: true
+        Event.new([:create, :match],
+        %{
+          id: id,
+          input: %MatchInput{
+            player_one: player_id,
+            player_two: player_id,
+            deck_one: deck_1_id,
+            deck_two: deck_2_id,
+            ranking: true
+          }
         }),
         nil
       )
+    |> List.first()
 
-    assert [:match, :error, nil] == resulting_event.keys
+    assert [:error, nil] == resulting_event.keys
     assert "ranks does not match" == resulting_event.data.cause
     TestHelper.wipe_test(:player, player_id)
-    TestHelper.wipe_test(:deck, [deck_id_1, deck_id_2])
+    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
   end
 
   test "list matches" do
-    [player_created_event] =
-      Player.feed(Event.new([:create, :player], %PlayerInput{name: "David Match"}), nil)
-
-    player_id = player_created_event.data.out
-
-    [deck_created_event, _deck_created_response] =
-      Deck.feed(Event.new([:create, :deck], %DeckInput{name: "Delta Match", player_id: player_id, format: "standard"}), nil)
-
-    deck_id = deck_created_event.data.id
+    player_id = TestHelper.init_only_player "David Match"
+    deck_id = TestHelper.init_only_deck "Delta Match", player_id
 
     Match.feed(
-      Event.new([:create, :match], %MatchInput{
-        player_one: player_id,
-        deck_one: deck_id,
-        player_two: player_id,
-        deck_two: deck_id,
-        ranking: false
+      Event.new([:create, :match],
+      %{
+        id: Id.guid(),
+        input: %MatchInput{
+          player_one: player_id,
+          deck_one: deck_id,
+          player_two: player_id,
+          deck_two: deck_id,
+          ranking: false
+        }
       }),
       nil
     )
 
     Match.feed(
-      Event.new([:create, :match], %MatchInput{
-        player_one: player_id,
-        deck_one: deck_id,
-        player_two: player_id,
-        deck_two: deck_id,
-        ranking: true
+      Event.new([:create, :match],
+      %{
+        id: Id.guid(),
+        input: %MatchInput{
+          player_one: player_id,
+          deck_one: deck_id,
+          player_two: player_id,
+          deck_two: deck_id,
+          ranking: true
+        }
       }),
       nil
     )
 
     Match.feed(
-      Event.new([:create, :match], %MatchInput{
-        player_one: player_id,
-        deck_one: deck_id,
-        player_two: player_id,
-        deck_two: deck_id,
-        ranking: false
+      Event.new([:create, :match],
+      %{
+        id: Id.guid(),
+        input: %MatchInput{
+          player_one: player_id,
+          deck_one: deck_id,
+          player_two: player_id,
+          deck_two: deck_id,
+          ranking: false
+        }
       }),
       nil
     )
 
-    [match_list_event] = Stately.feed(Event.new([:list, :match], %{}), nil)
-    matches = match_list_event.data.out
-    assert 3 = Enum.count(matches)
+    matches = Event.new([:list, :match])
+      |> State.feed(nil)
+      |> List.first()
+      |> Event.get_out()
+
+    assert 3 <= Enum.count(matches)
 
     TestHelper.wipe_test(:match, Enum.map(matches, fn m -> m.id end))
     TestHelper.wipe_test(:player, player_id)

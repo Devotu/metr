@@ -7,6 +7,7 @@ defmodule Metr.Router do
 
   alias Metr.Event
   alias Metr.Data
+  alias Metr.Router
   alias Metr.Modules.Deck
   alias Metr.Modules.Game
   alias Metr.Modules.Log
@@ -15,6 +16,7 @@ defmodule Metr.Router do
   alias Metr.Modules.Result
   alias Metr.Modules.Stately
   alias Metr.Modules.Tag
+  alias Metr.Modules.State
 
   def input(events, response_pid) when is_list(events) and is_pid(response_pid) do
     Enum.each(events, fn e -> input(e, response_pid) end)
@@ -42,18 +44,23 @@ defmodule Metr.Router do
   defp route({%Event{} = event, response_pid}), do: route(event, response_pid)
 
   defp route(%Event{} = event, response_pid \\ nil) do
-    # IO.inspect(event, label: "routing")
+    spawn(Router, :do_route, [event, response_pid])
+  end
+
+  # TODO make this private => make the public method async
+  def do_route(event, response_pid) do
     [
       # Module.feed(event),
       Player.feed(event, response_pid),
       Deck.feed(event, response_pid),
       Game.feed(event, response_pid),
-      Log.feed(event, response_pid),
+      # Log.feed(event, response_pid),
       Match.feed(event, response_pid),
       Metr.feed(event, response_pid),
       Result.feed(event, response_pid),
-      Stately.feed(event, response_pid),
-      Tag.feed(event, response_pid)
+      # Stately.feed(event, response_pid),
+      Tag.feed(event, response_pid),
+      State.feed(event, response_pid)
     ]
     |> Enum.filter(fn e -> Enum.count(e) > 0 end)
     |> Enum.each(fn e -> route(e) end)

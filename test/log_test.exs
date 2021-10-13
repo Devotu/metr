@@ -1,18 +1,21 @@
 defmodule LogTest do
   use ExUnit.Case
 
-  alias Metr.Modules.Log
   alias Metr.Event
 
-  test "read log" do
-    limit_requested = 5
-    repp = "fake repp"
-    sent_event = Event.new([:read, :log], %{limit: limit_requested})
-    [resulting_event] = Log.feed(sent_event, repp)
-    assert [:log, :read, repp] == resulting_event.keys
-    assert limit_requested == Enum.count(resulting_event.data.out)
+  test "only events" do
+    player_id = TestHelper.init_only_player "Olof Metr"
+    deck_id = TestHelper.init_only_deck "Oscar Metr", player_id
 
-    log_events = Metr.read_input_log(limit_requested)
-    assert limit_requested == Enum.count(log_events)
+    deck_initial = Metr.read(deck_id, :deck)
+    assert nil == deck_initial.rank
+
+    Metr.alter_rank(deck_id, :up)
+
+    deck_log = Metr.read_log(deck_id, :deck)
+    assert deck_log |> Enum.all?(fn l -> Event.is(l) end)
+
+    TestHelper.wipe_test(:player, player_id)
+    TestHelper.wipe_test(:deck, deck_id)
   end
 end

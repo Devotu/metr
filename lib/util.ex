@@ -28,4 +28,7 @@ defmodule Metr.Util do
   defp uniq([], _) do
     []
   end
+
+  def is_error?({:error, _e}), do: true
+  def is_error?(_), do: false
 end

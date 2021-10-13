@@ -2,11 +2,13 @@ ExUnit.start()
 
 defmodule TestHelper do
   alias Metr.Data
-  alias Metr.Modules.Game
+  alias Metr.Modules.State
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.MatchInput
   alias Metr.Modules.Input.PlayerInput
+
+  @propagation_delay 48
 
   def init_single_states(player_name, deck_name) do
     player_id = Metr.create(%PlayerInput{name: player_name}, :player)
@@ -35,7 +37,7 @@ defmodule TestHelper do
   end
 
   def cleanup_single_states({player_id, deck_id, match_id, game_id}) do
-    game = Game.read(game_id)
+    game = State.read(game_id, :game)
 
     TestHelper.wipe_test(:player, [player_id])
     TestHelper.wipe_test(:deck, [deck_id])
@@ -73,7 +75,7 @@ defmodule TestHelper do
   end
 
   def cleanup_double_states({player_1_id, deck_1_id, player_2_id, deck_2_id, match_id, game_id}) do
-    game = Game.read(game_id)
+    game = State.read(game_id, :game)
 
     TestHelper.wipe_test(:player, [player_1_id, player_2_id])
     TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
@@ -99,5 +101,17 @@ defmodule TestHelper do
   def wipe_log(module, id) when is_atom(module) and is_bitstring(id)  do
     "data/event/#{Data.module_specific_id(module, id)}.log"
     |> File.rm()
+  end
+
+  def init_only_player(name) do
+    Metr.create(%PlayerInput{name: name}, :player)
+  end
+
+  def init_only_deck(name, player_id, format \\ "standard") do
+    Metr.create(%DeckInput{name: name, format: format, player_id: player_id}, :deck)
+  end
+
+  def delay() do
+    :timer.sleep(@propagation_delay)
   end
 end

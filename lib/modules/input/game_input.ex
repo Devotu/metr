@@ -12,6 +12,6 @@ defmodule Metr.Modules.Input.GameInput do
             power_two: nil,
             fun_one: nil,
             fun_two: nil,
-            results: [],
+            results: [], #TODO remove?
             tags: []
 end

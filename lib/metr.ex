@@ -8,8 +8,8 @@ defmodule Metr do
   """
 
   alias Metr.Event
+  alias Metr.Id
   alias Metr.Router
-  alias Metr.Modules.Stately
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
   alias Metr.Modules.Input.MatchInput
@@ -18,10 +18,14 @@ defmodule Metr do
   ## api
 
   ### create
-  def create(%PlayerInput{} = data, :player), do: create_state(:player, data)
-  def create(%DeckInput{} = data, :deck), do: create_state(:deck, data)
-  def create(%GameInput{} = data, :game), do: create_state(:game, data)
-  def create(%MatchInput{} = data, :match), do: create_state(:match, data)
+  def create(%PlayerInput{} = data, :player), do: create_state(:player, add_id(data))
+  def create(%DeckInput{} = data, :deck), do: create_state(:deck, add_id(data))
+  def create(%GameInput{} = data, :game), do: create_state(:game, add_id(data))
+  def create(%MatchInput{} = data, :match), do: create_state(:match, add_id(data))
+
+  defp add_id(data) do
+    %{id: Id.guid(), input: data}
+  end
 
   ### list
   # all
@@ -39,18 +43,24 @@ defmodule Metr do
     |> list_of(:game)
   end
 
-  def list(:game, by: {:deck, deck_id}) do
-    Map.put(%{}, :deck_id, deck_id)
+  def list(:game, by: {:deck, id}) do
+    %{}
+    |> Map.put(:by, :deck)
+    |> Map.put(:id, id)
     |> list_of(:game)
   end
 
-  def list(:result, by: {:game, game_id}) do
-    Map.put(%{}, :game_id, game_id)
+  def list(:result, by: {:deck, id}) do
+    %{}
+    |> Map.put(:by, :deck)
+    |> Map.put(:id, id)
     |> list_of(:result)
   end
 
-  def list(:result, by: {:deck, deck_id}) do
-    Map.put(%{}, :deck_id, deck_id)
+  def list(:result, by: {:game, id}) do
+    %{}
+    |> Map.put(:by, :game)
+    |> Map.put(:id, id)
     |> list_of(:result)
   end
 
@@ -76,23 +86,20 @@ defmodule Metr do
 
   def read_input_log(limit) when is_number(limit), do: read_log(limit);
 
-  ### delete
-  def delete(id, :game), do: delete_state(:game, id)
-
   ### functions
   @spec alter_rank(any, :down | :up) :: any
   def alter_rank(deck_id, :up) do
-    Event.new([:alter, :rank], %{deck_id: deck_id, change: 1})
+    Event.new([:alter, :rank], %{id: deck_id, change: 1})
     |> run()
   end
 
   def alter_rank(deck_id, :down) do
-    Event.new([:alter, :rank], %{deck_id: deck_id, change: -1})
+    Event.new([:alter, :rank], %{id: deck_id, change: -1})
     |> run()
   end
 
-  def end_match(match_id) do
-    Event.new([:end, :match], %{match_id: match_id})
+  def end_match(id) do
+    Event.new([:end, :match], %{id: id})
     |> run()
   end
 
@@ -101,8 +108,8 @@ defmodule Metr do
     |> run()
   end
 
-  def add_tag(tag, type, id) when is_bitstring(tag) and is_atom(type) and is_bitstring(id) do
-    Event.new([:tag, type], %{id: id, tag: tag})
+  def add_tag(tag, target_type, target_id) when is_bitstring(tag) and is_atom(target_type) and is_bitstring(target_id) do
+    Event.new([:tag, target_type], %{id: target_id, tag: tag})
     |> run()
   end
 
@@ -123,25 +130,19 @@ defmodule Metr do
   end
 
   defp read_state(type, id) when is_atom(type) do
-    Map.put(%{}, Stately.module_specific_id(type), id)
+    Map.put(%{}, :id, id)
     |> Event.new([:read, type])
     |> run()
   end
 
   defp read_log_of(type, id) when is_atom(type) do
-    Map.put(%{}, Stately.module_specific_id(type), id)
+    Map.put(%{}, :id, id)
     |> Event.new([:read, :log, type])
     |> run()
   end
 
   defp read_log(limit) when is_number(limit) do
     Event.new([:read, :log], %{limit: limit})
-    |> run()
-  end
-
-  defp delete_state(type, id) when is_atom(type) do
-    Map.put(%{}, Stately.module_specific_id(type), id)
-    |> Event.new([:delete, type])
     |> run()
   end
 
@@ -173,10 +174,10 @@ defmodule Metr do
   feed methods of Metr matches on events sent as respons to requests sent into the system and forwards the content to the running listening task
   """
   def feed(%Event{keys: [:match,  :ended,     pid], data: %{out: out}}, _orepp) when is_pid(pid), do: respond(pid, out)
+  def feed(%Event{keys: [:error,              pid], data: %{cause: cause}}, _orepp) when is_pid(pid), do: respond(pid, {:error, cause})
   def feed(%Event{keys: [type,    :error,     pid], data: %{cause: cause}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, {:error, cause})
   def feed(%Event{keys: [type,    :altered,   pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
   def feed(%Event{keys: [type,    :created,   pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
-  def feed(%Event{keys: [type,    :deleted,   pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
   def feed(%Event{keys: [type,    :list,      pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
   def feed(%Event{keys: [type,    :read,      pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)
   def feed(%Event{keys: [type,    :reran,     pid], data: %{out: out}}, _orepp) when is_atom(type) and is_pid(pid), do: respond(pid, out)

@@ -1,94 +1,126 @@
 defmodule DeckTest do
   use ExUnit.Case
 
-  alias Metr.Data
-  alias Metr.Modules.Deck
   alias Metr.Event
-  alias Metr.Modules.Game
   alias Metr.Id
-  alias Metr.Modules.Player
+  alias Metr.Modules.Deck
   alias Metr.Modules.Input.DeckInput
   alias Metr.Modules.Input.GameInput
-  alias Metr.Modules.Input.PlayerInput
+  alias Metr.Modules.State
 
   test "basic feed" do
     assert [] == Deck.feed(Event.new([:not, :relevant], %{id: "abc_123"}), nil)
   end
 
   test "create deck" do
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Decky"}), nil)
+    player_id = TestHelper.init_only_player "Adam Deck"
+    id = Id.guid()
 
-    [resulting_event, _created_response] =
+    deck_id =
       Deck.feed(
-        Event.new([:create, :deck], %DeckInput{
-          name:  "Create deck",
-          player_id: "decky",
-          black: true,
-          red: true,
-          format: "standard"
+        Event.new([:create, :deck],
+        %{
+          id: id,
+          input: %DeckInput{
+            name:  "Create deck",
+            player_id: player_id,
+            black: true,
+            red: true,
+            format: "standard"
+          }
         }),
         nil
       )
+    |> List.first()
+    |> Event.get_out()
 
-    assert [:deck, :created, nil] == resulting_event.keys
-    TestHelper.wipe_test(:deck, resulting_event.data.id)
-    TestHelper.wipe_test(:player, resulting_event.data.player_id)
+    TestHelper.wipe_test(:deck, deck_id)
+    TestHelper.wipe_test(:player, player_id)
   end
 
   test "fail create deck" do
     player_id = "faily"
     name = "Fail create deck"
+    id = Id.guid()
 
-    [resulting_event] =
-      Deck.feed(Event.new([:create, :deck], %DeckInput{name: name, player_id: player_id, format: "standard"}), "repp")
+    creation_event =
+      Deck.feed(
+        Event.new([:create, :deck],
+        %{
+          id: id,
+          input: %DeckInput{
+            name: name,
+            player_id: player_id,
+            black: true,
+            red: true,
+            format: "standard"
+          }
+        }),
+        nil
+      )
+    |> List.first()
 
-    assert [:deck, :error, "repp"] == resulting_event.keys
-    assert "player faily not found" == resulting_event.data.cause
+    assert [:error, nil] == creation_event.keys
+    assert "player faily not found" == creation_event.data.cause
   end
 
   test "create deck with format" do
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Ceasar Deck"}), nil)
+    player_id = TestHelper.init_only_player "Bertil Deck"
     format = "pauper"
+    id = Id.guid()
 
-    [create_event, _created_response] =
+    created_event =
       Deck.feed(
-        Event.new([:create, :deck], %DeckInput{
-          name:  "Charlie Deck",
-          player_id: "ceasar_deck",
-          green: true,
-          blue: true,
-          format: format
+        Event.new([:create, :deck],
+        %{
+          id: id,
+          input: %DeckInput{
+            name:  "Charlie Deck",
+            player_id: player_id,
+            green: true,
+            blue: true,
+            format: format
+          }
         }),
         nil
       )
+    |> List.first()
 
-    assert [:deck, :created, nil] == create_event.keys
-    deck_id = create_event.data.id
-    [read_event] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_id}), nil)
+
+    assert [:deck, :created, nil] == created_event.keys
+    deck_id = created_event.data.out
+    [read_event] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     deck = read_event.data.out
     assert format == deck.format
     TestHelper.wipe_test(:deck, deck_id)
-    TestHelper.wipe_test(:player, create_event.data.player_id)
+    TestHelper.wipe_test(:player, player_id)
   end
 
   test "create deck with colors" do
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: "Erik Deck"}), nil)
+    player_id = TestHelper.init_only_player "Erik Deck"
 
-    [create_event, _created_response] =
+    id = Id.guid()
+
+    created_event =
       Deck.feed(
-        Event.new([:create, :deck], %DeckInput{
-          name:  "Echo Deck",
-          player_id: "erik_deck",
-          red: true,
-          blue: true,
-          format: "standard"
+        Event.new([:create, :deck],
+        %{
+          id: id,
+          input: %DeckInput{
+            name:  "Echo deck",
+            player_id: player_id,
+            red: true,
+            blue: true,
+            format: "standard"
+          }
         }),
         nil
       )
+    |> List.first()
 
-    assert [:deck, :created, nil] == create_event.keys
-    deck_id = create_event.data.id
-    [read_event] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_id}), nil)
+    assert [:deck, :created, nil] == created_event.keys
+    deck_id = created_event.data.out
+    [read_event] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     deck = read_event.data.out
     assert false == deck.black
     assert false == deck.white
@@ -97,193 +129,151 @@ defmodule DeckTest do
     assert true == deck.blue
     assert false == deck.colorless
     TestHelper.wipe_test(:deck, deck_id)
-    TestHelper.wipe_test(:player, create_event.data.player_id)
+    TestHelper.wipe_test(:player, player_id)
   end
 
   test "create deck with failed format" do
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: "David Deck"}), nil)
+    player_id = TestHelper.init_only_player "David Deck"
     format = "failingformat"
+    id = Id.guid()
 
-    [create_event] =
+    created_event =
       Deck.feed(
-        Event.new([:create, :deck], %DeckInput{
-          name:  "Delta Deck",
-          player_id: "david_deck",
-          green: true,
-          blue: true,
-          format: format
+        Event.new([:create, :deck],
+        %{
+          id: id,
+          input: %DeckInput{
+            name:  "Delta deck",
+            player_id: player_id,
+            black: true,
+            red: true,
+            format: format
+          }
         }),
         nil
       )
+    |> List.first()
 
-    assert [:deck, :error, nil] == create_event.keys
-    assert "format failingformat not vaild" == create_event.data.cause
-    TestHelper.wipe_test(:player, "david_deck")
-  end
-
-  test "deck created" do
-    # Players to participate
-    player_1_name = "Helge"
-    player_1_id = Id.hrid(player_1_name)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_1_name}), nil)
-    player_2_name = "Ivar"
-    player_2_id = Id.hrid(player_2_name)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_2_name}), nil)
-    # Decks to participate
-    deck_1_name = "Haste"
-    deck_1_id = Id.hrid(deck_1_name)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
-    deck_2_name = "Imprint"
-    deck_2_id = Id.hrid(deck_2_name)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_2_name, player_id: player_2_id, format: "standard"}), nil)
-    # Resolve game created
-
-    [game_created_event, _game_created_response] =
-      Game.feed(
-        Event.new([:create, :game], %GameInput{
-          player_one: player_1_id,
-          player_two: player_2_id,
-          deck_one: deck_1_id,
-          deck_two: deck_2_id,
-          power_one: -1,
-          power_two: 1,
-          fun_one: -2,
-          fun_two: 2,
-          winner: 1,
-          ranking: false
-        }),
-        nil
-      )
-
-    resulting_events = Deck.feed(game_created_event, nil)
-    first_resulting_event = List.first(resulting_events)
-    deck_log = Data.read_log_by_id(deck_1_id, :deck)
-    [first_result_id, _second_result_event] = game_created_event.data.result_ids
-
-    # Assert
-    assert 2 == Enum.count(resulting_events)
-    assert [:deck, :altered, nil] == first_resulting_event.keys
-
-    assert "Result #{first_result_id} added to deck #{deck_1_id}" ==
-             first_resulting_event.data.out
-
-    assert 2 == Enum.count(deck_log)
-
-    # Cleanup
-    TestHelper.wipe_test(:player, [player_1_id, player_2_id])
-    TestHelper.wipe_test(:deck, [deck_1_id, deck_2_id])
-    TestHelper.wipe_test(:game, [game_created_event.data.id])
-    TestHelper.wipe_test(:result, game_created_event.data.result_ids)
+    assert [:error, nil] == created_event.keys
+    assert "format failingformat not vaild" == created_event.data.cause
+    TestHelper.wipe_test(:player, player_id)
   end
 
   test "alter rank" do
-    player_1_name = "Adam Deck"
-    player_1_id = Id.hrid(player_1_name)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_1_name}), nil)
-    deck_1_name = "Alpha Deck"
-    deck_1_id = Id.hrid(deck_1_name)
-    Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_1_name, player_id: player_1_id, format: "standard"}), nil)
+    player_id = TestHelper.init_only_player "Adam Deck"
+    deck_id = TestHelper.init_only_deck "Alpha Deck", player_id
 
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id, change: 1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == nil
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: 1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {0, 1}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: 1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {1, 0}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: 1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {1, 1}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: 1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {2, 0}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: -1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {2, -1}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: 1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {2, 0}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: 1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {2, 1}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: 1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {2, 1}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: -1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {2, 0}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: -1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {2, -1}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: -1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {1, 0}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: -1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {1, -1}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: -1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {0, 0}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: -1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {0, -1}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: -1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {-1, 0}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: -1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {-1, -1}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: -1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {-2, 0}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: -1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {-2, -1}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: -1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: -1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {-2, -1}
 
-    Deck.feed(Event.new([:alter, :rank], %{deck_id: deck_1_id, change: 1}), nil)
-    [deck] = Deck.feed(Event.new([:read, :deck], %{deck_id: deck_1_id}), nil)
+    Deck.feed(Event.new([:alter, :rank], %{id: deck_id, change: 1}), nil)
+    [deck] = State.feed(Event.new([:read, :deck], %{id: deck_id}), nil)
     assert deck.data.out.rank == {-2, 0}
 
-    TestHelper.wipe_test(:deck, deck_1_id)
-    TestHelper.wipe_test(:player, player_1_id)
+    TestHelper.wipe_test(:deck, deck_id)
+    TestHelper.wipe_test(:player, player_id)
   end
 
   test "create minimum deck" do
-    player_name = "Gustav Deck"
-    player_id = Id.hrid(player_name)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
+    player_id = TestHelper.init_only_player "Gustav Deck"
     deck_name = "Golf Deck"
     format = "block"
+    id = Id.guid()
 
-    [resulting_event, _created_response] =
-      Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: format}), nil)
+    creation_event =
+      Deck.feed(
+        Event.new([:create, :deck],
+        %{
+          id: id,
+          input: %DeckInput{
+            name: deck_name,
+            player_id: player_id,
+            format: format
+          }
+        }),
+        nil
+      )
+    |> List.first()
 
-    assert [:deck, :created, nil] == resulting_event.keys
+    assert [:deck, :created, nil] == creation_event.keys
 
-    deck = Deck.read(resulting_event.data.id)
+    deck = State.read(creation_event.data.out, :deck)
     assert format == deck.format
     assert "" == deck.theme
     assert nil == deck.rank
@@ -297,29 +287,23 @@ defmodule DeckTest do
     assert false == deck.blue
     assert false == deck.colorless
 
-    TestHelper.wipe_test(:deck, resulting_event.data.id)
+    TestHelper.wipe_test(:deck, creation_event.data.out)
     TestHelper.wipe_test(:player, player_id)
   end
 
   test "toggle deck active" do
-    player_name = "Helge Deck"
-    player_id = Id.hrid(player_name)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
-    deck_name = "Hotel Deck"
+    player_id = TestHelper.init_only_player "Helge Deck"
+    deck_id = TestHelper.init_only_deck "Hotel Deck", player_id
 
-    [resulting_event, _created_response] =
-      Deck.feed(Event.new([:create, :deck], %DeckInput{name: deck_name, player_id: player_id, format: "standard"}), nil)
-
-    deck_id = resulting_event.data.id
-    created_deck = Deck.read(deck_id)
+    created_deck = State.read(deck_id, :deck)
     assert true == created_deck.active
 
-    Deck.feed(Event.new([:toggle, :deck, :active], %{deck_id: deck_id}), nil)
-    toggled_deck = Deck.read(deck_id)
+    Deck.feed(Event.new([:toggle, :deck, :active], %{id: deck_id}), nil)
+    toggled_deck = State.read(deck_id, :deck)
     assert false == toggled_deck.active
 
-    Deck.feed(Event.new([:toggle, :deck, :active], %{deck_id: deck_id}), nil)
-    reverted_deck = Deck.read(deck_id)
+    Deck.feed(Event.new([:toggle, :deck, :active], %{id: deck_id}), nil)
+    reverted_deck = State.read(deck_id, :deck)
     assert true == reverted_deck.active
 
     TestHelper.wipe_test(:deck, deck_id)
@@ -334,8 +318,9 @@ defmodule DeckTest do
 
     {player_one_id, deck_one_id, player_two_id, deck_two_id, match_id, game_id} =
       TestHelper.init_double_state(player_name, deck_name, player_two_name, deck_two_name)
+    TestHelper.delay()
 
-    original_deck = Deck.read(deck_one_id)
+    original_deck = State.read(deck_one_id, :deck)
     [first_result_id] = original_deck.results
 
     create_game_data = %GameInput{
@@ -347,13 +332,15 @@ defmodule DeckTest do
     }
 
     second_game_id = Metr.create(create_game_data, :game)
+    TestHelper.delay()
 
-    updated_deck = Deck.read(deck_one_id)
+    updated_deck = State.read(deck_one_id, :deck)
     [^first_result_id, second_result_id] = updated_deck.results
 
     third_game_id = Metr.create(create_game_data, :game)
+    TestHelper.delay()
 
-    updated_deck = Deck.read(deck_one_id)
+    updated_deck = State.read(deck_one_id, :deck)
     [^first_result_id, ^second_result_id, _third_result_id] = updated_deck.results
 
     player_one = Metr.read(player_one_id, :player)
@@ -369,89 +356,111 @@ defmodule DeckTest do
 
 
   test "create deck failed name" do
-    player_name = "Kalle Deck"
-    player_id = Id.hrid(player_name)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
+    player_id = TestHelper.init_only_player "Kalle Deck"
+    id = Id.guid()
 
-    [resulting_event] =
+    creation_event =
       Deck.feed(
-        Event.new([:create, :deck], %DeckInput{
-          name:  "",
-          player_id: player_id,
-          black: true,
-          red: true,
-          format: "standard"
+        Event.new([:create, :deck],
+        %{
+          id: id,
+          input: %DeckInput{
+            name: "",
+            player_id: player_id,
+            black: true,
+            red: true,
+            format: "standard"
+          }
         }),
         nil
       )
+    |> List.first()
 
-    assert [:deck, :error, nil] == resulting_event.keys
+    assert [:error, nil] == creation_event.keys
 
-    [resulting_event] =
+    creation_event =
       Deck.feed(
-        Event.new([:create, :deck], %DeckInput{
-          name:  nil,
-          player_id: nil,
-          black: true,
-          red: true,
-          format: "standard"
+        Event.new([:create, :deck],
+        %{
+          id: id,
+          input: %DeckInput{
+            name: nil,
+            player_id: nil,
+            black: true,
+            red: true,
+            format: "standard"
+          }
         }),
         nil
       )
+    |> List.first()
 
-    assert [:deck, :error, nil] == resulting_event.keys
+    assert [:error, nil] == creation_event.keys
 
-    [resulting_event] =
+    creation_event =
       Deck.feed(
-        Event.new([:create, :deck], %DeckInput{
-          name:  "a name with more than 32 codepoints",
-          player_id: nil,
-          black: true,
-          red: true,
-          format: "standard"
+        Event.new([:create, :deck],
+        %{
+          id: id,
+          input: %DeckInput{
+            name:  "a name with more than 32 codepoints",
+            player_id: nil,
+            black: true,
+            red: true,
+            format: "standard"
+          }
         }),
         nil
       )
+    |> List.first()
 
-    assert [:deck, :error, nil] == resulting_event.keys
+    assert [:error, nil] == creation_event.keys
 
     TestHelper.wipe_test(:player, player_id)
   end
 
   test "create deck failed format" do
-    player_name = "Kalle Deck"
-    player_id = Id.hrid(player_name)
-    Player.feed(Event.new([:create, :player], %PlayerInput{name: player_name}), nil)
+    player_id = TestHelper.init_only_player "Ludvid Deck"
 
-    [resulting_event] =
+    creation_event =
       Deck.feed(
-        Event.new([:create, :deck], %DeckInput{
-          name:  "",
-          player_id: player_id,
-          black: true,
-          red: true,
-          format: "not something we have"
+        Event.new([:create, :deck],
+        %{
+          id: Id.guid(),
+          input: %DeckInput{
+            name: "",
+            player_id: player_id,
+            black: true,
+            red: true,
+            format: "not something we have"
+          }
         }),
         nil
       )
+    |> List.first()
 
-    assert [:deck, :error, nil] == resulting_event.keys
+    assert [:error, nil] == creation_event.keys
     TestHelper.wipe_test(:player, player_id)
   end
 
   test "create deck failed player" do
-    [resulting_event] =
+    creation_event =
       Deck.feed(
-        Event.new([:create, :deck], %DeckInput{
-          name:  "",
-          player_id: nil,
-          black: true,
-          red: true,
-          format: "standard"
+        Event.new([:create, :deck],
+        %{
+          id: Id.guid(),
+          input: %DeckInput{
+            name: "",
+            player_id: nil,
+            black: true,
+            red: true,
+            format: "standard"
+          }
         }),
         nil
       )
+    |> List.first()
 
-    assert [:deck, :error, nil] == resulting_event.keys
+    assert [:error, nil] == creation_event.keys
   end
 end

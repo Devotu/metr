@@ -46,13 +46,23 @@ defmodule Metr.Data do
     |> Trail.has_state?()
   end
 
+  def log_exists?(module, id) when is_atom(module) and is_bitstring(id) do
+    module_specific_id(module, id)
+    |> Trail.on_record?()
+  end
+
   def wipe_state(ids, module) when is_atom(module) and is_list(ids) do
     Enum.each(ids, fn id -> wipe_state(id, module) end)
   end
 
   def wipe_state(id, module) when is_atom(module) and is_bitstring(id) do
-    module_specific_id(module, id)
-    |> Trail.clear()
+    case state_exists?(module, id) do
+      false ->
+        {:ok}
+      _ ->
+        module_specific_id(module, id)
+        |> Trail.clear()
+    end
   end
 
   def list_ids(module) when is_atom(module) do
@@ -76,6 +86,10 @@ defmodule Metr.Data do
   end
 
   def genserver_id(module, id) when is_atom(module) and is_bitstring(id) do
+    {:global, module_specific_id(module, id)}
+  end
+
+  def genserver_id(id, module) when is_atom(module) and is_bitstring(id) do
     {:global, module_specific_id(module, id)}
   end
 
