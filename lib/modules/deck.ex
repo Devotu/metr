@@ -276,7 +276,7 @@ defmodule Metr.Modules.Deck do
 
   @impl true
   def handle_call(
-        %Event{keys: [:toggle, @atom, :active], data: %{id: id} = event},
+        %Event{keys: [:toggle, @atom, :active], data: %{id: id}} = event,
         _from,
         state
       ) do
@@ -291,7 +291,7 @@ defmodule Metr.Modules.Deck do
 
   @impl true
   def handle_call(
-        %Event{keys: [@atom, :tagged], data: %{id: id, tag: tag} = event},
+        %Event{keys: [@atom, :tagged], data: %{id: id, tag: tag}} = event,
         _from,
         state
       ) do

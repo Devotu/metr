@@ -11,13 +11,15 @@ defmodule Metr.Data do
   Hard lesson to be learned!
   """
 
+  alias Metr.Event
+
   @id_input "input"
 
-  def log_external_input(event) do
+  def log_external_input(%Event{} = event) do
     Trail.store(@id_input, %{}, event)
   end
 
-  def save_state_with_log(module, id, state, event) when is_atom(module) and is_bitstring(id) do
+  def save_state_with_log(module, id, state, %Event{} = event) when is_atom(module) and is_bitstring(id) do
     module_specific_id(module, id)
     |> Trail.store(state, event)
   end

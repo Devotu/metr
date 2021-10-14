@@ -160,7 +160,7 @@ defmodule Metr.Modules.Player do
 
   @impl true
   def handle_call(
-        %Event{keys: [@atom, :tagged], data: %{id: id, tag: tag} = event},
+        %Event{keys: [@atom, :tagged], data: %{id: id, tag: tag}} = event,
         _from,
         state
       ) do
