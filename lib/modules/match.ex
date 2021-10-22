@@ -68,7 +68,7 @@ defmodule Metr.Modules.Match do
 
     [
       State.update(id, @atom, event)
-      |> Event.message_to_event([@atom, :altered, repp])
+      |> Event.message_to_event([@atom, :ended, repp])
     ]
   end
 
