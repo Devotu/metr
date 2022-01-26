@@ -19,6 +19,8 @@ defmodule Metr.Modules.Tag do
         repp
       ) do
 
+        IO.inspect event, label: "tag"
+
     validation =
       :ok
       |> is_valid_tag(tag)
@@ -29,8 +31,12 @@ defmodule Metr.Modules.Tag do
     tag_exist? = State.exist?(id, :tag)
     propagating_event = Event.new([target_module, :tagged], %{id: target_id, tag: tag})
 
+    IO.inspect tag_exist?, label: "tag exist"
+    IO.inspect propagating_event, label: "tag prop"
+
     case {validation, tag_exist?} do
       {:ok, false} ->
+        IO.puts("tag - ok, false")
         create_response_event = State.create(id, @atom, event, repp)
         case create_response_event do
           [%Event{data: %{cause: _cause}}] = error_event ->
@@ -39,6 +45,7 @@ defmodule Metr.Modules.Tag do
             [e, propagating_event]
         end
       {:ok, true} ->
+        IO.puts("tag - ok, true")
         case State.update(id, :tag, event) do
           :ok ->
             [Event.new([:tag, :created, repp], %{out: id}), propagating_event]
@@ -46,6 +53,7 @@ defmodule Metr.Modules.Tag do
             x
         end
       {{:error, e}, _} ->
+        IO.puts("tag - error")
         [Event.error_to_event(e, repp)]
     end
   end
@@ -121,13 +129,19 @@ defmodule Metr.Modules.Tag do
   end
 
   @impl true
-  def handle_call(%Event{keys: [:tag, target_module], data: %{id: target_id}}, _from, state) do
+  def handle_call(%Event{keys: [:tag, target_module], data: %{id: target_id}} = event, _from, state) do
     new_state = state
       |> Map.update!(
         :tagged,
         &(&1 ++ [tag_tuple(target_module, target_id)])
       )
 
-    {:reply, :ok, new_state}
+    case Data.save_state_with_log(@atom, state.id, new_state, event) do
+      {:error, e} ->
+        {:stop, e}
+      _ ->
+        {:ok, new_state}
+    end
+    # {:reply, "#{target_id} added to tagged by #{state.name}", new_state}
   end
 end
