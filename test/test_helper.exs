@@ -114,4 +114,9 @@ defmodule TestHelper do
   def delay() do
     :timer.sleep(@propagation_delay)
   end
+
+  def kill_state(type, id) do
+    gen_id = Data.genserver_id(type, id)
+    :ok == GenServer.stop(gen_id) && nil == GenServer.whereis(gen_id)
+  end
 end

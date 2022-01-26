@@ -52,10 +52,34 @@ defmodule TagTest do
   # end
 
   test "player tagged" do
-    tag_one_name = "Adam Tag"
-    player_id = TestHelper.init_only_player "Alpha Tag"
+    tag_one_name = "Alpha Tag"
+    player_id = TestHelper.init_only_player "Adam Tag"
 
     tag_id = Metr.add_tag(tag_one_name, :player, player_id)
+
+    player = Metr.read(player_id, :player)
+    #The tag is added to the player tags
+    assert Enum.member?(player.tags, tag_one_name)
+
+    tag = Metr.read(tag_id, :tag)
+    #The player has been added to the tagged states
+    assert Enum.member?(tag.tagged, {:player, player_id, Time.timestamp()})
+
+    # Cleanup
+    TestHelper.delay()
+    TestHelper.wipe_test(:tag, tag_id)
+    TestHelper.wipe_test(:player, player_id)
+  end
+
+  test "tag persists" do
+    tag_one_name = "Bravo Tag"
+    player_id = TestHelper.init_only_player "Bertil Tag"
+
+    tag_id = Metr.add_tag(tag_one_name, :player, player_id)
+
+    #Kill the current process
+    assert TestHelper.kill_state(:player, player_id)
+    assert TestHelper.kill_state(:tag, tag_id)
 
     player = Metr.read(player_id, :player)
     #The tag is added to the player tags
