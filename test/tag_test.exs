@@ -1,7 +1,6 @@
 defmodule TagTest do
   use ExUnit.Case
 
-  alias Metr.Data
   alias Metr.Event
   alias Metr.Modules.Tag
   alias Metr.Time
@@ -93,6 +92,60 @@ defmodule TagTest do
     TestHelper.delay()
     TestHelper.wipe_test(:tag, tag_id)
     TestHelper.wipe_test(:player, player_id)
+  end
+
+  test "multiple players tagged" do
+    tag_one_name = "Charlie Tag"
+    player_one_id = TestHelper.init_only_player("Ceasar Tag")
+    player_two_id = TestHelper.init_only_player("David Tag")
+
+    tag_one_id = Metr.add_tag(tag_one_name, :player, player_one_id)
+    assert tag_one_id == Metr.add_tag(tag_one_name, :player, player_two_id)
+
+    player_one = Metr.read(player_one_id, :player)
+    player_two = Metr.read(player_two_id, :player)
+    #The tag is added to the players tags
+    assert Enum.member?(player_one.tags, tag_one_name)
+    assert Enum.member?(player_two.tags, tag_one_name)
+
+    tag_one = Metr.read(tag_one_id, :tag)
+    #The players have been added to the tagged states
+    assert Enum.member?(tag_one.tagged, {:player, player_two_id, Time.timestamp()})
+    assert Enum.member?(tag_one.tagged, {:player, player_one_id, Time.timestamp()})
+
+    # Cleanup
+    TestHelper.delay()
+    TestHelper.wipe_test(:tag, tag_one_id)
+    # TestHelper.wipe_test(:tag, tag_two_id)
+    TestHelper.wipe_test(:player, player_one_id)
+    TestHelper.wipe_test(:player, player_two_id)
+  end
+
+  test "player to multiple tags" do
+    tag_one_name = "Delta Tag"
+    tag_two_name = "Echo Tag"
+    player_one_id = TestHelper.init_only_player("Erik Tag")
+
+    tag_one_id = Metr.add_tag(tag_one_name, :player, player_one_id)
+    tag_two_id = Metr.add_tag(tag_two_name, :player, player_one_id)
+
+    player_one = Metr.read(player_one_id, :player)
+    #The tags are added to the player tags
+    assert Enum.member?(player_one.tags, tag_one_name)
+    assert Enum.member?(player_one.tags, tag_two_name)
+
+    tag_one = Metr.read(tag_one_id, :tag)
+    tag_two = Metr.read(tag_two_id, :tag)
+    #The player has been added to the tags
+    assert Enum.member?(tag_one.tagged, {:player, player_one_id, Time.timestamp()})
+    assert Enum.member?(tag_two.tagged, {:player, player_one_id, Time.timestamp()})
+
+    # Cleanup
+    TestHelper.delay()
+    TestHelper.wipe_test(:tag, tag_one_id)
+    TestHelper.wipe_test(:tag, tag_two_id)
+    TestHelper.wipe_test(:player, player_one_id)
+    # TestHelper.wipe_test(:player, player_two_id)
   end
 
   # test "list tags" do

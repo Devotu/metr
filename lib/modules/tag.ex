@@ -47,10 +47,11 @@ defmodule Metr.Modules.Tag do
       {:ok, true} ->
         IO.puts("tag - ok, true")
         case State.update(id, :tag, event) do
-          :ok ->
+          {:error, e} ->
+            IO.puts("tag - error")
+            [Event.error_to_event(e, repp)]
+          _ ->
             [Event.new([:tag, :created, repp], %{out: id}), propagating_event]
-          x ->
-            x
         end
       {{:error, e}, _} ->
         IO.puts("tag - error")
@@ -140,8 +141,7 @@ defmodule Metr.Modules.Tag do
       {:error, e} ->
         {:stop, e}
       _ ->
-        {:ok, new_state}
+        {:reply, "#{target_module} #{target_id} added to tagged by #{state.name}", new_state}
     end
-    # {:reply, "#{target_id} added to tagged by #{state.name}", new_state}
   end
 end
